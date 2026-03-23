@@ -1,0 +1,248 @@
+/* ============================================================
+   LOGIN PAGE - SHRI AANDAVAR TOOLING ERP
+============================================================ */
+
+/* Background */
+.login-page {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #c40000; /* full-page red background */
+  font-family: "Maiandra GD", sans-serif;
+}
+
+/* Gradient animation */
+/* gradient animation removed for solid red background */
+
+/* Optional particle canvas placeholder */
+.particles-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Login Card */
+.login-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 520px;
+  padding: 40px 35px;
+  border-radius: 0; /* remove card corners */
+  background: transparent; /* remove card background */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none; /* remove border */
+  box-shadow: none; /* remove shadow */
+  color: #fff;
+  animation: fadeIn 0.8s ease;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Container styling */
+.login-logo {
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Specific logo styling */
+.login-brand-logo {
+  width: 300px;         /* Control the specific width */
+  height: auto;          /* Keep proportions perfect */
+  border-radius: 8px;    /* Optional: adds soft corners if the image is square */
+  object-fit: contain;   /* Ensures the image isn't stretched */
+}
+
+/* Titles */
+.login-title {
+  text-align: center;
+  font-size: 58px;
+  font-weight: 700;
+  max-width: 700px;
+  margin-top: 25px;
+}
+
+.login-sub {
+  text-align: center;
+  font-size: 28px;
+  opacity: 0.9;
+  margin-top: 25px;
+}
+
+/* Form */
+.login-form {
+  width: 100%;
+  margin-top: 25px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+/* Input */
+.form-control {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: 0.3s ease;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 2px #60a5fa;
+}
+
+/* larger, white labels for better contrast on red background */
+.form-group label {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* password wrapper & toggle */
+.password-wrapper { display: none; }
+
+/* Button */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: #FFD700; /* yellow button */
+  color: #1e1b00;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.15s ease;
+  margin-top: 10px;
+  border: none;
+}
+
+.login-btn:hover {
+  background: #e6c200;
+  transform: translateY(-2px);
+}
+
+.login-btn:active {
+  transform: scale(0.98);
+}
+
+.btn.btn-primary.login-btn {
+  background-color: #FFD700;
+  color: black;
+}
+
+/* Labels for Username & Password on login page */
+.login-form .form-group label {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;       /* white for contrast on red background */
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  text-transform: none; /* change to uppercase if you prefer all-caps */
+}
+
+/* Hint */
+.login-hint {
+  margin-top: 20px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-card {
+    width: 90%;
+    padding: 30px 20px;
+  }
+}
+
+/* Two-column layout */
+.login-wrap {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  max-width: none;
+  align-items: stretch;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.login-left {
+  flex: 1; /* equal width */
+  border-radius: 16px 0 0 16px;
+  height: 100vh;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.login-left-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.login-right {
+  flex: 1; /* equal width */
+  display: flex;
+  align-items: flex-start; /* place content at top */
+  justify-content: center;
+  padding-top: 60px;
+  background: transparent; /* inherit page red */
+}
+
+.forgot-row { text-align: center; margin-top: 12px; }
+.forgot-link {
+  color: rgba(255,255,255,0.9);
+  font-size: 16px;
+  text-decoration: underline;
+  opacity: 0.95;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (max-width: 920px) {
+  .login-wrap { width: 680px; }
+}
+
+@media (max-width: 760px) {
+  .login-logo { width: 84px; height: 84px; font-size: 30px; }
+  .login-title { font-size: 20px; }
+  .login-sub { font-size: 14px; }
+  .login-card { max-width: 90%; padding: 30px 20px; }
+}
+
+@media (max-width: 760px) {
+  .login-wrap { flex-direction: column; width: 100%; }
+  .login-left { min-height: 220px; border-radius: 12px; }
+  .login-left-img { object-fit: contain; }
+}

@@ -1,0 +1,182 @@
+/* ================= SIDEBAR ================= */
+
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: linear-gradient(180deg, #8b0000, #c40000);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* removed scrollbar */
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* ================= LOGO AREA ================= */
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  padding: 0 18px 12px 18px; /* reduced bottom spacing */
+  margin-top: 25px;
+}
+
+.logo-box {
+  width: 36px;
+  height: 36px;
+  background: #ffd700;
+  color: #8b0000;
+  font-weight: bold;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.logo-text h2 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.logo-text p {
+  font-size: 11px;
+  opacity: 0.8;
+  margin: 2px 0 0 0;
+}
+
+/* ================= MENU SECTIONS ================= */
+
+.menu-section {
+  margin-bottom: 4px; /* reduced section spacing */
+}
+
+.menu-title {
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 6px 18px; /* reduced vertical padding */
+  color: #ffcc00;
+  font-weight: 600;
+}
+
+/* ================= MENU ITEM ================= */
+
+.menu-item {
+  padding: 8px 18px; /* reduced padding */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 2px 8px; /* reduced spacing */
+  transition: 0.2s ease;
+  font-size: 13px;
+}
+
+.menu-item i {
+  width: 18px;
+  font-size: 13px;
+}
+
+.menu-item span {
+  margin-left: 10px;
+}
+
+/* Hover */
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Active */
+.menu-item.active {
+  background: #ffd700;
+  color: #8b0000;
+  font-weight: 600;
+}
+
+/* ================= FOOTER ================= */
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 6px;
+}
+
+.logout:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* ================= GLOBAL LIGHT ================= */
+
+body {
+  margin: 0;
+  background: #f4f6f9;
+  color: #222;
+  font-family: Arial, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ================= DARK THEME ================= */
+
+body.dark-theme {
+  background: #121212;
+  color: #e4e4e4;
+}
+
+/* Page background */
+body.dark-theme .page {
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+/* Table */
+body.dark-theme table {
+  background: #1f1f1f;
+  color: #ffffff;
+}
+
+body.dark-theme th {
+  background: #2a2a2a;
+}
+
+body.dark-theme td {
+  border-color: #333;
+}
+
+/* Topbar */
+body.dark-theme .topbar {
+  background: #1c1c1c;
+  color: #ffffff;
+}
+
+/* Sidebar Dark Version */
+body.dark-theme .sidebar {
+  background: linear-gradient(180deg, #1b1b1b, #2c2c2c);
+}
+
+/* Collapsed Mode */
+.sidebar {
+  width: 250px;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+}
+
+.sidebar.collapsed .menu-title {
+  display: none;
+}
+
+.sidebar.collapsed .logo-text {
+  display: none;
+}
+
+.sidebar.collapsed .menu-item span {
+  display: none;
+}

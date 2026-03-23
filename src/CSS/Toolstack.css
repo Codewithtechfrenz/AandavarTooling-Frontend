@@ -1,0 +1,129 @@
+/* PAGE */
+
+.cs-page{
+padding:90px 40px 40px 260px;
+background:gray;
+min-height:100vh;
+font-family:Segoe UI, sans-serif;
+}
+
+
+/* HEADER */
+
+.cs-header{
+margin-bottom:25px;
+}
+
+.cs-header h1{
+font-size:28px;
+font-weight:600;
+color:#222;
+margin-bottom:5px;
+}
+
+.cs-header p{
+color:#222;
+font-size:14px;
+}
+
+
+/* TABLE CARD */
+
+.cs-table-card{
+background:#ffffff;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+/* TABLE */
+
+.cs-table{
+width:100%;
+border-collapse:collapse;
+font-size:14px;
+}
+
+.cs-table thead{
+background:#f2f3f7;
+}
+
+.cs-table th{
+padding:14px;
+text-align:left;
+font-size:12px;
+font-weight:600;
+color:#666;
+text-transform:uppercase;
+border-bottom:1px solid #e6e6e6;
+}
+
+.cs-table td{
+padding:12px 14px;
+border-bottom:1px solid #f0f0f0;
+color:#444;
+}
+
+.cs-table tr:hover{
+background:#fafafa;
+}
+
+
+/* DELETE BUTTON */
+
+.cs-delete-btn{
+background:#f44336;
+border:none;
+color:white;
+padding:6px 10px;
+border-radius:4px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.cs-delete-btn:hover{
+background:#e53935;
+}
+
+.cs-delete-btn i{
+font-size:13px;
+}
+
+
+/* EMPTY MESSAGE */
+
+.cs-empty{
+text-align:center;
+padding:25px;
+color:#888;
+font-size:14px;
+}
+
+
+/* RESPONSIVE */
+
+@media(max-width:1100px){
+
+.cs-page{
+padding-left:200px;
+}
+
+}
+
+@media(max-width:768px){
+
+.cs-page{
+padding:90px 20px;
+}
+
+.cs-table{
+font-size:13px;
+}
+
+.cs-table th,
+.cs-table td{
+padding:10px;
+}
+
+}

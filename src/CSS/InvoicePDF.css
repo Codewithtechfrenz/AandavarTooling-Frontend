@@ -1,0 +1,47 @@
+/* Hide invoice template from screen */
+
+.pdf-hidden{
+position:absolute;
+left:-9999px;
+top:0;
+width:210mm;
+}
+
+
+
+/* A4 PDF container */
+
+#invoice{
+width:210mm;
+height:297mm;
+background:#fff;
+overflow:hidden;
+}
+
+
+
+/* Prevent page breaks */
+
+#invoice *{
+page-break-inside:avoid !important;
+break-inside:avoid !important;
+}
+
+
+
+/* Download button styling */
+
+.download-btn{
+background:#2563eb;
+color:white;
+border:none;
+padding:10px 18px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+margin-top:10px;
+}
+
+.download-btn:hover{
+background:#1d4ed8;
+}

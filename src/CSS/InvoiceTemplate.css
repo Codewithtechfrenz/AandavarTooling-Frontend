@@ -1,0 +1,271 @@
+/* ============================= */
+/* A4 PAGE SIZE */
+/* ============================= */
+
+.invoice-container{
+width:210mm;
+min-height:297mm;
+margin:auto;
+background:#ffffff;
+font-family:Arial, Helvetica, sans-serif;
+font-size:11px;
+padding:6mm;
+box-sizing:border-box;
+overflow:hidden;
+}
+
+
+
+/* ============================= */
+/* TOP BAR */
+/* ============================= */
+
+.top-bar{
+background:#e11d2e;
+color:#fff;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:5px 15px;
+font-size:10px;
+}
+
+
+
+/* ============================= */
+/* COMPANY HEADER */
+/* ============================= */
+
+.company-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:6px;
+}
+
+.company-left{
+background:#1f2937;
+color:#fff;
+padding:15px 25px;
+border-bottom-right-radius:100px;
+width:55%;
+}
+
+.company-left h2{
+margin:0;
+font-size:17px;
+}
+
+.company-left p{
+margin:2px 0;
+font-size:10px;
+}
+
+.invoice-title{
+text-align:right;
+width:40%;
+}
+
+.invoice-title h1{
+font-size:20px;
+margin:0;
+}
+
+
+
+/* ============================= */
+/* BILL DETAILS */
+/* ============================= */
+
+.bill-details{
+display:flex;
+justify-content:space-between;
+margin-top:8px;
+}
+
+.bill-left{
+width:60%;
+}
+
+.bill-left p{
+margin:2px 0;
+}
+
+.bill-right{
+text-align:right;
+}
+
+.bill-right p{
+margin:2px 0;
+}
+
+
+
+/* ============================= */
+/* PRODUCT TABLE */
+/* ============================= */
+
+.invoice-table{
+width:100%;
+border-collapse:collapse;
+margin-top:8px;
+}
+
+.invoice-table th{
+background:#e11d2e;
+color:#fff;
+padding:5px;
+border:1px solid #ccc;
+font-size:10px;
+}
+
+.invoice-table td{
+border:1px solid #ccc;
+padding:5px;
+text-align:center;
+height:18px;
+}
+
+
+
+/* ============================= */
+/* PAYMENT SECTION */
+/* ============================= */
+
+.payment-wrapper{
+display:flex;
+justify-content:space-between;
+margin-top:8px;
+}
+
+.payto{
+width:55%;
+font-size:10px;
+}
+
+.payto p{
+margin:2px 0;
+}
+
+.total-box{
+width:40%;
+}
+
+.total-box table{
+width:100%;
+border-collapse:collapse;
+}
+
+.total-box td{
+border:1px solid #ccc;
+padding:4px;
+font-size:10px;
+}
+
+.total-row{
+background:#e11d2e;
+color:#fff;
+font-weight:bold;
+}
+
+
+
+/* ============================= */
+/* AMOUNT WORDS */
+/* ============================= */
+
+.amount-words{
+margin-top:6px;
+font-size:10px;
+}
+
+.amount-words p{
+margin:2px 0;
+}
+
+
+
+/* ============================= */
+/* TERMS */
+/* ============================= */
+
+.terms{
+margin-top:6px;
+font-size:10px;
+}
+
+.terms p{
+margin:2px 0;
+}
+
+
+
+/* ============================= */
+/* SIGNATURE */
+/* ============================= */
+
+.signature{
+margin-top:6px;
+}
+
+.sign-box{
+width:150px;
+height:35px;
+border-bottom:1px solid #000;
+}
+
+
+
+/* ============================= */
+/* ACKNOWLEDGEMENT */
+/* ============================= */
+
+.ack-section{
+margin-top:10px;
+border-top:2px dashed #aaa;
+padding-top:6px;
+}
+
+.ack-header{
+background:#1f2937;
+color:#fff;
+padding:6px 10px;
+font-weight:bold;
+font-size:11px;
+width:35%;
+border-top-right-radius:30px;
+}
+
+.ack-content{
+display:flex;
+justify-content:space-between;
+margin-top:6px;
+font-size:10px;
+}
+
+.ack-content p{
+margin:2px 0;
+}
+
+.pdf-hidden{
+position:absolute;
+left:-9999px;
+top:0;
+width:210mm;
+}
+
+#invoice{
+width:210mm;
+height:297mm;
+overflow:hidden;
+}
+
+/* ============================= */
+/* PREVENT PAGE BREAK */
+/* ============================= */
+
+.invoice-container,
+.invoice-container *{
+page-break-inside:avoid !important;
+break-inside:avoid !important;
+}
