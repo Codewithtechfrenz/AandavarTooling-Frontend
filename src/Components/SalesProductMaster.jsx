@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/SalesProductMaster.css";
@@ -14,8 +14,8 @@ function SalesProductMaster() {
   useEffect(() => {
     const fetchSalesProducts = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8001/sales/getSalesProducts"
+        const response = await api.get(
+          "/sales/getSalesProducts"
         );
 
         if (response.status === 200) {
@@ -40,8 +40,8 @@ function SalesProductMaster() {
     if (!productName) return;
 
     try {
-      const response = await axios.post(
-        "http://localhost:8001/sales/createSalesProduct",
+      const response = await api.post(
+        "/sales/createSalesProduct",
         { Product_Name: productName }
       );
 
@@ -80,8 +80,8 @@ function SalesProductMaster() {
         Product_Name: newName,
       };
 
-      const response = await axios.post(
-        "http://localhost:8001/sales/updateSalesProduct",
+      const response = await api.post(
+        "/sales/updateSalesProduct",
         payload
       );
 
@@ -112,8 +112,8 @@ function SalesProductMaster() {
 
     try {
       const payload = { S_No: backendProduct.S_No };
-      const response = await axios.post(
-        "http://localhost:8001/sales/deleteSalesProduct",
+      const response = await api.post(
+        "/sales/deleteSalesProduct",
         payload
       );
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 import { useNavigate } from "react-router-dom";
 import "../CSS/Page.css";
 
@@ -18,8 +18,8 @@ const Page = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:8001/dashboard/dashboards"
+        const res = await api.get(
+          "/dashboard/dashboards"
         );
 
         // Adjust mapping based on API response

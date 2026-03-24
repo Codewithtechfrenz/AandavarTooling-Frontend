@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/LineReturn.css";
@@ -44,8 +44,8 @@ function LineReturn() {
   /* ================= FETCH UOM ================= */
   const fetchUOMOptions = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8001/activeuoms/activeUOM"
+      const res = await api.get(
+        "/activeuoms/activeUOM"
       );
       if (res.status === 200 && res.data.data) {
         setUomOptions(res.data.data);
@@ -59,8 +59,8 @@ function LineReturn() {
   /* ================= FETCH CATEGORY ================= */
   const fetchCategoryOptions = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8001/activecategories/activeCategorie"
+      const res = await api.get(
+        "/activecategories/activeCategory"
       );
       if (res.status === 200 && res.data.data) {
         setCategoryOptions(res.data.data);
@@ -75,8 +75,8 @@ function LineReturn() {
 
   const fetchItemOptions = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8001/activeitems/activeitem"
+      const res = await api.get(
+        "/activeitems/activeitem"
       );
       if (res.status === 200 && res.data.data) {
         setItemOptions(res.data.data);
@@ -89,8 +89,8 @@ function LineReturn() {
 
   const fetchWorkerOptions = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8001/activeworkers/activeworker"
+      const res = await api.get(
+        "/activeworkers/activeworker"
       );
       if (res.status === 200 && res.data.data) {
         setWorkerOptions(res.data.data);
@@ -103,8 +103,8 @@ function LineReturn() {
 
   const fetchMachineOptions = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8001/activemachines/activemachine"
+      const res = await api.get(
+        "/activemachines/activemachine"
       );
       if (res.status === 200 && res.data.data) {
         setMachineOptions(res.data.data);
@@ -174,8 +174,8 @@ function LineReturn() {
         Description: "Received from supplier",
       };
 
-      await axios.post(
-        "http://localhost:8001/linefeedin/linefeedins",
+      await api.post(
+        "/linefeedin/linefeedins",
         payload
       );
 
