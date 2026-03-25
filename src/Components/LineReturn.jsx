@@ -185,7 +185,7 @@ function LineReturn() {
             <select value={workerName} onChange={(e)=>setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
               {workerOptions.map((w,i)=>(
-                <option key={i}>{w}</option>
+                <option key={i} value={w}>{w}</option>
               ))}
             </select>
           </div>
@@ -198,7 +198,7 @@ function LineReturn() {
                 <option key={i}>{m.MachineName || m}</option>
               ))}
             </select>
-          </div>
+          </div><br></br>
 
         </div>
 

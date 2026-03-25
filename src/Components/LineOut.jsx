@@ -256,7 +256,7 @@ function WorkOrder() {
                 <option key={i} value={w}>{w}</option>
               ))}
             </select>
-          </div>
+          </div><br></br>
  
           <div className="wo-group">
             <label>Machine</label>
