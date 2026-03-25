@@ -52,7 +52,7 @@ function WorkOrder() {
  
   const fetchWorkers = async () => {
     try {
-      const res = await api.get("/activeworkers/activeworker");
+      const res = await api.get("/getactiveworker/activeworker");
 
       console.log("Worker API:", res.data); // debug
 
