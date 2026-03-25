@@ -3,7 +3,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/LineOut.css";
 import api from "../api"; // ✅ BASE URL
-
+ 
 function WorkOrder() {
   const [productName, setProductName] = useState("");
   const [productUOM, setProductUOM] = useState("");
@@ -13,13 +13,13 @@ function WorkOrder() {
   const [productQty, setProductQty] = useState("");
   const [toolQty, setToolQty] = useState("");
   const [workOrders, setWorkOrders] = useState([]);
-
+ 
   const [productOptions, setProductOptions] = useState([]);
   const [toolOptions, setToolOptions] = useState([]);
   const [workerOptions, setWorkerOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
   const [uomOptions, setUOMOptions] = useState([]);
-
+ 
   /* ================= LOAD DATA ================= */
   useEffect(() => {
     fetchProducts();
@@ -29,7 +29,7 @@ function WorkOrder() {
     fetchUOMs();
     fetchWorkOrders();
   }, []);
-
+ 
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
@@ -39,7 +39,7 @@ function WorkOrder() {
       setProductOptions([]);
     }
   };
-
+ 
   const fetchTools = async () => {
     try {
       const res = await api.get("/activetools/activetool");
@@ -49,7 +49,7 @@ function WorkOrder() {
       setToolOptions([]);
     }
   };
-
+ 
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/activeworker");
@@ -59,7 +59,7 @@ function WorkOrder() {
       setWorkerOptions([]);
     }
   };
-
+ 
   const fetchMachines = async () => {
     try {
       const res = await api.get("/activemachines/activemachine");
@@ -69,13 +69,13 @@ function WorkOrder() {
       setMachineOptions([]);
     }
   };
-
+ 
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-
+ 
       console.log("UOM API:", res.data); // ✅ DEBUG
-
+ 
       if (res.data.status === 1) {
         const formatted = res.data.data.map(
           (u) => u.UOMName || u.uom_name || u
@@ -89,7 +89,7 @@ function WorkOrder() {
       setUOMOptions([]);
     }
   };
-
+ 
   const fetchWorkOrders = async () => {
     try {
       const res = await api.get("/workorder/list");
@@ -99,14 +99,14 @@ function WorkOrder() {
       setWorkOrders([]);
     }
   };
-
+ 
   /* ================= CREATE ================= */
   const handleCreateWorkOrder = async () => {
     if (!productName || !productUOM || !productQty || !workerName || !machineName) {
       alert("Please fill all required fields");
       return;
     }
-
+ 
     const payload = {
       ProductName: productName,
       ProductUOM: productUOM,
@@ -117,12 +117,12 @@ function WorkOrder() {
       ToolQty: Number(toolQty) || 0,
       Status: "Pending",
     };
-
+ 
     try {
       const res = await api.post("/workorder/create", payload);
-
+ 
       alert(res.data.message);
-
+ 
       if (res.data.status === 1) {
         fetchWorkOrders();
         clearForm();
@@ -132,12 +132,12 @@ function WorkOrder() {
       alert("Error creating work order");
     }
   };
-
+ 
   /* ================= COMPLETE ================= */
   const handleComplete = async (WorkOrderID) => {
     try {
       const res = await api.post("/workorder/complete", { WorkOrderID });
-
+ 
       alert(res.data.message);
       fetchWorkOrders();
     } catch (err) {
@@ -145,7 +145,7 @@ function WorkOrder() {
       alert("Error completing work order");
     }
   };
-
+ 
   /* ================= CLEAR ================= */
   const clearForm = () => {
     setProductName("");
@@ -156,17 +156,17 @@ function WorkOrder() {
     setProductQty("");
     setToolQty("");
   };
-
+ 
   return (
     <div className="wo-page">
       <Sidebar />
       <Topbar />
-
+ 
       <div className="wo-header">
         <h1>Work Order</h1>
         <p>Create work orders with UOM</p>
       </div>
-
+ 
       <div className="wo-form">
         {/* ===== PRODUCT ===== */}
         <div className="wo-row">
@@ -184,12 +184,12 @@ function WorkOrder() {
               ))}
             </select>
           </div>
-
+ 
           <div className="wo-group">
             <label>Product UOM</label>
             <select value={productUOM} onChange={e => setProductUOM(e.target.value)}>
               <option value="">Select UOM</option>
-
+ 
               {uomOptions.length > 0 ? (
                 uomOptions.map((u, i) => (
                   <option key={i} value={u}>{u}</option>
@@ -199,7 +199,7 @@ function WorkOrder() {
               )}
             </select>
           </div>
-
+ 
           <div className="wo-group">
             <label>Product Qty</label>
             <input
@@ -209,7 +209,7 @@ function WorkOrder() {
             />
           </div>
         </div>
-
+ 
         {/* ===== TOOL ===== */}
         <div className="wo-row">
           <div className="wo-group">
@@ -226,7 +226,7 @@ function WorkOrder() {
               ))}
             </select>
           </div>
-
+ 
           <div className="wo-group">
             <label>Tool Qty</label>
             <input
@@ -236,7 +236,7 @@ function WorkOrder() {
             />
           </div>
         </div>
-
+ 
         {/* ===== WORKER + MACHINE ===== */}
         <div className="wo-row">
           <div className="wo-group">
@@ -248,7 +248,7 @@ function WorkOrder() {
               ))}
             </select>
           </div>
-
+ 
           <div className="wo-group">
             <label>Machine</label>
             <select value={machineName} onChange={e => setMachineName(e.target.value)}>
@@ -259,16 +259,16 @@ function WorkOrder() {
             </select>
           </div>
         </div>
-
+ 
         <button className="wo-btn" onClick={handleCreateWorkOrder}>
           Create Work Order
         </button>
       </div>
-
+ 
       {/* ===== TABLE ===== */}
       <div className="wo-table-card">
         <h2>Work Orders</h2>
-
+ 
         <table className="wo-table">
           <thead>
             <tr>
@@ -284,7 +284,7 @@ function WorkOrder() {
               <th>Action</th>
             </tr>
           </thead>
-
+ 
           <tbody>
             {workOrders.length === 0 ? (
               <tr><td colSpan="10">No Work Orders Found</td></tr>
@@ -316,5 +316,6 @@ function WorkOrder() {
     </div>
   );
 }
-
+ 
 export default WorkOrder;
+ 
