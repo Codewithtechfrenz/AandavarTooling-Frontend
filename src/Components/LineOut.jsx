@@ -53,7 +53,17 @@ function WorkOrder() {
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/activeworker");
-      setWorkerOptions(res.data.status === 1 ? res.data.data : []);
+
+      console.log("Worker API:", res.data); // debug
+
+      if (res.data.status === 1) {
+        const formatted = res.data.data.map(
+          (w) => w.WorkerName || w.worker_name || w
+        );
+        setWorkerOptions(formatted);
+      } else {
+        setWorkerOptions([]);
+      }
     } catch (err) {
       console.error("Worker Error:", err);
       setWorkerOptions([]);
@@ -74,7 +84,7 @@ function WorkOrder() {
     try {
       const res = await api.get("/activeuoms/activeUOM");
  
-      console.log("UOM API:", res.data); // ✅ DEBUG
+      console.log("UOM API:", res.data);
  
       if (res.data.status === 1) {
         const formatted = res.data.data.map(
@@ -189,7 +199,6 @@ function WorkOrder() {
             <label>Product UOM</label>
             <select value={productUOM} onChange={e => setProductUOM(e.target.value)}>
               <option value="">Select UOM</option>
- 
               {uomOptions.length > 0 ? (
                 uomOptions.map((u, i) => (
                   <option key={i} value={u}>{u}</option>
@@ -318,4 +327,3 @@ function WorkOrder() {
 }
  
 export default WorkOrder;
- 

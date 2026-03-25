@@ -1,407 +1,263 @@
 import React, { useState, useEffect } from "react";
-import api from "../api";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/LineReturn.css";
+import api from "../api";
 
 function LineReturn() {
-  const [itemName, setItemName] = useState("");
-  const [itemCode, setItemCode] = useState("");
-  const [uom, setUom] = useState("");
-  const [category, setCategory] = useState("");
-  const [inQty, setInQty] = useState("");
-  const [damageQty, setDamageQty] = useState("");
-  const [worker, setWorker] = useState("");
-  const [machine, setMachine] = useState("");
 
-  const [lineReturnList, setLineReturnList] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [productName,setProductName] = useState("");
+  const [productUOM,setProductUOM] = useState("");
+  const [productQty,setProductQty] = useState("");
 
-  const [uomOptions, setUomOptions] = useState([]);
-  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [toolName,setToolName] = useState("");
+  const [toolQty,setToolQty] = useState("");
 
-  // ✅ NEW STATES
-  const [itemOptions, setItemOptions] = useState([]);
-  const [workerOptions, setWorkerOptions] = useState([]);
-  const [machineOptions, setMachineOptions] = useState([]);
+  const [workerName,setWorkerName] = useState("");
+  const [machineName,setMachineName] = useState("");
 
-  /* ================= LOAD DATA ================= */
-  useEffect(() => {
-    const stored = localStorage.getItem("lineReturnData");
-    if (stored) setLineReturnList(JSON.parse(stored));
-    else localStorage.setItem("lineReturnData", JSON.stringify([]));
+  const [lineReturns,setLineReturns] = useState([]);
 
-    fetchUOMOptions();
-    fetchCategoryOptions();
+  const [productOptions,setProductOptions] = useState([]);
+  const [toolOptions,setToolOptions] = useState([]);
+  const [workerOptions,setWorkerOptions] = useState([]);
+  const [machineOptions,setMachineOptions] = useState([]);
+  const [uomOptions,setUomOptions] = useState([]);
 
-    // ✅ NEW API CALLS
-    fetchItemOptions();
-    fetchWorkerOptions();
-    fetchMachineOptions();
-  }, []);
+  useEffect(()=>{
+    fetchProducts();
+    fetchTools();
+    fetchWorkers();
+    fetchMachines();
+    fetchUOM();
+    fetchLineReturns();
+  },[]);
 
-  /* ================= FETCH UOM ================= */
-  const fetchUOMOptions = async () => {
-    try {
-      const res = await api.get(
-        "/activeuoms/activeUOM"
-      );
-      if (res.status === 200 && res.data.data) {
-        setUomOptions(res.data.data);
-      }
-    } catch (err) {
-      console.error("UOM API Error:", err?.response || err);
-      alert("Failed to fetch UOM options");
+  const fetchProducts = async ()=>{
+    const res = await api.get("/activeitems/activeitem");
+    if(res.data.status===1) setProductOptions(res.data.data);
+  };
+
+  const fetchTools = async ()=>{
+    const res = await api.get("/activetools/activetool");
+    if(res.data.status===1) setToolOptions(res.data.data);
+  };
+
+  const fetchWorkers = async ()=>{
+    const res = await api.get("/activeworkers/activeworker");
+    if(res.data.status===1){
+      const data = res.data.data.map(w=>w.WorkerName || w.worker_name || w);
+      setWorkerOptions(data);
     }
   };
 
-  /* ================= FETCH CATEGORY ================= */
-  const fetchCategoryOptions = async () => {
-    try {
-      const res = await api.get(
-        "/activecategories/activeCategory"
-      );
-      if (res.status === 200 && res.data.data) {
-        setCategoryOptions(res.data.data);
-      }
-    } catch (err) {
-      console.error("CATEGORY API Error:", err?.response || err);
-      alert("Failed to fetch Category options");
+  const fetchMachines = async ()=>{
+    const res = await api.get("/activemachines/activemachine");
+    if(res.data.status===1) setMachineOptions(res.data.data);
+  };
+
+  const fetchUOM = async ()=>{
+    const res = await api.get("/activeuoms/activeUOM");
+    if(res.data.status===1){
+      const data = res.data.data.map(u=>u.UOMName || u);
+      setUomOptions(data);
     }
   };
 
-  /* ================= NEW APIs ================= */
-
-  const fetchItemOptions = async () => {
-    try {
-      const res = await api.get(
-        "/activeitems/activeitem"
-      );
-      if (res.status === 200 && res.data.data) {
-        setItemOptions(res.data.data);
-      }
-    } catch (err) {
-      console.error("ITEM API Error:", err?.response || err);
-      alert("Failed to fetch Item options");
-    }
+  const fetchLineReturns = async ()=>{
+    const res = await api.get("/linereturn/list");
+    if(res.data.status===1) setLineReturns(res.data.data);
   };
 
-  const fetchWorkerOptions = async () => {
-    try {
-      const res = await api.get(
-        "/activeworkers/activeworker"
-      );
-      if (res.status === 200 && res.data.data) {
-        setWorkerOptions(res.data.data);
-      }
-    } catch (err) {
-      console.error("WORKER API Error:", err?.response || err);
-      alert("Failed to fetch Worker options");
-    }
-  };
+  /* CREATE LINE RETURN */
 
-  const fetchMachineOptions = async () => {
-    try {
-      const res = await api.get(
-        "/activemachines/activemachine"
-      );
-      if (res.status === 200 && res.data.data) {
-        setMachineOptions(res.data.data);
-      }
-    } catch (err) {
-      console.error("MACHINE API Error:", err?.response || err);
-      alert("Failed to fetch Machine options");
-    }
-  };
+  const handleSubmit = async ()=>{
 
-  /* ================= SAVE STORAGE ================= */
-  const updateStorage = (data) => {
-    localStorage.setItem("lineReturnData", JSON.stringify(data));
-    setLineReturnList(data);
-  };
-
-  /* ================= SUBMIT ================= */
-  const handleSubmit = async () => {
-    if (!itemName || !inQty || !uom) {
-      alert("Enter Item Name, Quantity, and select UOM");
+    if(!productName || !productUOM || !productQty){
+      alert("Fill required fields");
       return;
     }
 
-    let data = [...lineReturnList];
+    const payload = {
+      ItemName:productName,
+      UOMName:productUOM,
+      Quantity:Number(productQty),
+      ToolName:toolName,
+      ToolQty:Number(toolQty),
+      WorkerName:workerName,
+      MachineName:machineName,
+      Rate:0,
+      Status:"Completed"
+    };
 
-    if (editIndex !== null) {
-      data[editIndex] = {
-        ...data[editIndex],
-        itemName,
-        itemCode,
-        uom,
-        category,
-        inQty,
-        damageQty,
-        worker,
-        machine,
-        updated: new Date().toLocaleString(),
-      };
-      setEditIndex(null);
-    } else {
-      data.push({
-        id: data.length + 1,
-        itemName,
-        itemCode,
-        uom,
-        category,
-        inQty,
-        damageQty,
-        worker,
-        machine,
-        created: new Date().toLocaleString(),
-        updated: "-",
-      });
-    }
+    const res = await api.post("/linereturn/create",payload);
 
-    updateStorage(data);
+    alert(res.data.message);
 
-    try {
-      const payload = {
-        ItemName: itemName,
-        UOMName: uom,
-        Quantity: Number(inQty),
-        Rate: 0,
-        Status: "Completed",
-        WorkerName: worker,
-        MachineName: machine,
-        Description: "Received from supplier",
-      };
+    fetchLineReturns();
 
-      await api.post(
-        "/linefeedin/linefeedins",
-        payload
-      );
-
-      alert("Line Return submitted and stock updated!");
-    } catch (err) {
-      console.error(err);
-      alert("API Error while updating stock!");
-    }
-
-    setItemName("");
-    setItemCode("");
-    setUom("");
-    setCategory("");
-    setInQty("");
-    setDamageQty("");
-    setWorker("");
-    setMachine("");
+    setProductName("");
+    setProductUOM("");
+    setProductQty("");
+    setToolName("");
+    setToolQty("");
+    setWorkerName("");
+    setMachineName("");
   };
 
-  /* ================= EDIT ================= */
-  const handleEdit = (index) => {
-    const item = lineReturnList[index];
-    setItemName(item.itemName);
-    setItemCode(item.itemCode);
-    setUom(item.uom);
-    setCategory(item.category);
-    setInQty(item.inQty);
-    setDamageQty(item.damageQty);
-    setWorker(item.worker);
-    setMachine(item.machine);
-    setEditIndex(index);
-  };
-
-  /* ================= DELETE ================= */
-  const handleDelete = (index) => {
-    const data = lineReturnList
-      .filter((_, i) => i !== index)
-      .map((item, i) => ({ ...item, id: i + 1 }));
-    updateStorage(data);
-  };
-
-  /* ================= SEARCH ================= */
-  const filteredData = lineReturnList.filter(
-    (item) =>
-      item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.itemCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.worker?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
+  return(
     <div className="lr-page">
-      <Sidebar />
-      <Topbar />
+
+      <Sidebar/>
+      <Topbar/>
 
       <div className="lr-header">
-        <div>
-          <h1>Line Return</h1>
-          <p>Record material returns to inventory</p>
-        </div>
+        <h1>Line Return</h1>
+        <p>Return items from line to stock</p>
       </div>
 
+      {/* FORM */}
+
       <div className="lr-form">
+
         <div className="lr-row">
-          {/* ✅ ITEM DROPDOWN */}
+
           <div className="lr-group">
-            <label>Item Name</label>
-            <select
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            >
-              <option value="">Select Item</option>
-              {itemOptions.map((option, i) => (
-                <option key={i} value={option}>
-                  {option}
-                </option>
+            <label>Product</label>
+            <select value={productName} onChange={(e)=>setProductName(e.target.value)}>
+              <option value="">Select Product</option>
+              {productOptions.map((p,i)=>(
+                <option key={i}>{p.ItemName || p}</option>
               ))}
             </select>
           </div>
 
           <div className="lr-group">
-            <label>Item Code</label>
-            <input
-              type="text"
-              value={itemCode}
-              onChange={(e) => setItemCode(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="lr-row">
-          <div className="lr-group">
-            <label>UOM</label>
-            <select value={uom} onChange={(e) => setUom(e.target.value)}>
+            <label>Product UOM</label>
+            <select value={productUOM} onChange={(e)=>setProductUOM(e.target.value)}>
               <option value="">Select UOM</option>
-              {uomOptions.map((option, i) => (
-                <option key={i} value={option}>
-                  {option}
-                </option>
+              {uomOptions.map((u,i)=>(
+                <option key={i}>{u}</option>
               ))}
             </select>
           </div>
 
           <div className="lr-group">
-            <label>Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Select Category</option>
-              {categoryOptions.map((option, i) => (
-                <option key={i} value={option}>
-                  {option}
-                </option>
+            <label>Product Qty</label>
+            <input
+            type="number"
+            value={productQty}
+            onChange={(e)=>setProductQty(e.target.value)}
+            />
+          </div>
+
+        </div>
+
+
+        <div className="lr-row">
+
+          <div className="lr-group">
+            <label>Tool</label>
+            <select value={toolName} onChange={(e)=>setToolName(e.target.value)}>
+              <option value="">Select Tool</option>
+              {toolOptions.map((t,i)=>(
+                <option key={i}>{t.ToolName || t}</option>
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="lr-row">
           <div className="lr-group">
-            <label>In Quantity</label>
+            <label>Tool Qty</label>
             <input
-              type="number"
-              value={inQty}
-              onChange={(e) => setInQty(e.target.value)}
+            type="number"
+            value={toolQty}
+            onChange={(e)=>setToolQty(e.target.value)}
             />
           </div>
 
-          <div className="lr-group">
-            <label>Damage Quantity</label>
-            <input
-              type="number"
-              value={damageQty}
-              onChange={(e) => setDamageQty(e.target.value)}
-            />
-          </div>
         </div>
 
+
         <div className="lr-row">
-          {/* ✅ WORKER DROPDOWN */}
+
           <div className="lr-group">
             <label>Worker</label>
-            <select
-              value={worker}
-              onChange={(e) => setWorker(e.target.value)}
-            >
+            <select value={workerName} onChange={(e)=>setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
-              {workerOptions.map((option, i) => (
-                <option key={i} value={option}>
-                  {option}
-                </option>
+              {workerOptions.map((w,i)=>(
+                <option key={i}>{w}</option>
               ))}
             </select>
           </div>
 
-          {/* ✅ MACHINE DROPDOWN */}
           <div className="lr-group">
             <label>Machine</label>
-            <select
-              value={machine}
-              onChange={(e) => setMachine(e.target.value)}
-            >
+            <select value={machineName} onChange={(e)=>setMachineName(e.target.value)}>
               <option value="">Select Machine</option>
-              {machineOptions.map((option, i) => (
-                <option key={i} value={option}>
-                  {option}
-                </option>
+              {machineOptions.map((m,i)=>(
+                <option key={i}>{m.MachineName || m}</option>
               ))}
             </select>
           </div>
+
         </div>
 
         <button className="lr-btn" onClick={handleSubmit}>
-          {editIndex !== null ? "Update" : "Submit"}
+          Submit Line Return
         </button>
+
       </div>
 
-      <div className="lr-search">
-        <input
-          type="text"
-          placeholder="Search line return..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      {/* TABLE */}
 
       <div className="lr-table-card">
+
+        <h2>Line Return History</h2>
+
         <table className="lr-table">
+
           <thead>
             <tr>
               <th>ID</th>
-              <th>Item Name</th>
-              <th>Item Code</th>
+              <th>Product</th>
               <th>UOM</th>
-              <th>Category</th>
-              <th>In Quantity</th>
-              <th>Damage Quantity</th>
+              <th>Qty</th>
+              <th>Tool</th>
+              <th>Tool Qty</th>
               <th>Worker</th>
               <th>Machine</th>
               <th>Created</th>
             </tr>
           </thead>
+
           <tbody>
-            {filteredData.length === 0 ? (
+
+            {lineReturns.length===0 ? (
               <tr>
-                <td colSpan="10">No Line Return Found</td>
+                <td colSpan="9">No Data</td>
               </tr>
-            ) : (
-              filteredData.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
-                  <td>{item.itemName}</td>
-                  <td>{item.itemCode}</td>
-                  <td>{item.uom}</td>
-                  <td>{item.category}</td>
-                  <td>{item.inQty}</td>
-                  <td>{item.damageQty}</td>
-                  <td>{item.worker}</td>
-                  <td>{item.machine}</td>
-                  <td>{item.created}</td>
+            ):(
+              lineReturns.map((row,i)=>(
+                <tr key={i}>
+                  <td>{row.InID}</td>
+                  <td>{row.ItemName}</td>
+                  <td>{row.UOMName}</td>
+                  <td>{row.Quantity}</td>
+                  <td>{row.ToolName || "-"}</td>
+                  <td>{row.ToolQty || "-"}</td>
+                  <td>{row.WorkerName}</td>
+                  <td>{row.MachineName}</td>
+                  <td>{new Date(row.CreatedDate).toLocaleString()}</td>
                 </tr>
               ))
             )}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 }
