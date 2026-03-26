@@ -52,18 +52,8 @@ function WorkOrder() {
  
   const fetchWorkers = async () => {
     try {
-      const res = await api.get("/getactiveworker/activeworker");
-
-      console.log("Worker API:", res.data); // debug
-
-      if (res.data.status === 1) {
-        const formatted = res.data.data.map(
-          (w) => w.WorkerName || w.worker_name || w
-        );
-        setWorkerOptions(formatted);
-      } else {
-        setWorkerOptions([]);
-      }
+      const res = await api.get("/activeworkers/activeworker");
+      setWorkerOptions(res.data.status === 1 ? res.data.data : []);
     } catch (err) {
       console.error("Worker Error:", err);
       setWorkerOptions([]);
@@ -84,7 +74,7 @@ function WorkOrder() {
     try {
       const res = await api.get("/activeuoms/activeUOM");
  
-      console.log("UOM API:", res.data);
+      console.log("UOM API:", res.data); // ✅ DEBUG
  
       if (res.data.status === 1) {
         const formatted = res.data.data.map(
@@ -199,6 +189,7 @@ function WorkOrder() {
             <label>Product UOM</label>
             <select value={productUOM} onChange={e => setProductUOM(e.target.value)}>
               <option value="">Select UOM</option>
+ 
               {uomOptions.length > 0 ? (
                 uomOptions.map((u, i) => (
                   <option key={i} value={u}>{u}</option>
@@ -256,7 +247,7 @@ function WorkOrder() {
                 <option key={i} value={w}>{w}</option>
               ))}
             </select>
-          </div><br></br>
+          </div>
  
           <div className="wo-group">
             <label>Machine</label>
