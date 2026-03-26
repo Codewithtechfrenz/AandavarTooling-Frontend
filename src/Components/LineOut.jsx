@@ -33,7 +33,6 @@ function WorkOrder() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      console.log("Products:", res.data);
       setProductOptions(res.data?.data || []);
     } catch (err) {
       console.error("Product Error:", err);
@@ -44,7 +43,6 @@ function WorkOrder() {
   const fetchTools = async () => {
     try {
       const res = await api.get("/activetools/activetool");
-      console.log("Tools:", res.data);
       setToolOptions(res.data?.data || []);
     } catch (err) {
       console.error("Tool Error:", err);
@@ -54,9 +52,14 @@ function WorkOrder() {
 
   const fetchWorkers = async () => {
     try {
-      const res = await api.get("/getactiveworker/activeworker");
-      console.log("Workers:", res.data);
-      setWorkerOptions(res.data?.data || []);
+      const res = await api.get("/getactiveworker/dropworkers");
+      console.log("Workers API:", res.data);
+
+      if (res.data.status === 1) {
+        setWorkerOptions(res.data.data); // ["GURU"]
+      } else {
+        setWorkerOptions([]);
+      }
     } catch (err) {
       console.error("Worker Error:", err);
       setWorkerOptions([]);
@@ -66,7 +69,6 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/activemachines/activemachine");
-      console.log("Machines:", res.data);
       setMachineOptions(res.data?.data || []);
     } catch (err) {
       console.error("Machine Error:", err);
@@ -77,9 +79,8 @@ function WorkOrder() {
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-      console.log("UOM API:", res.data);
 
-      if (res.data?.data) {
+      if (res.data.status === 1) {
         const formatted = res.data.data.map(
           (u) => u.UOMName || u.uom_name || u
         );
@@ -96,7 +97,6 @@ function WorkOrder() {
   const fetchWorkOrders = async () => {
     try {
       const res = await api.get("/workorder/list");
-      console.log("Work Orders:", res.data);
       setWorkOrders(res.data?.data || []);
     } catch (err) {
       console.error("WorkOrder Error:", err);
@@ -159,15 +159,6 @@ function WorkOrder() {
     setToolQty("");
   };
 
-  /* ================= HELPER ================= */
-  const getName = (obj, keys) => {
-    if (typeof obj === "string") return obj;
-    for (let key of keys) {
-      if (obj[key]) return obj[key];
-    }
-    return "";
-  };
-
   return (
     <div className="wo-page">
       <Sidebar />
@@ -185,14 +176,14 @@ function WorkOrder() {
             <label>Product</label>
             <select value={productName} onChange={e => setProductName(e.target.value)}>
               <option value="">Select Product</option>
-              {productOptions.map((p, i) => {
-                const name = getName(p, ["ItemName", "product_name"]);
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })}
+              {productOptions.map((p, i) => (
+                <option
+                  key={i}
+                  value={typeof p === "string" ? p : p.ItemName}
+                >
+                  {typeof p === "string" ? p : p.ItemName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -222,14 +213,14 @@ function WorkOrder() {
             <label>Tool</label>
             <select value={toolName} onChange={e => setToolName(e.target.value)}>
               <option value="">Select Tool</option>
-              {toolOptions.map((t, i) => {
-                const name = getName(t, ["ToolName", "tool_name"]);
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })}
+              {toolOptions.map((t, i) => (
+                <option
+                  key={i}
+                  value={typeof t === "string" ? t : t.ToolName}
+                >
+                  {typeof t === "string" ? t : t.ToolName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -247,16 +238,21 @@ function WorkOrder() {
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
-            <select value={workerName} onChange={e => setWorkerName(e.target.value)}>
+            <select
+              value={workerName}
+              onChange={(e) => setWorkerName(e.target.value)}
+            >
               <option value="">Select Worker</option>
-              {workerOptions.map((w, i) => {
-                const name = getName(w, ["WorkerName", "worker_name", "Name"]);
-                return (
-                  <option key={i} value={name}>
-                    {name}
+
+              {workerOptions.length > 0 ? (
+                workerOptions.map((worker, index) => (
+                  <option key={index} value={worker}>
+                    {worker}
                   </option>
-                );
-              })}
+                ))
+              ) : (
+                <option disabled>No Workers Found</option>
+              )}
             </select>
           </div>
 
@@ -264,14 +260,11 @@ function WorkOrder() {
             <label>Machine</label>
             <select value={machineName} onChange={e => setMachineName(e.target.value)}>
               <option value="">Select Machine</option>
-              {machineOptions.map((m, i) => {
-                const name = getName(m, ["MachineName", "machine_name"]);
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })}
+              {machineOptions.map((m, i) => (
+                <option key={i} value={m}>
+                  {m}
+                </option>
+              ))}
             </select>
           </div>
         </div>
