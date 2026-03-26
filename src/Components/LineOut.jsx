@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/LineOut.css";
-import api from "../api"; // ✅ BASE URL
+import api from "../api";
 
 function WorkOrder() {
   const [productName, setProductName] = useState("");
@@ -33,7 +33,8 @@ function WorkOrder() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      setProductOptions(res.data.status === 1 ? res.data.data : []);
+      console.log("Products:", res.data);
+      setProductOptions(res.data?.data || []);
     } catch (err) {
       console.error("Product Error:", err);
       setProductOptions([]);
@@ -43,7 +44,8 @@ function WorkOrder() {
   const fetchTools = async () => {
     try {
       const res = await api.get("/activetools/activetool");
-      setToolOptions(res.data.status === 1 ? res.data.data : []);
+      console.log("Tools:", res.data);
+      setToolOptions(res.data?.data || []);
     } catch (err) {
       console.error("Tool Error:", err);
       setToolOptions([]);
@@ -53,7 +55,8 @@ function WorkOrder() {
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/getactiveworker/activeworker");
-      setWorkerOptions(res.data.status === 1 ? res.data.data : []);
+      console.log("Workers:", res.data);
+      setWorkerOptions(res.data?.data || []);
     } catch (err) {
       console.error("Worker Error:", err);
       setWorkerOptions([]);
@@ -63,7 +66,8 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/activemachines/activemachine");
-      setMachineOptions(res.data.status === 1 ? res.data.data : []);
+      console.log("Machines:", res.data);
+      setMachineOptions(res.data?.data || []);
     } catch (err) {
       console.error("Machine Error:", err);
       setMachineOptions([]);
@@ -73,10 +77,9 @@ function WorkOrder() {
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
+      console.log("UOM API:", res.data);
 
-      console.log("UOM API:", res.data); // ✅ DEBUG
-
-      if (res.data.status === 1) {
+      if (res.data?.data) {
         const formatted = res.data.data.map(
           (u) => u.UOMName || u.uom_name || u
         );
@@ -93,7 +96,8 @@ function WorkOrder() {
   const fetchWorkOrders = async () => {
     try {
       const res = await api.get("/workorder/list");
-      setWorkOrders(res.data.status === 1 ? res.data.data : []);
+      console.log("Work Orders:", res.data);
+      setWorkOrders(res.data?.data || []);
     } catch (err) {
       console.error("WorkOrder Error:", err);
       setWorkOrders([]);
@@ -120,7 +124,6 @@ function WorkOrder() {
 
     try {
       const res = await api.post("/workorder/create", payload);
-
       alert(res.data.message);
 
       if (res.data.status === 1) {
@@ -137,7 +140,6 @@ function WorkOrder() {
   const handleComplete = async (WorkOrderID) => {
     try {
       const res = await api.post("/workorder/complete", { WorkOrderID });
-
       alert(res.data.message);
       fetchWorkOrders();
     } catch (err) {
@@ -157,6 +159,15 @@ function WorkOrder() {
     setToolQty("");
   };
 
+  /* ================= HELPER ================= */
+  const getName = (obj, keys) => {
+    if (typeof obj === "string") return obj;
+    for (let key of keys) {
+      if (obj[key]) return obj[key];
+    }
+    return "";
+  };
+
   return (
     <div className="wo-page">
       <Sidebar />
@@ -168,20 +179,20 @@ function WorkOrder() {
       </div>
 
       <div className="wo-form">
-        {/* ===== PRODUCT ===== */}
+        {/* PRODUCT */}
         <div className="wo-row">
           <div className="wo-group">
             <label>Product</label>
             <select value={productName} onChange={e => setProductName(e.target.value)}>
               <option value="">Select Product</option>
-              {productOptions.map((p, i) => (
-                <option
-                  key={i}
-                  value={typeof p === "string" ? p : p.ItemName || p.product_name}
-                >
-                  {typeof p === "string" ? p : p.ItemName || p.product_name}
-                </option>
-              ))}
+              {productOptions.map((p, i) => {
+                const name = getName(p, ["ItemName", "product_name"]);
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -189,14 +200,9 @@ function WorkOrder() {
             <label>Product UOM</label>
             <select value={productUOM} onChange={e => setProductUOM(e.target.value)}>
               <option value="">Select UOM</option>
-
-              {uomOptions.length > 0 ? (
-                uomOptions.map((u, i) => (
-                  <option key={i} value={u}>{u}</option>
-                ))
-              ) : (
-                <option disabled>No UOM Found</option>
-              )}
+              {uomOptions.map((u, i) => (
+                <option key={i} value={u}>{u}</option>
+              ))}
             </select>
           </div>
 
@@ -210,20 +216,20 @@ function WorkOrder() {
           </div>
         </div>
 
-        {/* ===== TOOL ===== */}
+        {/* TOOL */}
         <div className="wo-row">
           <div className="wo-group">
             <label>Tool</label>
             <select value={toolName} onChange={e => setToolName(e.target.value)}>
               <option value="">Select Tool</option>
-              {toolOptions.map((t, i) => (
-                <option
-                  key={i}
-                  value={typeof t === "string" ? t : t.ToolName || t.tool_name}
-                >
-                  {typeof t === "string" ? t : t.ToolName || t.tool_name}
-                </option>
-              ))}
+              {toolOptions.map((t, i) => {
+                const name = getName(t, ["ToolName", "tool_name"]);
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -237,15 +243,20 @@ function WorkOrder() {
           </div>
         </div>
 
-        {/* ===== WORKER + MACHINE ===== */}
+        {/* WORKER + MACHINE */}
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
             <select value={workerName} onChange={e => setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
-              {workerOptions.map((w, i) => (
-                <option key={i} value={w}>{w}</option>
-              ))}
+              {workerOptions.map((w, i) => {
+                const name = getName(w, ["WorkerName", "worker_name", "Name"]);
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -253,9 +264,14 @@ function WorkOrder() {
             <label>Machine</label>
             <select value={machineName} onChange={e => setMachineName(e.target.value)}>
               <option value="">Select Machine</option>
-              {machineOptions.map((m, i) => (
-                <option key={i} value={m}>{m}</option>
-              ))}
+              {machineOptions.map((m, i) => {
+                const name = getName(m, ["MachineName", "machine_name"]);
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -265,7 +281,7 @@ function WorkOrder() {
         </button>
       </div>
 
-      {/* ===== TABLE ===== */}
+      {/* TABLE */}
       <div className="wo-table-card">
         <h2>Work Orders</h2>
 
@@ -287,7 +303,9 @@ function WorkOrder() {
 
           <tbody>
             {workOrders.length === 0 ? (
-              <tr><td colSpan="10">No Work Orders Found</td></tr>
+              <tr>
+                <td colSpan="10">No Work Orders Found</td>
+              </tr>
             ) : (
               workOrders.map((order, i) => (
                 <tr key={i}>
