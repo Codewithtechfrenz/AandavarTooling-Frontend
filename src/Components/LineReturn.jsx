@@ -44,7 +44,7 @@ function LineReturn() {
   };
 
   const fetchWorkers = async ()=>{
-    const res = await api.get("/getactiveworker/activeworker");
+    const res = await api.get("/getactiveworker/dropworkers");
     if(res.data.status===1){
       const data = res.data.data.map(w=>w.WorkerName || w.worker_name || w);
       setWorkerOptions(data);
@@ -185,7 +185,7 @@ function LineReturn() {
             <select value={workerName} onChange={(e)=>setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
               {workerOptions.map((w,i)=>(
-                <option key={i} value={w}>{w}</option>
+                <option key={i}>{w.WorkerName || w}</option>
               ))}
             </select>
           </div>
