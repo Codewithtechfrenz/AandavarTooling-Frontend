@@ -154,22 +154,22 @@ function CustomerMaster() {
       <div className="customer-form">
         <div className="customer-form-row">
           <div className="customer-form-group">
-            <label>Customer Name</label>
+            <label>Vendor Name</label>
             <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
           </div>
           <div className="customer-form-group">
-            <label>Customer Address</label>
+            <label>Vendor Address</label>
             <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
           </div>
         </div>
 
         <div className="customer-form-row">
           <div className="customer-form-group">
-            <label>Customer Phone No</label>
+            <label>Vendor Phone No</label>
             <input type="text" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           </div>
           <div className="customer-form-group">
-            <label>Customer GSTIN</label>
+            <label><Vendor></Vendor> GSTIN</label>
             <input type="text" value={customerGSTIN} onChange={(e) => setCustomerGSTIN(e.target.value)} />
           </div>
         </div>
@@ -182,7 +182,7 @@ function CustomerMaster() {
       {/* SEARCH */}
       <div className="customer-search">
         <i className="fa fa-search"></i>
-        <input type="text" placeholder="Search Customer..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <input type="text" placeholder="Search Vendor..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
 
       {/* TABLE */}
@@ -191,10 +191,10 @@ function CustomerMaster() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Customer Name</th>
-              <th>Customer Address</th>
-              <th>Customer Phone No</th>
-              <th>Customer GSTIN</th>
+              <th>Vendor Name</th>
+              <th>Vendor Address</th>
+              <th>Vendor Phone No</th>
+              <th>Vendor GSTIN</th>
               <th>Action</th>
               <th>Created</th>
               <th>Updated</th>
@@ -204,7 +204,7 @@ function CustomerMaster() {
           <tbody>
             {filteredCustomers.length === 0 ? (
               <tr>
-                <td colSpan="8" className="customer-empty">No Customers Found</td>
+                <td colSpan="8" className="customer-empty">No Vendors Found</td>
               </tr>
             ) : (
               filteredCustomers.map((item) => (
