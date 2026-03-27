@@ -169,7 +169,7 @@ function CustomerMaster() {
             <input type="text" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           </div>
           <div className="customer-form-group">
-            <label><Vendor></Vendor> GSTIN</label>
+            <label> vendor  GSTIN</label>
             <input type="text" value={customerGSTIN} onChange={(e) => setCustomerGSTIN(e.target.value)} />
           </div>
         </div>
