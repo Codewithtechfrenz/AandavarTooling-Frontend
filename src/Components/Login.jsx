@@ -50,7 +50,7 @@ const LoginPage = () => {
           <div className="login-card">
             <div className="login-logo">
               <img
-                src="/Aandavarlogo1.png"
+                src="./AandavarLogo1.png"
                 alt="Shri Aandavar"
                 className="login-brand-logo"
               />
@@ -82,7 +82,7 @@ const LoginPage = () => {
               </div>
 
               <button type="submit" className="btn btn-primary login-btn">
-                Sign In
+                Login
               </button>
 
               <div className="forgot-row">
