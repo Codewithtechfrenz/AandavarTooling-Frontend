@@ -248,15 +248,10 @@ const fetchWorkers = async () => {
             <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
 
-              {workerOptions.length > 0 ? (
-                workerOptions.map((worker, index) => (
-                  <option key={index} value={worker}>
-                    {worker}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No Workers Found</option>
-              )}
+            
+               { workerOptions.map((worker, index) => (
+                  <option key={index} value={worker}>{worker}</option>
+                ))}
             </select>
           </div>
 
