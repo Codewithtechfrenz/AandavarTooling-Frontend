@@ -24,7 +24,7 @@ function WorkOrder() {
   useEffect(() => {
     fetchProducts();
     fetchTools();
-    fetchWorkers();
+    fetchWorkers(); // ✅ important
     fetchMachines();
     fetchUOMs();
     fetchWorkOrders();
@@ -50,26 +50,31 @@ function WorkOrder() {
     }
   };
 
-const fetchWorkers = async () => {
-  try {
-    const res = await api.get("/getactiveworker/dropworkers");
-    console.log("Workers API:", res.data);
+  /* ================= WORKER FIX START ================= */
+  const fetchWorkers = async () => {
+    try {
+      const res = await api.get("/getactiveworker/dropworkers");
+      console.log("Workers API Response:", res.data);
 
-    if (res.data.status === 1 && Array.isArray(res.data.data)) {
-      // ✅ Normalize data (VERY IMPORTANT FIX)
-      const formatted = res.data.data.map((w) =>
-        typeof w === "string" ? w : w.WorkerName
-      );
+      if (res.data.status === 1 && Array.isArray(res.data.data)) {
+        // ✅ HANDLE BOTH STRING + OBJECT FORMAT
+        const formattedWorkers = res.data.data.map((w) => {
+          if (typeof w === "string") return w;
+          if (w?.WorkerName) return w.WorkerName;
+          if (w?.workerName) return w.workerName;
+          return "";
+        }).filter(Boolean); // remove empty values
 
-      setWorkerOptions(formatted);
-    } else {
+        setWorkerOptions(formattedWorkers);
+      } else {
+        setWorkerOptions([]);
+      }
+    } catch (err) {
+      console.error("Worker Error:", err);
       setWorkerOptions([]);
     }
-  } catch (err) {
-    console.error("Worker Error:", err);
-    setWorkerOptions([]);
-  }
-};
+  };
+  /* ================= WORKER FIX END ================= */
 
   const fetchMachines = async () => {
     try {
@@ -182,10 +187,7 @@ const fetchWorkers = async () => {
             <select value={productName} onChange={e => setProductName(e.target.value)}>
               <option value="">Select Product</option>
               {productOptions.map((p, i) => (
-                <option
-                  key={i}
-                  value={typeof p === "string" ? p : p.ItemName}
-                >
+                <option key={i} value={typeof p === "string" ? p : p.ItemName}>
                   {typeof p === "string" ? p : p.ItemName}
                 </option>
               ))}
@@ -219,10 +221,7 @@ const fetchWorkers = async () => {
             <select value={toolName} onChange={e => setToolName(e.target.value)}>
               <option value="">Select Tool</option>
               {toolOptions.map((t, i) => (
-                <option
-                  key={i}
-                  value={typeof t === "string" ? t : t.ToolName}
-                >
+                <option key={i} value={typeof t === "string" ? t : t.ToolName}>
                   {typeof t === "string" ? t : t.ToolName}
                 </option>
               ))}
@@ -243,22 +242,22 @@ const fetchWorkers = async () => {
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
-           <select
+            <select
               value={workerName}
               onChange={(e) => setWorkerName(e.target.value)}
-        >
-          <option value="">Select Worker</option>
+            >
+              <option value="">Select Worker</option>
 
-           {workerOptions && workerOptions.length > 0 ? (
-           workerOptions.map((worker, index) => (
-          <option key={index} value={worker}>
-          {worker}
-          </option>
-         ))
-       ) : (
-         <option disabled>No Workers Found</option>
-         )}
-          </select>
+              {workerOptions.length > 0 ? (
+                workerOptions.map((worker, index) => (
+                  <option key={index} value={worker}>
+                    {worker}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Workers Found</option>
+              )}
+            </select>
           </div>
 
           <div className="wo-group">
@@ -266,9 +265,7 @@ const fetchWorkers = async () => {
             <select value={machineName} onChange={e => setMachineName(e.target.value)}>
               <option value="">Select Machine</option>
               {machineOptions.map((m, i) => (
-                <option key={i} value={m}>
-                  {m}
-                </option>
+                <option key={i} value={m}>{m}</option>
               ))}
             </select>
           </div>
