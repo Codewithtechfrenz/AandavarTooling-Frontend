@@ -1,7 +1,7 @@
 /* ============================= */
 /* A4 PAGE SIZE */
 /* ============================= */
-
+ 
 .invoice-container {
   width: 210mm;
   min-height: 297mm;
@@ -13,14 +13,14 @@
   box-sizing: border-box;
   overflow: hidden;
 }
-
+ 
 /* InvoiceTemplate.css */
-
+ 
 /* Watermark styling */
 .invoice-container {
   position: relative;
 }
-
+ 
 .invoice-watermark {
   position: absolute;
   top: 50%;
@@ -32,11 +32,11 @@
   height: auto;
   pointer-events: none;   /* so it doesn’t block clicks */
 }
-
+ 
 /* ============================= */
 /* TOP BAR */
 /* ============================= */
-
+ 
 .top-bar {
   background: #e11d2e;
   color: #fff;
@@ -46,17 +46,17 @@
   padding: 5px 15px;
   font-size: 10px;
 }
-
+ 
 /* ============================= */
 /* COMPANY HEADER */
 /* ============================= */
-
+ 
 /* Logo + Text wrapper */
 .logo-text-wrapper {
   display: flex;
   align-items: center;
 }
-
+ 
 /* Logo styling */
 .company-logo {
   width: 85px;
@@ -64,25 +64,25 @@
   margin-right: 10px;
   object-fit: contain; /* keeps logo proportions */
 }
-
+ 
 /* Optional: adjust company info spacing */
 .company-info h2 {
   margin: 0;
   font-size: 17px;
 }
-
+ 
 .company-info p {
   margin: 2px 0;
   font-size: 10px;
 }
-
+ 
 .company-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 6px;
 }
-
+ 
 .company-left {
   background: #aeb2b8;
   color: black;
@@ -90,63 +90,63 @@
   border-bottom-right-radius: 100px;
   width: 55%;
 }
-
+ 
 .company-left h2 {
   margin: 0;
   font-size: 17px;
 }
-
+ 
 .company-left p {
   margin: 2px 0;
   font-size: 10px;
 }
-
+ 
 .invoice-title {
   text-align: right;
   width: 40%;
 }
-
+ 
 .invoice-title h1 {
   font-size: 20px;
   margin: 0;
 }
-
+ 
 /* ============================= */
 /* BILL DETAILS */
 /* ============================= */
-
+ 
 .bill-details {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
 }
-
+ 
 .bill-left {
   width: 60%;
 }
-
+ 
 .bill-left p {
   margin: 2px 0;
 }
-
+ 
 .bill-right {
   text-align: right;
 }
-
+ 
 .bill-right p {
   margin: 2px 0;
 }
-
+ 
 /* ============================= */
 /* PRODUCT TABLE */
 /* ============================= */
-
+ 
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
 }
-
+ 
 .invoice-table th {
   background: #e11d2e;
   color: #fff;
@@ -154,54 +154,54 @@
   border: 1px solid #ccc;
   font-size: 10px;
 }
-
+ 
 .invoice-table td {
   border: 1px solid #ccc;
   padding: 5px;
   text-align: center;
   height: 18px;
 }
-
+ 
 /* ============================= */
 /* PAYMENT SECTION */
 /* ============================= */
-
+ 
 .payment-wrapper {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
 }
-
+ 
 .payto {
   width: 55%;
   font-size: 10px;
 }
-
+ 
 .payto p {
   margin: 2px 0;
 }
-
+ 
 .total-box {
   width: 40%;
 }
-
+ 
 .total-box table {
   width: 100%;
   border-collapse: collapse;
 }
-
+ 
 .total-box td {
   border: 1px solid #ccc;
   padding: 4px;
   font-size: 10px;
 }
-
+ 
 .total-row {
   background: #e11d2e;
   color: #fff;
   font-weight: bold;
 }
-
+ 
 .bottom-section {
   display: flex;
   justify-content: space-between;
@@ -209,7 +209,7 @@
   margin-top: -40px;
   width: 100%;
 }
-
+ 
 .left-side {
   width: 60%;
   text-align: left;
@@ -217,41 +217,41 @@
   flex-direction: column;
   justify-content: space-between;
 }
-
+ 
 /* Amount in words */
 .amount-words {
   margin-bottom: 10px;
 }
-
+ 
 .amount-words p {
   margin: 3px 0;
 }
-
+ 
 /* Terms */
 .terms {
   margin-bottom: 10px;
 }
-
+ 
 .terms p {
   margin: 3px 0;
 }
-
+ 
 /* Signature block */
 .signature {
   margin-top: -10px;
 }
-
+ 
 .signature p {
   margin: 5px 0;
 }
-
+ 
 .signature .sign-box {
   width: 220px;
   height: 30px;
   border-bottom: 2px solid black;
   margin: 15px 0;
 }
-
+ 
 /* RIGHT SIDE */
 .right-side {
   width: 40%;
@@ -259,29 +259,29 @@
   justify-content: flex-end;
   align-items: flex-end;
 }
-
+ 
 /* Receiver sign */
 .receiver-sign {
   width: 250px;
   text-align: center;
   margin-top: 140px; /* pushes it down to align with signature */
 }
-
+ 
 .receiver-sign .line {
   border-bottom: 2px solid black;
   margin-bottom: 6px;
 }
-
+ 
 .receiver-sign p {
   font-size: 12px;
   color: #333;
   margin: 0;
 }
-
+ 
 /* ============================= */
 /* PREVENT PAGE BREAK */
 /* ============================= */
-
+ 
 .invoice-container,
 .invoice-container * {
   page-break-inside: avoid !important;
