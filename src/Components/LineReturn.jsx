@@ -44,7 +44,7 @@ function LineReturn() {
   };
 
   const fetchWorkers = async ()=>{
-    const res = await api.get("/getactiveworker/dropworkers");
+    const res = await api.get("/activeworkers/getWorkers");
     if(res.data.status===1){
       const data = res.data.data.map(w=>w.WorkerName || w.worker_name || w);
       setWorkerOptions(data);
