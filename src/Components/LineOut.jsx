@@ -24,7 +24,7 @@ function WorkOrder() {
   useEffect(() => {
     fetchProducts();
     fetchTools();
-    fetchWorkers(); // ✅ important
+    fetchWorkers();
     fetchMachines();
     fetchUOMs();
     fetchWorkOrders();
@@ -50,31 +50,16 @@ function WorkOrder() {
     }
   };
 
-  /* ================= WORKER FIX START ================= */
+  /* ================= WORKER FIX ================= */
   const fetchWorkers = async () => {
-    try {
-      const res = await api.get("/getactiveworker/dropworkers");
-      console.log("Workers API Response:", res.data);
-
-      if (res.data.status === 1 && Array.isArray(res.data.data)) {
-        // ✅ HANDLE BOTH STRING + OBJECT FORMAT
-        const formattedWorkers = res.data.data.map((w) => {
-          if (typeof w === "string") return w;
-          if (w?.WorkerName) return w.WorkerName;
-          if (w?.workerName) return w.workerName;
-          return "";
-        }).filter(Boolean); // remove empty values
-
-        setWorkerOptions(formattedWorkers);
-      } else {
-        setWorkerOptions([]);
-      }
-    } catch (err) {
-      console.error("Worker Error:", err);
-      setWorkerOptions([]);
-    }
-  };
-  /* ================= WORKER FIX END ================= */
+  try {
+    const res = await api.get("/activeworkers/activeworker");
+    setWorkerOptions(res.data?.data || []);
+  } catch (err) {
+    console.error("Worker Error:", err);
+    setWorkerOptions([]);
+  }
+};
 
   const fetchMachines = async () => {
     try {
@@ -242,10 +227,7 @@ function WorkOrder() {
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
-            <select
-              value={workerName}
-              onChange={(e) => setWorkerName(e.target.value)}
-            >
+            <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
               <option value="">Select Worker</option>
 
               {workerOptions.length > 0 ? (
