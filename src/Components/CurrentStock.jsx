@@ -3,16 +3,16 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/CurrentStock.css";
 import api from "../api"; // Axios instance with baseURL
-
+ 
 function CurrentStock() {
   const [stockList, setStockList] = useState([]);
   const [loading, setLoading] = useState(true);
-
+ 
   /* ========== FETCH CURRENT STOCK FROM API ========== */
   const fetchStock = async () => {
     try {
       const res = await api.get("/currentstock/getCurrentStock");
-
+ 
       if (res.data.status === 1 && Array.isArray(res.data.data)) {
         const formatted = res.data.data.map((item) => ({
           id: item.StockID, // unique ID
@@ -25,7 +25,7 @@ function CurrentStock() {
           created: "-", // not provided
           updated: item.LastUpdated ? new Date(item.LastUpdated).toLocaleString() : "-",
         }));
-
+ 
         setStockList(formatted);
       } else {
         setStockList([]);
@@ -37,22 +37,22 @@ function CurrentStock() {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchStock();
   }, []);
-
+ 
   /* DELETE (UI only, optional) */
   const handleDelete = (index) => {
     const data = stockList.filter((_, i) => i !== index);
     setStockList(data);
   };
-
+ 
   return (
     <div className="cs-page">
       <Sidebar />
       <Topbar />
-
+ 
       {/* HEADER */}
       <div className="cs-header">
         <div>
@@ -60,7 +60,7 @@ function CurrentStock() {
           <p>Real-time inventory levels</p>
         </div>
       </div>
-
+ 
       {/* TABLE */}
       <div className="cs-table-card">
         {loading ? (
@@ -80,7 +80,7 @@ function CurrentStock() {
                 <th>Updated</th>
               </tr>
             </thead>
-
+ 
             <tbody>
               {stockList.length === 0 ? (
                 <tr>
@@ -117,5 +117,6 @@ function CurrentStock() {
     </div>
   );
 }
-
+ 
 export default CurrentStock;
+ 
