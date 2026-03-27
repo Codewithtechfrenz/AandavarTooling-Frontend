@@ -1,43 +1,70 @@
-import React from "react";
-import html2pdf from "html2pdf.js";
+import React, { useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import InvoiceTemplate from "./InvoiceTemplate";
-import "../CSS/InvoicePDF.css";
+import "../CSS/InvoiceTemplate.css";
 
 function InvoicePDF() {
+  const invoiceRef = useRef();
 
-const downloadPDF = () => {
+  const downloadPDF = async () => {
+    const element = invoiceRef.current;
 
-const element = document.getElementById("invoice");
+    const canvas = await html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
 
-const opt = {
-margin:0,
-filename:"Empty_Invoice.pdf",
-image:{type:"jpeg",quality:1},
-html2canvas:{scale:2,scrollY:0},
-jsPDF:{unit:"mm",format:[210,297],orientation:"portrait"},
-pagebreak:{mode:["avoid-all"]}
-};
+    const imgData = canvas.toDataURL("image/png");
 
-html2pdf().set(opt).from(element).save();
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
-};
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-return(
+    let scale = 1;
+    if (imgHeight > pdfHeight) {
+      scale = pdfHeight / imgHeight;
+    }
 
-<div>
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth * scale, imgHeight * scale);
+    pdf.save("Invoice.pdf");
+  };
 
-<button onClick={downloadPDF} className="download-btn">
-Download Invoice PDF
-</button>
+  return (
+    <div>
+      {/* Your button design is exactly preserved */}
+      <button
+        onClick={downloadPDF}
+        style={{
+          background: "#4f46e5",
+          color: "#fff",
+          border: "none",
+          padding: "12px 25px",
+          borderRadius: "6px",
+          cursor: "pointer",
+        }}
+      >
+        Download PDF
+      </button>
 
-<div className="pdf-hidden">
-<InvoiceTemplate/>
-</div>
-
-</div>
-
-);
-
+      {/* Invoice off-screen for capture */}
+      <div
+        ref={invoiceRef}
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          width: "210mm",
+          minHeight: "297mm",
+        }}
+      >
+        <InvoiceTemplate />
+      </div>
+    </div>
+  );
 }
 
 export default InvoicePDF;

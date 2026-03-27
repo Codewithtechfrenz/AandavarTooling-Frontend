@@ -7,6 +7,13 @@ return (
 
 <div id="invoice" className="invoice-container">
 
+  {/* Watermark */}
+  <img
+    src="/Aandavarlogo.png"
+    alt="Watermark Logo"
+    className="invoice-watermark"
+  />
+
 {/* TOP BAR */}
 
 <div className="top-bar">
@@ -21,12 +28,21 @@ return (
 <div className="company-header">
 
 <div className="company-left">
+  <div className="logo-text-wrapper">
+    {/* Logo Image */}
+    <img
+      src="/AandavarLogo1.png"
+      alt="Logo"
+      className="company-logo"
+    />
 
-<h2>SHREE AANDAVAR TOOLING</h2>
-
-<p>GSTIN: 33BYPPP7144R1Z0</p>
-<p>State: 33-Tamil Nadu</p>
-
+    {/* Company Info */}
+    <div className="company-info">
+      <h2>SHREE AANDAVAR TOOLING</h2>
+      <p>GSTIN: 33BYPPP7144R1Z0</p>
+      <p>State: 33-Tamil Nadu</p>
+    </div>
+  </div>
 </div>
 
 <div className="invoice-title">
@@ -44,18 +60,18 @@ return (
 
 <h4>Bill To</h4>
 
-<p><b>PKM AUTOCOM (P) LTD</b></p>
-<p>malayalatham Patti kodikulam post madurai</p>
-<p>Contact No: 9344033006</p>
-<p>GSTIN Number: 33AAPPC5453D2ZM</p>
-<p>State: 33-Tamil Nadu</p>
+<p><b>Company Name: ______</b></p>
+<p>Address:         ______</p>
+<p>Contact No:      ______</p>
+<p>GSTIN Number:    ______</p>
+<p>State:           ______</p>
 
 </div>
 
 <div className="bill-right">
 
-<p>Invoice No: ______</p>
-<p>Date: ______</p>
+<p>Invoice No:      ______</p>
+<p>Date:            ______</p>
 <p>Place of Supply: ______</p>
 
 </div>
@@ -116,9 +132,9 @@ return (
 
 <h4>Pay To:</h4>
 
-<p>Bank Name: Bank Of Baroda</p>
+<p>Bank Name:       __________</p>
 <p>Bank Account No: __________</p>
-<p>Bank IFSC Code: __________</p>
+<p>Bank IFSC Code:  __________</p>
 <p>Account Holder's Name: SHREE AANDAVAR TOOLING</p>
 
 </div>
@@ -170,73 +186,45 @@ return (
 </div>
 
 
-{/* AMOUNT WORDS */}
+<div className="bottom-section">
 
-<div className="amount-words">
+  {/* LEFT SIDE */}
+ <div className="left-side">
 
-<p><b>Invoice Amount In Words</b></p>
-<p>____________________________________________</p>
+  <div className="amount-words">
+    <p><b>Invoice Amount In Words</b></p>
+    <p>________________________________</p>
+  </div>
 
-</div>
-
-
-{/* TERMS */}
-
-<div className="terms">
-
-<p><b>Terms And Conditions</b></p>
-<p>Thank you for doing business with us.</p>
-
-</div>
+  <div className="terms">
+    <p><b>Terms And Conditions</b></p>
+    <p>Thank you for doing business with us.</p>
+  </div>
 
 
-{/* SIGNATURE */}
+      <div className="signature">
+      <p>For: SHREE AANDAVAR TOOLING</p>
 
-<div className="signature">
+      <div className="sign-box"></div>
 
-<p>For: SHREE AANDAVAR TOOLING</p>
+      <p>Authorized Signatory</p>
+      <p>M. PRABAHARAN</p>
+    </div>
 
-<div className="sign-box"></div>
-
-<p>Authorized Signatory</p>
+  {/* RECEIVER SIGN */}
 
 </div>
 
+  {/* RIGHT SIDE */}
+  <div className="right-side">
 
-{/* ACKNOWLEDGEMENT */}
+  {/* RECEIVER SIGN */}
+  <div className="receiver-sign">
+    <div className="line"></div>
+    <p>Receiver's Seal & Sign</p>
+  </div>
 
-<div className="ack-section">
-
-<div className="ack-header">
-ACKNOWLEDGEMENT
-</div>
-
-<div className="ack-content">
-
-<div>
-
-<p><b>Invoice To:</b></p>
-<p>________________________</p>
-
-</div>
-
-<div>
-
-<p><b>Invoice Details:</b></p>
-<p>Invoice No: ______</p>
-<p>Invoice Date: ______</p>
-<p>Invoice Amount: ______</p>
-
-</div>
-
-<div>
-
-<p>Receiver's Seal & Sign</p>
-<div className="sign-box"></div>
-
-</div>
-
-</div>
+  </div>
 
 </div>
 

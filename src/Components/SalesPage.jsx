@@ -273,7 +273,7 @@ onChange={()=>setSelectedBank("bank1")}
 </div>
 
 
-<div className="bank-card">
+{/* <div className="bank-card">
 
 <label>
 
@@ -293,7 +293,7 @@ onChange={()=>setSelectedBank("bank2")}
 
 </label>
 
-</div>
+</div> */}
 
 </div>
 
