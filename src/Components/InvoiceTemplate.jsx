@@ -19,9 +19,7 @@ return (
 <div className="top-bar">
 <div>📞 9944130610</div>
 <div>✉ prabusangari690@gmail.com</div>
-<div>📍 5/520 D, kabeer Nagar MasthanPatti</div>
-<div>(vikram Hospital Opp Road)</div>
-<div>AndarKottam Post Madurai - 20</div>
+<div>📍 5/520 D, kabeer Nagar MasthanPatti Madurai - 20</div>
 </div>
  
  
