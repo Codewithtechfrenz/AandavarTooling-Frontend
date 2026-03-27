@@ -43,7 +43,7 @@ useEffect(()=>{
 useEffect(()=>{
   const fetchCustomers = async () => {
     try {
-      const res = await api.get("/acticustomers/getdropCustomers");
+      const res = await api.get("/custdrop/getCustomers");
       setCustomerOptions(res.data?.data || []);
     } catch(err){
       console.error("Customer Error:", err);

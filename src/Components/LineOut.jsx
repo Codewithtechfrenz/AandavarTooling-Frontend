@@ -53,7 +53,7 @@ function WorkOrder() {
   /* ================= WORKER FIX ================= */
   const fetchWorkers = async () => {
   try {
-    const res = await api.get("/activeworkers/activeworker");
+    const res = await api.get("/activeworkers/getWorkers");
     setWorkerOptions(res.data?.data || []);
   } catch (err) {
     console.error("Worker Error:", err);
