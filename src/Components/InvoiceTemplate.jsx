@@ -60,11 +60,11 @@ return (
  
 <h4>Bill To</h4>
  
-<p><b>Company Name: ______</b></p>
+<p><b>Company Name: SHREE AANDAVAR TOOLING</b></p>
 <p>Address:         ______</p>
 <p>Contact No:      ______</p>
-<p>GSTIN Number:    ______</p>
-<p>State:           ______</p>
+<p>GSTIN Number:    33BYPPP7144R1Z0</p>
+<p>State:           33-Tamil Nadu</p>
  
 </div>
  
@@ -132,9 +132,9 @@ return (
  
 <h4>Pay To:</h4>
  
-<p>Bank Name:       __________</p>
-<p>Bank Account No: __________</p>
-<p>Bank IFSC Code:  __________</p>
+<p>Bank Name:       BANK OF BARODA</p>
+<p>Bank Account No: 75220200001446</p>
+<p>Bank IFSC Code:  BARBOVJMAAN</p>
 <p>Account Holder's Name: SHREE AANDAVAR TOOLING</p>
  
 </div>

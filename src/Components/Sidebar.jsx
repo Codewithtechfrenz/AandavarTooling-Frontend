@@ -12,10 +12,10 @@ const Sidebar = ({ collapsed }) => {
 
       {/* ===== LOGO ===== */}
       <div className="sidebar-top">
-        <div className="logo-box">SA</div>
+        <div className="logo-box">SAT</div>
         {!collapsed && (
           <div className="logo-text">
-            <h2>Aandavar Tooling</h2>
+            <h2>SHREE AANDAVAR TOOLING</h2>
             <p>ERP System</p>
           </div>
         )}

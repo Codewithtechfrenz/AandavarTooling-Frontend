@@ -41,7 +41,7 @@ const LoginPage = () => {
         <div className="login-left">
           <img
             src="/Murugan.jpg"
-            alt="Shri Aandavar"
+            alt="Shree Aandavar Tooling"
             className="login-left-img"
           />
         </div>
@@ -51,7 +51,7 @@ const LoginPage = () => {
             <div className="login-logo">
               <img
                 src="/AandavarLogo1.png"
-                alt="Shri Aandavar"
+                alt="Shree Aandavar Tooling"
                 className="login-brand-logo"
               />
             </div>

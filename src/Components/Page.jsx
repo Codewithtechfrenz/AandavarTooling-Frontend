@@ -49,7 +49,7 @@ const Page = () => {
         <h1>Dashboard</h1>
         <p>
           Real-time inventory overview —{" "}
-          <span className="company">Shri Aandavar Tooling</span>
+          <span className="company">SHREE AANDAVAR TOOLING</span>
         </p>
       </div>
 
