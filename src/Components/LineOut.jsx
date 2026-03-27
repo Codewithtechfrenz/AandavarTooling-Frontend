@@ -51,15 +51,33 @@ function WorkOrder() {
   };
 
   /* ================= WORKER FIX ================= */
-  const fetchWorkers = async () => {
-  try {
-    const res = await api.get("/activeworkers/getWorkers");
-    setWorkerOptions(res.data?.data || []);
-  } catch (err) {
-    console.error("Worker Error:", err);
-    setWorkerOptions([]);
-  }
-};
+//   const fetchWorkers = async () => {
+//   try {
+//     const res = await api.get("/activeworkers/getWorkers");
+//     setWorkerOptions(res.data?.data || []);
+//   } catch (err) {
+//     console.error("Worker Error:", err);
+//     setWorkerOptions([]);
+//   }
+// };
+
+const fetchWorkers = async () => {
+    try {
+      const res = await api.get("/activeworkers/getWorkers");
+      setWorkerOptions(res.data?.data || []);
+    } catch (err) {
+      console.error("Worker Error:", err);
+      setWorkerOptions([]);
+    }
+  };
+
+
+
+
+
+
+
+
 
   const fetchMachines = async () => {
     try {
