@@ -50,21 +50,26 @@ function WorkOrder() {
     }
   };
 
-  const fetchWorkers = async () => {
-    try {
-      const res = await api.get("/getactiveworker/dropworkers");
-      console.log("Workers API:", res.data);
+const fetchWorkers = async () => {
+  try {
+    const res = await api.get("/getactiveworker/dropworkers");
+    console.log("Workers API:", res.data);
 
-      if (res.data.status === 1) {
-        setWorkerOptions(res.data.data); // ["GURU"]
-      } else {
-        setWorkerOptions([]);
-      }
-    } catch (err) {
-      console.error("Worker Error:", err);
+    if (res.data.status === 1 && Array.isArray(res.data.data)) {
+      // ✅ Normalize data (VERY IMPORTANT FIX)
+      const formatted = res.data.data.map((w) =>
+        typeof w === "string" ? w : w.WorkerName
+      );
+
+      setWorkerOptions(formatted);
+    } else {
       setWorkerOptions([]);
     }
-  };
+  } catch (err) {
+    console.error("Worker Error:", err);
+    setWorkerOptions([]);
+  }
+};
 
   const fetchMachines = async () => {
     try {
@@ -238,22 +243,22 @@ function WorkOrder() {
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
-            <select
+           <select
               value={workerName}
               onChange={(e) => setWorkerName(e.target.value)}
-            >
-              <option value="">Select Worker</option>
+        >
+          <option value="">Select Worker</option>
 
-              {workerOptions.length > 0 ? (
-                workerOptions.map((worker, index) => (
-                  <option key={index} value={worker}>
-                    {worker}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No Workers Found</option>
-              )}
-            </select>
+           {workerOptions && workerOptions.length > 0 ? (
+           workerOptions.map((worker, index) => (
+          <option key={index} value={worker}>
+          {worker}
+          </option>
+         ))
+       ) : (
+         <option disabled>No Workers Found</option>
+         )}
+          </select>
           </div>
 
           <div className="wo-group">

@@ -28,7 +28,9 @@ function WorkerMaster() {
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/workers/getWorkers");
-      const data = res.data.data || [];
+
+      // ✅ FIX: Ensure array
+      const data = Array.isArray(res.data.data) ? res.data.data : [];
 
       const formattedData = data.map((item) => ({
         id: item.SI,
@@ -44,6 +46,7 @@ function WorkerMaster() {
       localStorage.setItem("workerData", JSON.stringify(formattedData));
     } catch (err) {
       console.error("Fetch Workers API Error:", err);
+
       const stored = localStorage.getItem("workerData");
       setWorkerList(stored ? JSON.parse(stored) : []);
     }
@@ -76,7 +79,8 @@ function WorkerMaster() {
           WorkerJoiningDate: joiningDate,
         });
 
-        if (res.data.status === 0) throw new Error(res.data.message || "Update Failed");
+        if (res.data.status === 0)
+          throw new Error(res.data.message || "Update Failed");
 
         alert("Worker updated successfully");
       } else {
@@ -88,12 +92,15 @@ function WorkerMaster() {
           WorkerJoiningDate: joiningDate,
         });
 
-        if (res.data.status === 0) throw new Error(res.data.message || "Create Failed");
+        if (res.data.status === 0)
+          throw new Error(res.data.message || "Create Failed");
 
         alert("Worker created successfully");
       }
 
-      fetchWorkers();
+      // ✅ FIX: wait for fresh data (important for live server)
+      await fetchWorkers();
+
       setEditIndex(null);
       setWorkerCode("");
       setWorkerName("");
@@ -126,10 +133,14 @@ function WorkerMaster() {
 
     try {
       const res = await api.post("/workers/deleteWorker", { SI: item.id });
-      if (res.data.status === 0) throw new Error(res.data.message || "Delete Failed");
+
+      if (res.data.status === 0)
+        throw new Error(res.data.message || "Delete Failed");
 
       alert("Worker deleted successfully");
-      fetchWorkers();
+
+      // ✅ FIX: refresh after delete
+      await fetchWorkers();
     } catch (error) {
       console.error("Delete Worker Error:", error);
       alert("Failed to delete worker");
@@ -158,22 +169,35 @@ function WorkerMaster() {
         <div className="form-row">
           <div className="form-group">
             <label>Worker Code</label>
-            <input value={workerCode} onChange={(e) => setWorkerCode(e.target.value)} />
+            <input
+              value={workerCode}
+              onChange={(e) => setWorkerCode(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label>Worker Name</label>
-            <input value={workerName} onChange={(e) => setWorkerName(e.target.value)} />
+            <input
+              value={workerName}
+              onChange={(e) => setWorkerName(e.target.value)}
+            />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
             <label>Worker Department</label>
-            <input value={workerDepartment} onChange={(e) => setWorkerDepartment(e.target.value)} />
+            <input
+              value={workerDepartment}
+              onChange={(e) => setWorkerDepartment(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label>Joining Date</label>
-            <input type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} />
+            <input
+              type="date"
+              value={joiningDate}
+              onChange={(e) => setJoiningDate(e.target.value)}
+            />
           </div>
         </div>
 
@@ -221,8 +245,12 @@ function WorkerMaster() {
                   <td>{item.workerDepartment}</td>
                   <td>{item.joiningDate}</td>
                   <td>
-                    <button onClick={() => handleEdit(index)}><i className="fa fa-edit"></i></button>
-                    <button onClick={() => handleDelete(index)}><i className="fa fa-trash"></i></button>
+                    <button onClick={() => handleEdit(index)}>
+                      <i className="fa fa-edit"></i>
+                    </button>
+                    <button onClick={() => handleDelete(index)}>
+                      <i className="fa fa-trash"></i>
+                    </button>
                   </td>
                   <td>{item.created}</td>
                   <td>{item.updated}</td>
