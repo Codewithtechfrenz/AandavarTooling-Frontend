@@ -50,18 +50,8 @@ function WorkOrder() {
     }
   };
 
-  /* ================= WORKER FIX ================= */
-//   const fetchWorkers = async () => {
-//   try {
-//     const res = await api.get("/activeworkers/getWorkers");
-//     setWorkerOptions(res.data?.data || []);
-//   } catch (err) {
-//     console.error("Worker Error:", err);
-//     setWorkerOptions([]);
-//   }
-// };
-
-const fetchWorkers = async () => {
+  /* ================= WORKER ================= */
+  const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
       setWorkerOptions(res.data?.data || []);
@@ -71,14 +61,7 @@ const fetchWorkers = async () => {
     }
   };
 
-
-
-
-
-
-
-
-
+  /* ================= MACHINE ================= */
   const fetchMachines = async () => {
     try {
       const res = await api.get("/activemachines/activemachine");
@@ -183,6 +166,7 @@ const fetchWorkers = async () => {
       </div>
 
       <div className="wo-form">
+
         {/* PRODUCT */}
         <div className="wo-row">
           <div className="wo-group">
@@ -241,26 +225,42 @@ const fetchWorkers = async () => {
           </div>
         </div>
 
-        {/* WORKER + MACHINE */}
+        {/* ✅ FIXED WORKER + MACHINE */}
         <div className="wo-row">
           <div className="wo-group">
             <label>Worker</label>
-            <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
+            <select
+              value={workerName}
+              onChange={(e) => setWorkerName(e.target.value)}
+            >
               <option value="">Select Worker</option>
 
-            
-               { workerOptions.map((worker, index) => (
-                  <option key={index} value={worker}>{worker}</option>
-                ))}
+              {workerOptions.map((worker, index) => (
+                <option
+                  key={index}
+                  value={worker?.WorkerName || worker}
+                >
+                  {worker?.WorkerName || worker}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="wo-group">
             <label>Machine</label>
-            <select value={machineName} onChange={e => setMachineName(e.target.value)}>
+            <select
+              value={machineName}
+              onChange={e => setMachineName(e.target.value)}
+            >
               <option value="">Select Machine</option>
+
               {machineOptions.map((m, i) => (
-                <option key={i} value={m}>{m}</option>
+                <option
+                  key={i}
+                  value={m?.MachineName || m}
+                >
+                  {m?.MachineName || m}
+                </option>
               ))}
             </select>
           </div>
@@ -271,7 +271,7 @@ const fetchWorkers = async () => {
         </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE (UNCHANGED) */}
       <div className="wo-table-card">
         <h2>Work Orders</h2>
 
