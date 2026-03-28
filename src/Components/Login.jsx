@@ -50,7 +50,7 @@ const LoginPage = () => {
           <div className="login-card">
             <div className="login-logo">
               <img
-                src="/AandavarLogo1.png"
+                src="/AandavarLogo1.png" 
                 alt="Shree Aandavar Tooling"
                 className="login-brand-logo"
               />
