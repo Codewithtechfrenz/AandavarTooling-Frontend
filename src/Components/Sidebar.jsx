@@ -156,7 +156,7 @@ const Sidebar = ({ collapsed }) => {
           onClick={() => navigate("/dashboard/InwardEntry")}
         >
           <i className="fa fa-chart-bar"></i>
-          {!collapsed && <span>product Inward Entry</span>}
+          {!collapsed && <span>Product Inward Entry</span>}
         </div>
 
 

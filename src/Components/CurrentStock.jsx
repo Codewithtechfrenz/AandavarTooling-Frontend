@@ -1,31 +1,34 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/CurrentStock.css";
-import api from "../api"; // Axios instance with baseURL
- 
+import api from "../api";
+
 function CurrentStock() {
   const [stockList, setStockList] = useState([]);
   const [loading, setLoading] = useState(true);
- 
-  /* ========== FETCH CURRENT STOCK FROM API ========== */
+
+  const location = useLocation(); // Detect navigation with state
+
   const fetchStock = async () => {
+    setLoading(true);
     try {
       const res = await api.get("/currentstock/getCurrentStock");
- 
+
       if (res.data.status === 1 && Array.isArray(res.data.data)) {
         const formatted = res.data.data.map((item) => ({
-          id: item.StockID, // unique ID
-          itemID: item.ItemID, // for API reference
+          id: item.StockID,
+          itemID: item.ItemID,
           itemName: item.ItemName,
           itemCode: item.ItemCode,
           category: item.CategoryName || "-",
           uom: item.UOMName || "-",
           quantity: item.AvailableQty,
-          created: "-", // not provided
+          created: "-", 
           updated: item.LastUpdated ? new Date(item.LastUpdated).toLocaleString() : "-",
         }));
- 
+
         setStockList(formatted);
       } else {
         setStockList([]);
@@ -37,31 +40,35 @@ function CurrentStock() {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     fetchStock();
   }, []);
- 
-  /* DELETE (UI only, optional) */
+
+  // If navigated with refresh state, refetch
+  useEffect(() => {
+    if (location.state?.refresh) {
+      fetchStock();
+    }
+  }, [location.state]);
+
   const handleDelete = (index) => {
     const data = stockList.filter((_, i) => i !== index);
     setStockList(data);
   };
- 
+
   return (
     <div className="cs-page">
       <Sidebar />
       <Topbar />
- 
-      {/* HEADER */}
+
       <div className="cs-header">
         <div>
           <h1>Current Stock</h1>
           <p>Real-time inventory levels</p>
         </div>
       </div>
- 
-      {/* TABLE */}
+
       <div className="cs-table-card">
         {loading ? (
           <p>Loading stock data...</p>
@@ -80,13 +87,11 @@ function CurrentStock() {
                 <th>Updated</th>
               </tr>
             </thead>
- 
+
             <tbody>
               {stockList.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="cs-empty">
-                    No Stock Available
-                  </td>
+                  <td colSpan="9" className="cs-empty">No Stock Available</td>
                 </tr>
               ) : (
                 stockList.map((item, index) => (
@@ -98,10 +103,7 @@ function CurrentStock() {
                     <td>{item.uom}</td>
                     <td>{item.quantity}</td>
                     <td>
-                      <button
-                        className="cs-delete-btn"
-                        onClick={() => handleDelete(index)}
-                      >
+                      <button className="cs-delete-btn" onClick={() => handleDelete(index)}>
                         <i className="fa fa-trash"></i>
                       </button>
                     </td>
@@ -117,6 +119,5 @@ function CurrentStock() {
     </div>
   );
 }
- 
+
 export default CurrentStock;
- 
