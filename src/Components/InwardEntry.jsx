@@ -24,64 +24,66 @@ function InwardEntry() {
     fetchItems();
   }, []);
 
+  /* ================= FETCH UOM ================= */
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
 
       if (res.data.status === 1) {
-        setUomOptions(res.data.data);
-      } else {
-        setUomOptions([]);
+        setUomOptions(res.data.data || []);
       }
     } catch (err) {
       console.error("UOM Error:", err);
-      setUomOptions([]);
     }
   };
 
+  /* ================= FETCH ITEMS ================= */
   const fetchItems = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
 
       if (res.data.status === 1) {
-        setItemOptions(res.data.data);
-      } else {
-        setItemOptions([]);
+        const formattedItems = res.data.data.map((item) => ({
+          ItemID: item.ItemID || item.item_id,
+          ItemName: item.ItemName || item.item_name,
+          ItemCode: item.ItemCode || item.item_code
+        }));
+
+        setItemOptions(formattedItems);
       }
     } catch (err) {
       console.error("Item Error:", err);
-      setItemOptions([]);
     }
   };
 
-  /* ================= HANDLE ITEM NAME SELECT ================= */
+  /* ================= SELECT ITEM NAME ================= */
   const handleItemNameChange = (e) => {
-    const selectedId = e.target.value;
+    const id = e.target.value;
 
     const selectedItem = itemOptions.find(
-      (item) =>
-        item.ItemID == selectedId ||
-        item.item_id == selectedId
+      (item) => String(item.ItemID) === String(id)
     );
 
-    setItemID(selectedItem?.ItemID || selectedItem?.item_id || "");
-    setItemName(selectedItem?.ItemName || selectedItem?.item_name || "");
-    setItemCode(selectedItem?.ItemCode || selectedItem?.item_code || "");
+    if (selectedItem) {
+      setItemID(selectedItem.ItemID);
+      setItemName(selectedItem.ItemName);
+      setItemCode(selectedItem.ItemCode);
+    }
   };
 
-  /* ================= HANDLE ITEM CODE SELECT ================= */
+  /* ================= SELECT ITEM CODE ================= */
   const handleItemCodeChange = (e) => {
-    const selectedCode = e.target.value;
+    const code = e.target.value;
 
     const selectedItem = itemOptions.find(
-      (item) =>
-        item.ItemCode === selectedCode ||
-        item.item_code === selectedCode
+      (item) => item.ItemCode === code
     );
 
-    setItemID(selectedItem?.ItemID || selectedItem?.item_id || "");
-    setItemName(selectedItem?.ItemName || selectedItem?.item_name || "");
-    setItemCode(selectedItem?.ItemCode || selectedItem?.item_code || "");
+    if (selectedItem) {
+      setItemID(selectedItem.ItemID);
+      setItemName(selectedItem.ItemName);
+      setItemCode(selectedItem.ItemCode);
+    }
   };
 
   /* ================= SUBMIT ================= */
@@ -104,9 +106,9 @@ function InwardEntry() {
 
       const res = await api.post("/inward/iteminward", payload);
 
-      alert(res.data.message || "Inward submitted & stock updated!");
+      alert(res.data.message || "Inward submitted successfully");
 
-      // Clear form
+      // Reset form
       setItemID("");
       setItemName("");
       setItemCode("");
@@ -114,12 +116,12 @@ function InwardEntry() {
       setItemQty("");
       setRate("");
 
-      // Redirect to stock page
+      // Redirect
       navigate("/current-stock", { state: { refresh: true } });
 
     } catch (err) {
       console.error(err);
-      alert("Error updating stock");
+      alert("Error saving inward");
     }
   };
 
@@ -133,16 +135,18 @@ function InwardEntry() {
       </div>
 
       <div className="ie-form">
-        {/* ===== ROW 1 ===== */}
+
+        {/* ROW 1 */}
         <div className="ie-row">
+
           {/* Item Name */}
           <div className="ie-group">
             <label>Item Name</label>
             <select value={itemID} onChange={handleItemNameChange}>
               <option value="">Select Item</option>
-              {itemOptions.map((item, i) => (
-                <option key={i} value={item.ItemID || item.item_id}>
-                  {item.ItemName || item.item_name}
+              {itemOptions.map((item) => (
+                <option key={item.ItemID} value={item.ItemID}>
+                  {item.ItemName}
                 </option>
               ))}
             </select>
@@ -153,31 +157,29 @@ function InwardEntry() {
             <label>Item Code</label>
             <select value={itemCode} onChange={handleItemCodeChange}>
               <option value="">Select Code</option>
-              {itemOptions.map((item, i) => (
-                <option key={i} value={item.ItemCode || item.item_code}>
-                  {item.ItemCode || item.item_code}
+              {itemOptions.map((item) => (
+                <option key={item.ItemCode} value={item.ItemCode}>
+                  {item.ItemCode}
                 </option>
               ))}
             </select>
           </div>
+
         </div>
 
-        {/* ===== ROW 2 ===== */}
+        {/* ROW 2 */}
         <div className="ie-row">
+
           {/* UOM */}
           <div className="ie-group">
             <label>UOM</label>
             <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
-              {uomOptions.length > 0 ? (
-                uomOptions.map((u, i) => (
-                  <option key={i} value={u.UOMName || u}>
-                    {u.UOMName || u}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No UOM Found</option>
-              )}
+              {uomOptions.map((u, i) => (
+                <option key={i} value={u.UOMName || u}>
+                  {u.UOMName || u}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -190,9 +192,10 @@ function InwardEntry() {
               onChange={(e) => setItemQty(e.target.value)}
             />
           </div>
+
         </div>
 
-        {/* ===== ROW 3 ===== */}
+        {/* ROW 3 */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
@@ -207,6 +210,7 @@ function InwardEntry() {
         <button className="ie-btn" onClick={handleSubmit}>
           Submit
         </button>
+
       </div>
     </div>
   );
