@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../CSS/InwardEntry.css";
-import api from "../api"; // ✅ USE BASE URL
+import api from "../api";
 
 function InwardEntry() {
   const navigate = useNavigate();
 
+  const [itemID, setItemID] = useState("");
   const [itemName, setItemName] = useState("");
   const [uom, setUom] = useState("");
   const [itemQty, setItemQty] = useState("");
@@ -25,8 +26,6 @@ function InwardEntry() {
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-      console.log("UOM API:", res.data);
-
       if (res.data.status === 1) setUomOptions(res.data.data);
       else setUomOptions([]);
     } catch (err) {
@@ -38,8 +37,6 @@ function InwardEntry() {
   const fetchItems = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      console.log("ITEM API:", res.data);
-
       if (res.data.status === 1) setItemOptions(res.data.data);
       else setItemOptions([]);
     } catch (err) {
@@ -50,13 +47,14 @@ function InwardEntry() {
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
-    if (!itemName || !itemQty || !rate || !uom) {
+    if (!itemID || !itemQty || !rate || !uom) {
       alert("Enter all fields");
       return;
     }
 
     try {
       const payload = {
+        ItemID: itemID,
         ItemName: itemName,
         UOMName: uom,
         Quantity: Number(itemQty),
@@ -68,19 +66,20 @@ function InwardEntry() {
 
       alert(res.data.message || "Inward submitted & stock updated!");
 
-      // Navigate to Current Stock with state to force refresh
+      // Clear form
+      setItemID("");
+      setItemName("");
+      setUom("");
+      setItemQty("");
+      setRate("");
+
+      // Navigate to stock page and refresh
       navigate("/current-stock", { state: { refresh: true } });
 
     } catch (err) {
       console.error(err);
       alert("Error updating stock");
     }
-
-    // Reset form
-    setItemName("");
-    setUom("");
-    setItemQty("");
-    setRate("");
   };
 
   return (
@@ -97,11 +96,23 @@ function InwardEntry() {
         <div className="ie-row">
           <div className="ie-group">
             <label>Item Name</label>
-            <select value={itemName} onChange={(e) => setItemName(e.target.value)}>
+            <select
+              value={itemID}
+              onChange={(e) => {
+                const selectedId = e.target.value;
+                setItemID(selectedId);
+
+                const selectedItem = itemOptions.find(
+                  (item) => item.ItemID == selectedId
+                );
+
+                setItemName(selectedItem?.ItemName || "");
+              }}
+            >
               <option value="">Select Item</option>
               {itemOptions.map((item, i) => (
-                <option key={i} value={typeof item === "string" ? item : item.ItemName || item.item_name}>
-                  {typeof item === "string" ? item : item.ItemName || item.item_name}
+                <option key={i} value={item.ItemID}>
+                  {item.ItemName}
                 </option>
               ))}
             </select>
@@ -113,8 +124,8 @@ function InwardEntry() {
               <option value="">Select UOM</option>
               {uomOptions.length > 0 ? (
                 uomOptions.map((u, i) => (
-                  <option key={i} value={u.UOMName || u.uom_name || u}>
-                    {u.UOMName || u.uom_name || u}
+                  <option key={i} value={u.UOMName || u}>
+                    {u.UOMName || u}
                   </option>
                 ))
               ) : (
@@ -128,12 +139,20 @@ function InwardEntry() {
         <div className="ie-row">
           <div className="ie-group">
             <label>Quantity</label>
-            <input type="number" value={itemQty} onChange={(e) => setItemQty(e.target.value)} />
+            <input
+              type="number"
+              value={itemQty}
+              onChange={(e) => setItemQty(e.target.value)}
+            />
           </div>
 
           <div className="ie-group">
             <label>Rate</label>
-            <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} />
+            <input
+              type="number"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+            />
           </div>
         </div>
 

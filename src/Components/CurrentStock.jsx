@@ -9,32 +9,37 @@ function CurrentStock() {
   const [stockList, setStockList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const location = useLocation(); // Detect navigation with state
+  const location = useLocation();
 
   const fetchStock = async () => {
     setLoading(true);
+
     try {
       const res = await api.get("/currentstock/getCurrentStock");
 
-      if (res.data.status === 1 && Array.isArray(res.data.data)) {
+      if (res.data.status === 1) {
         const formatted = res.data.data.map((item) => ({
           id: item.StockID,
           itemID: item.ItemID,
           itemName: item.ItemName,
-          itemCode: item.ItemCode,
+          itemCode: item.ItemCode || "-",
           category: item.CategoryName || "-",
           uom: item.UOMName || "-",
           quantity: item.AvailableQty,
-          created: "-", 
-          updated: item.LastUpdated ? new Date(item.LastUpdated).toLocaleString() : "-",
+          created: item.CreatedDate
+            ? new Date(item.CreatedDate).toLocaleString()
+            : "-",
+          updated: item.LastUpdated
+            ? new Date(item.LastUpdated).toLocaleString()
+            : "-",
         }));
 
         setStockList(formatted);
       } else {
         setStockList([]);
       }
-    } catch (err) {
-      console.error("Error fetching current stock:", err);
+    } catch (error) {
+      console.error("Stock fetch error:", error);
       setStockList([]);
     } finally {
       setLoading(false);
@@ -45,17 +50,11 @@ function CurrentStock() {
     fetchStock();
   }, []);
 
-  // If navigated with refresh state, refetch
   useEffect(() => {
     if (location.state?.refresh) {
       fetchStock();
     }
   }, [location.state]);
-
-  const handleDelete = (index) => {
-    const data = stockList.filter((_, i) => i !== index);
-    setStockList(data);
-  };
 
   return (
     <div className="cs-page">
@@ -82,7 +81,6 @@ function CurrentStock() {
                 <th>Category</th>
                 <th>UOM</th>
                 <th>Quantity</th>
-                <th>Action</th>
                 <th>Created</th>
                 <th>Updated</th>
               </tr>
@@ -91,10 +89,12 @@ function CurrentStock() {
             <tbody>
               {stockList.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="cs-empty">No Stock Available</td>
+                  <td colSpan="8" className="cs-empty">
+                    No Stock Available
+                  </td>
                 </tr>
               ) : (
-                stockList.map((item, index) => (
+                stockList.map((item) => (
                   <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{item.itemName}</td>
@@ -102,11 +102,6 @@ function CurrentStock() {
                     <td>{item.category}</td>
                     <td>{item.uom}</td>
                     <td>{item.quantity}</td>
-                    <td>
-                      <button className="cs-delete-btn" onClick={() => handleDelete(index)}>
-                        <i className="fa fa-trash"></i>
-                      </button>
-                    </td>
                     <td>{item.created}</td>
                     <td>{item.updated}</td>
                   </tr>
