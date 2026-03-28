@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import "../CSS/InwardEntry.css"; // Reuse same CSS
-import api from "../api"; // ✅ USE BASE API
+import "../CSS/InwardEntry.css";
+import api from "../api";
 
 function ToolInwardEntry() {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ function ToolInwardEntry() {
   const [rate, setRate] = useState("");
 
   const [toolOptions, setToolOptions] = useState([]);
+  const [filteredTools, setFilteredTools] = useState([]);
+  const [searchTool, setSearchTool] = useState("");
+
   const [uomOptions, setUomOptions] = useState([]);
 
   /* LOAD DROPDOWNS */
@@ -22,23 +25,38 @@ function ToolInwardEntry() {
     fetchUOMs();
   }, []);
 
+  /* FETCH TOOLS */
   const fetchTools = async () => {
     try {
-      const res = await api.get("/Toolstock/activetool"); // ✅ use api
-      setToolOptions(res.data.data || []);
+      const res = await api.get("/Toolstock/activetool");
+
+      const tools = res.data.data || [];
+
+      setToolOptions(tools);
+      setFilteredTools(tools);
     } catch (err) {
       console.error("Error fetching tools:", err);
     }
   };
 
+  /* FETCH UOMS */
   const fetchUOMs = async () => {
     try {
-      const res = await api.get("/Toolstock/activeuom"); // ✅ use api
+      const res = await api.get("/Toolstock/activeuom");
       setUomOptions(res.data.data || []);
     } catch (err) {
       console.error("Error fetching UOMs:", err);
     }
   };
+
+  /* TOOL FILTER */
+  useEffect(() => {
+    const filtered = toolOptions.filter((tool) =>
+      tool.toLowerCase().includes(searchTool.toLowerCase())
+    );
+
+    setFilteredTools(filtered);
+  }, [searchTool, toolOptions]);
 
   /* SUBMIT */
   const handleSubmit = async () => {
@@ -55,22 +73,21 @@ function ToolInwardEntry() {
         Rate: Number(rate),
       };
 
-      await api.post("/toolinward/toolinwards", payload); // ✅ use api
+      await api.post("/toolinward/toolinwards", payload);
 
       alert("Tool Inward submitted & stock updated!");
 
-      // Redirect to Tool Current Stock (Tool Stack)
       navigate("/tool-stock");
     } catch (err) {
       console.error("Error submitting Tool Inward:", err);
       alert("Error updating Tool stock");
     }
 
-    // Reset form
     setToolName("");
     setUom("");
     setQuantity("");
     setRate("");
+    setSearchTool("");
   };
 
   return (
@@ -83,29 +100,52 @@ function ToolInwardEntry() {
       </div>
 
       <div className="ie-form">
+
+        {/* ROW 1 */}
         <div className="ie-row">
+
+          <div className="ie-group">
+            <label>Search Tool</label>
+            <input
+              type="text"
+              placeholder="Search tool..."
+              value={searchTool}
+              onChange={(e) => setSearchTool(e.target.value)}
+            />
+          </div>
+
           <div className="ie-group">
             <label>Tool Name</label>
-            <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
+            <select
+              value={toolName}
+              onChange={(e) => setToolName(e.target.value)}
+            >
               <option value="">Select Tool</option>
-              {toolOptions.map((opt, i) => (
-                <option key={i} value={opt}>{opt}</option>
+              {filteredTools.map((tool, i) => (
+                <option key={i} value={tool}>
+                  {tool}
+                </option>
               ))}
             </select>
           </div>
+
+        </div>
+
+        {/* ROW 2 */}
+        <div className="ie-row">
 
           <div className="ie-group">
             <label>UOM</label>
             <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
               {uomOptions.map((opt, i) => (
-                <option key={i} value={opt}>{opt}</option>
+                <option key={i} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="ie-row">
           <div className="ie-group">
             <label>Quantity</label>
             <input
@@ -115,6 +155,11 @@ function ToolInwardEntry() {
             />
           </div>
 
+        </div>
+
+        {/* ROW 3 */}
+        <div className="ie-row">
+
           <div className="ie-group">
             <label>Rate</label>
             <input
@@ -123,11 +168,13 @@ function ToolInwardEntry() {
               onChange={(e) => setRate(e.target.value)}
             />
           </div>
+
         </div>
 
         <button className="ie-btn" onClick={handleSubmit}>
           Submit
         </button>
+
       </div>
     </div>
   );
