@@ -15,7 +15,6 @@ function ToolInwardEntry() {
 
   const [toolOptions, setToolOptions] = useState([]);
   const [filteredTools, setFilteredTools] = useState([]);
-  const [searchTool, setSearchTool] = useState("");
 
   const [uomOptions, setUomOptions] = useState([]);
 
@@ -25,13 +24,10 @@ function ToolInwardEntry() {
     fetchUOMs();
   }, []);
 
-  /* FETCH TOOLS */
   const fetchTools = async () => {
     try {
       const res = await api.get("/Toolstock/activetool");
-
       const tools = res.data.data || [];
-
       setToolOptions(tools);
       setFilteredTools(tools);
     } catch (err) {
@@ -39,7 +35,6 @@ function ToolInwardEntry() {
     }
   };
 
-  /* FETCH UOMS */
   const fetchUOMs = async () => {
     try {
       const res = await api.get("/Toolstock/activeuom");
@@ -49,14 +44,17 @@ function ToolInwardEntry() {
     }
   };
 
-  /* TOOL FILTER */
-  useEffect(() => {
+  /* SEARCH FILTER */
+  const handleToolSearch = (e) => {
+    const value = e.target.value;
+    setToolName(value);
+
     const filtered = toolOptions.filter((tool) =>
-      tool.toLowerCase().includes(searchTool.toLowerCase())
+      tool.toLowerCase().includes(value.toLowerCase())
     );
 
     setFilteredTools(filtered);
-  }, [searchTool, toolOptions]);
+  };
 
   /* SUBMIT */
   const handleSubmit = async () => {
@@ -87,7 +85,7 @@ function ToolInwardEntry() {
     setUom("");
     setQuantity("");
     setRate("");
-    setSearchTool("");
+    setFilteredTools(toolOptions);
   };
 
   return (
@@ -103,36 +101,30 @@ function ToolInwardEntry() {
 
         {/* ROW 1 */}
         <div className="ie-row">
-
-          <div className="ie-group">
-            <label>Search Tool</label>
-            <input
-              type="text"
-              placeholder="Search tool..."
-              value={searchTool}
-              onChange={(e) => setSearchTool(e.target.value)}
-            />
-          </div>
-
           <div className="ie-group">
             <label>Tool Name</label>
+
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="Search Tool..."
+              value={toolName}
+              onChange={handleToolSearch}
+            />
+
+            {/* Same Dropdown UI */}
             <select
               value={toolName}
               onChange={(e) => setToolName(e.target.value)}
             >
               <option value="">Select Tool</option>
-              {filteredTools.map((tool, i) => (
-                <option key={i} value={tool}>
-                  {tool}
+              {filteredTools.map((opt, i) => (
+                <option key={i} value={opt}>
+                  {opt}
                 </option>
               ))}
             </select>
           </div>
-
-        </div>
-
-        {/* ROW 2 */}
-        <div className="ie-row">
 
           <div className="ie-group">
             <label>UOM</label>
@@ -145,7 +137,10 @@ function ToolInwardEntry() {
               ))}
             </select>
           </div>
+        </div>
 
+        {/* ROW 2 */}
+        <div className="ie-row">
           <div className="ie-group">
             <label>Quantity</label>
             <input
@@ -155,11 +150,6 @@ function ToolInwardEntry() {
             />
           </div>
 
-        </div>
-
-        {/* ROW 3 */}
-        <div className="ie-row">
-
           <div className="ie-group">
             <label>Rate</label>
             <input
@@ -168,13 +158,11 @@ function ToolInwardEntry() {
               onChange={(e) => setRate(e.target.value)}
             />
           </div>
-
         </div>
 
         <button className="ie-btn" onClick={handleSubmit}>
           Submit
         </button>
-
       </div>
     </div>
   );
