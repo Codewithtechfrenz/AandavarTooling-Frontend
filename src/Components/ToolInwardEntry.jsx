@@ -18,7 +18,6 @@ function ToolInwardEntry() {
 
   const [uomOptions, setUomOptions] = useState([]);
 
-  /* LOAD DROPDOWNS */
   useEffect(() => {
     fetchTools();
     fetchUOMs();
@@ -44,8 +43,8 @@ function ToolInwardEntry() {
     }
   };
 
-  /* SEARCH FILTER */
-  const handleToolSearch = (e) => {
+  /* FILTER WHILE TYPING IN DROPDOWN */
+  const handleFilter = (e) => {
     const value = e.target.value;
     setToolName(value);
 
@@ -56,7 +55,6 @@ function ToolInwardEntry() {
     setFilteredTools(filtered);
   };
 
-  /* SUBMIT */
   const handleSubmit = async () => {
     if (!toolName || !uom || !quantity || !rate) {
       alert("Enter all fields");
@@ -74,7 +72,6 @@ function ToolInwardEntry() {
       await api.post("/toolinward/toolinwards", payload);
 
       alert("Tool Inward submitted & stock updated!");
-
       navigate("/tool-stock");
     } catch (err) {
       console.error("Error submitting Tool Inward:", err);
@@ -98,32 +95,23 @@ function ToolInwardEntry() {
       </div>
 
       <div className="ie-form">
-
-        {/* ROW 1 */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Tool Name</label>
 
-            {/* Search Input */}
+            {/* Single Searchable Dropdown */}
             <input
-              type="text"
-              placeholder="Search Tool..."
+              list="toolList"
               value={toolName}
-              onChange={handleToolSearch}
+              onChange={handleFilter}
+              placeholder="Select Tool"
             />
 
-            {/* Same Dropdown UI */}
-            <select
-              value={toolName}
-              onChange={(e) => setToolName(e.target.value)}
-            >
-              <option value="">Select Tool</option>
-              {filteredTools.map((opt, i) => (
-                <option key={i} value={opt}>
-                  {opt}
-                </option>
+            <datalist id="toolList">
+              {filteredTools.map((tool, i) => (
+                <option key={i} value={tool} />
               ))}
-            </select>
+            </datalist>
           </div>
 
           <div className="ie-group">
@@ -139,7 +127,6 @@ function ToolInwardEntry() {
           </div>
         </div>
 
-        {/* ROW 2 */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Quantity</label>
