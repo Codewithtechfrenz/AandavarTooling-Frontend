@@ -96,14 +96,14 @@ const Sidebar = ({ collapsed }) => {
           {!collapsed && <span>Worker Master</span>}
         </div>
 
-
+{/* 
         <div
           className={`menu-item ${isActive("/dashboard/salesproducts") ? "active" : ""}`}
           onClick={() => navigate("/dashboard/salesproducts")}
         >
           <i className="fa fa-users"></i>
           {!collapsed && <span>Sales Product Master</span>}
-        </div>
+        </div> */}
 
         
 
