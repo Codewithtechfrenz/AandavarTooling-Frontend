@@ -8,7 +8,7 @@ import api from "../api";
 function InwardEntry() {
   const navigate = useNavigate();
 
-  /* ================= STATES ================= */
+  /* STATES */
   const [products, setProducts] = useState([]);
   const [uoms, setUoms] = useState([]);
 
@@ -18,47 +18,61 @@ function InwardEntry() {
   const [qty, setQty] = useState("");
   const [rate, setRate] = useState("");
 
-  /* ================= LOAD DATA ================= */
+  /* LOAD DATA */
   useEffect(() => {
-    fetchProducts();
-    fetchUOMs();
+    loadProducts();
+    loadUoms();
   }, []);
 
-  /* ================= FETCH PRODUCTS ================= */
-  const fetchProducts = async () => {
+  /* FETCH PRODUCTS */
+  const loadProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
 
-      console.log("Products API:", res.data);
+      console.log("Products API Response:", res);
 
-      if (res.data.status === 1) {
-        setProducts(res.data.data);
-      } else {
-        setProducts([]);
+      let list = [];
+
+      if (Array.isArray(res.data)) {
+        list = res.data;
+      } else if (Array.isArray(res.data.data)) {
+        list = res.data.data;
+      } else if (res.data.status === 1 && Array.isArray(res.data.data)) {
+        list = res.data.data;
       }
-    } catch (err) {
-      console.error("Product fetch error:", err);
+
+      setProducts(list);
+    } catch (error) {
+      console.error("Product API Error:", error);
       setProducts([]);
     }
   };
 
-  /* ================= FETCH UOMS ================= */
-  const fetchUOMs = async () => {
+  /* FETCH UOMS */
+  const loadUoms = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
 
-      if (res.data.status === 1) {
-        setUoms(res.data.data);
-      } else {
-        setUoms([]);
+      console.log("UOM API Response:", res);
+
+      let list = [];
+
+      if (Array.isArray(res.data)) {
+        list = res.data;
+      } else if (Array.isArray(res.data.data)) {
+        list = res.data.data;
+      } else if (res.data.status === 1 && Array.isArray(res.data.data)) {
+        list = res.data.data;
       }
-    } catch (err) {
-      console.error("UOM fetch error:", err);
+
+      setUoms(list);
+    } catch (error) {
+      console.error("UOM API Error:", error);
       setUoms([]);
     }
   };
 
-  /* ================= SELECT ITEM NAME ================= */
+  /* ITEM NAME CHANGE */
   const handleItemChange = (e) => {
     const id = e.target.value;
 
@@ -69,13 +83,10 @@ function InwardEntry() {
     if (item) {
       setSelectedItem(item);
       setItemCode(item.ItemCode);
-    } else {
-      setSelectedItem(null);
-      setItemCode("");
     }
   };
 
-  /* ================= SELECT ITEM CODE ================= */
+  /* ITEM CODE CHANGE */
   const handleCodeChange = (e) => {
     const code = e.target.value;
 
@@ -86,13 +97,10 @@ function InwardEntry() {
     if (item) {
       setSelectedItem(item);
       setItemCode(item.ItemCode);
-    } else {
-      setSelectedItem(null);
-      setItemCode("");
     }
   };
 
-  /* ================= SUBMIT ================= */
+  /* SUBMIT */
   const handleSubmit = async () => {
     if (!selectedItem || !qty || !rate || !uom) {
       alert("Please fill all fields");
@@ -112,19 +120,19 @@ function InwardEntry() {
     try {
       const res = await api.post("/inward/iteminward", payload);
 
-      alert(res.data.message || "Inward saved successfully");
+      alert(res.data.message || "Saved successfully");
 
-      clearForm();
+      resetForm();
 
       navigate("/current-stock", { state: { refresh: true } });
-    } catch (err) {
-      console.error("Submit error:", err);
+    } catch (error) {
+      console.error("Submit Error:", error);
       alert("Error saving inward");
     }
   };
 
-  /* ================= CLEAR FORM ================= */
-  const clearForm = () => {
+  /* RESET FORM */
+  const resetForm = () => {
     setSelectedItem(null);
     setItemCode("");
     setUom("");
@@ -143,10 +151,8 @@ function InwardEntry() {
 
       <div className="ie-form">
 
-        {/* ROW 1 */}
         <div className="ie-row">
 
-          {/* ITEM NAME */}
           <div className="ie-group">
             <label>Item Name</label>
             <select
@@ -154,52 +160,54 @@ function InwardEntry() {
               onChange={handleItemChange}
             >
               <option value="">Select Item</option>
-              {products.map((item) => (
-                <option key={item.ItemID} value={item.ItemID}>
-                  {item.ItemName}
-                </option>
-              ))}
+              {products.length > 0 ? (
+                products.map((item) => (
+                  <option key={item.ItemID} value={item.ItemID}>
+                    {item.ItemName}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Items Found</option>
+              )}
             </select>
           </div>
 
-          {/* ITEM CODE */}
           <div className="ie-group">
             <label>Item Code</label>
-            <select
-              value={itemCode}
-              onChange={handleCodeChange}
-            >
+            <select value={itemCode} onChange={handleCodeChange}>
               <option value="">Select Code</option>
-              {products.map((item) => (
-                <option key={item.ItemCode} value={item.ItemCode}>
-                  {item.ItemCode}
-                </option>
-              ))}
+              {products.length > 0 ? (
+                products.map((item) => (
+                  <option key={item.ItemCode} value={item.ItemCode}>
+                    {item.ItemCode}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Codes Found</option>
+              )}
             </select>
           </div>
 
         </div>
 
-        {/* ROW 2 */}
         <div className="ie-row">
 
-          {/* UOM */}
           <div className="ie-group">
             <label>UOM</label>
-            <select
-              value={uom}
-              onChange={(e) => setUom(e.target.value)}
-            >
+            <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
-              {uoms.map((u, i) => (
-                <option key={i} value={u.UOMName || u}>
-                  {u.UOMName || u}
-                </option>
-              ))}
+              {uoms.length > 0 ? (
+                uoms.map((u, i) => (
+                  <option key={i} value={u.UOMName || u}>
+                    {u.UOMName || u}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No UOM Found</option>
+              )}
             </select>
           </div>
 
-          {/* QUANTITY */}
           <div className="ie-group">
             <label>Quantity</label>
             <input
@@ -211,7 +219,6 @@ function InwardEntry() {
 
         </div>
 
-        {/* ROW 3 */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
@@ -223,7 +230,6 @@ function InwardEntry() {
           </div>
         </div>
 
-        {/* SUBMIT BUTTON */}
         <button className="ie-btn" onClick={handleSubmit}>
           Submit
         </button>
