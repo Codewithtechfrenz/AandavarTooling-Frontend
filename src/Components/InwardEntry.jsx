@@ -16,12 +16,12 @@ function InwardEntry() {
   const [rate, setRate] = useState("");
 
   const [uomOptions, setUomOptions] = useState([]);
-  const [itemOptions, setItemOptions] = useState([]);
+  const [productOptions, setProductOptions] = useState([]);
 
   /* ================= LOAD DATA ================= */
   useEffect(() => {
     fetchUOMs();
-    fetchItems();
+    fetchProducts();
   }, []);
 
   /* ================= FETCH UOM ================= */
@@ -38,21 +38,13 @@ function InwardEntry() {
   };
 
   /* ================= FETCH ITEMS ================= */
-  const fetchItems = async () => {
+ const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-
-      if (res.data.status === 1) {
-        const formattedItems = res.data.data.map((item) => ({
-          ItemID: item.ItemID || item.item_id,
-          ItemName: item.ItemName || item.item_name,
-          ItemCode: item.ItemCode || item.item_code
-        }));
-
-        setItemOptions(formattedItems);
-      }
+      setProductOptions(res.data.status === 1 ? res.data.data : []);
     } catch (err) {
-      console.error("Item Error:", err);
+      console.error("Product Error:", err);
+      setProductOptions([]);
     }
   };
 
@@ -60,7 +52,7 @@ function InwardEntry() {
   const handleItemNameChange = (e) => {
     const id = e.target.value;
 
-    const selectedItem = itemOptions.find(
+    const selectedItem = productOptions.find(
       (item) => String(item.ItemID) === String(id)
     );
 
@@ -75,7 +67,7 @@ function InwardEntry() {
   const handleItemCodeChange = (e) => {
     const code = e.target.value;
 
-    const selectedItem = itemOptions.find(
+    const selectedItem = productOptions.find(
       (item) => item.ItemCode === code
     );
 
@@ -144,7 +136,7 @@ function InwardEntry() {
             <label>Item Name</label>
             <select value={itemID} onChange={handleItemNameChange}>
               <option value="">Select Item</option>
-              {itemOptions.map((item) => (
+              {productOptions.map((item) => (
                 <option key={item.ItemID} value={item.ItemID}>
                   {item.ItemName}
                 </option>
@@ -157,7 +149,7 @@ function InwardEntry() {
             <label>Item Code</label>
             <select value={itemCode} onChange={handleItemCodeChange}>
               <option value="">Select Code</option>
-              {itemOptions.map((item) => (
+              {productOptions.map((item) => (
                 <option key={item.ItemCode} value={item.ItemCode}>
                   {item.ItemCode}
                 </option>
