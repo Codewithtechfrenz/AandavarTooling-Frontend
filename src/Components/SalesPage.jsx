@@ -36,7 +36,7 @@ fetchSales();
 
 const fetchSales = async () => {
 try {
-const res = await api.get("/getSales");
+const res = await api.get("/sales/getSales");
 
 if (res.data?.status === 1) {
 setSales(res.data.data);
@@ -100,7 +100,7 @@ total: totalAmount
 
 try {
 
-const res = await api.post("/addsales", payload);
+const res = await api.post("/sales/addsales", payload);
 
 if (res.data?.status === 1) {
 
@@ -127,7 +127,7 @@ if (!confirmDelete) return;
 
 try {
 
-const res = await api.delete(`/deleteSales/${id}`);
+const res = await api.post(`/sales/deleteSales/${id}`);
 
 if (res.data?.status === 1) {
 await fetchSales();
