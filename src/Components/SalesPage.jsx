@@ -8,6 +8,7 @@ import "../CSS/SalesPage.css";
 function SalesPage() {
 
 const [sales, setSales] = useState([]);
+const [loading, setLoading] = useState(false);
 
 const [customer, setCustomer] = useState("");
 const [productName, setProductName] = useState("");
@@ -17,15 +18,17 @@ const [price, setPrice] = useState("");
 const [sgst] = useState(9);
 const [cgst] = useState(9);
 
-const [selectedBank, setSelectedBank] = useState("bank1");
+const [editingId, setEditingId] = useState(null);
 
 const [productOptions, setProductOptions] = useState([]);
 const [customerOptions, setCustomerOptions] = useState([]);
 
+const [selectedBank, setSelectedBank] = useState("bank1");
+
 /* ================= CALCULATIONS ================= */
 
 const subTotal = quantity && price ? quantity * price : 0;
-const gstAmount = subTotal * ((Number(sgst) + Number(cgst)) / 100);
+const gstAmount = subTotal * ((sgst + cgst) / 100);
 const totalAmount = subTotal + gstAmount;
 
 /* ================= FETCH SALES ================= */
@@ -36,16 +39,42 @@ fetchSales();
 
 const fetchSales = async () => {
 try {
+
+setLoading(true);
+
 const res = await api.get("/sales/getSales");
 
 if (res.data?.status === 1) {
-setSales(res.data.data);
+
+const formatted = res.data.data.map((item) => ({
+id: item.Sale_ID,
+customer: item.customer_name,
+productName: item.product_name,
+quantity: Number(item.quantity),
+price: Number(item.price),
+sgst: Number(item.sgst),
+cgst: Number(item.cgst),
+subTotal: Number(item.subtotal),
+gstAmount: Number(item.gst_total),
+totalAmount: Number(item.total),
+created: item.created_at
+? new Date(item.created_at).toLocaleDateString()
+: "-",
+updated: item.updated_at
+? new Date(item.updated_at).toLocaleDateString()
+: "-"
+}));
+
+setSales(formatted);
+
 } else {
 setSales([]);
 }
 
 } catch (err) {
-console.error("Sales Fetch Error:", err);
+console.error("Fetch Sales Error:", err);
+} finally {
+setLoading(false);
 }
 };
 
@@ -77,22 +106,23 @@ console.error("Customer Error:", err);
 fetchCustomers();
 }, []);
 
-/* ================= ADD SALES ================= */
+/* ================= ADD / UPDATE SALES ================= */
 
-const addSales = async () => {
+const handleSaveSales = async () => {
 
-if (!productName || !customer) {
+if (!customer || !productName) {
 alert("Customer and Product required");
 return;
 }
 
 const payload = {
+Sale_ID: editingId,
 customer_name: customer,
 product_name: productName,
 quantity: Number(quantity),
 price: Number(price),
-sgst: Number(sgst),
-cgst: Number(cgst),
+sgst,
+cgst,
 subtotal: subTotal,
 gst_total: gstAmount,
 total: totalAmount
@@ -100,7 +130,13 @@ total: totalAmount
 
 try {
 
-const res = await api.post("/sales/addsales", payload);
+let res;
+
+if (editingId) {
+res = await api.put("/sales/updateSales", payload);
+} else {
+res = await api.post("/sales/addsales", payload);
+}
 
 if (res.data?.status === 1) {
 
@@ -108,13 +144,25 @@ await fetchSales();
 clearForm();
 
 } else {
-alert(res.data?.message || "Failed");
+alert(res.data?.message || "Operation Failed");
 }
 
 } catch (err) {
-console.error("Sales Save Error:", err);
+console.error("Save Error:", err);
 alert("Server Error");
 }
+
+};
+
+/* ================= EDIT SALES ================= */
+
+const editSale = (item) => {
+
+setEditingId(item.id);
+setCustomer(item.customer);
+setProductName(item.productName);
+setQuantity(item.quantity);
+setPrice(item.price);
 
 };
 
@@ -122,16 +170,13 @@ alert("Server Error");
 
 const deleteSale = async (id) => {
 
-const confirmDelete = window.confirm("Are you sure?");
+const confirmDelete = window.confirm("Delete this sale?");
 if (!confirmDelete) return;
 
 try {
 
-const res = await api.post(`/sales/deleteSales/${id}`);
-
-if (res.data?.status === 1) {
+await api.delete(`/sales/deleteSales/${id}`);
 await fetchSales();
-}
 
 } catch (err) {
 console.error("Delete Error:", err);
@@ -146,6 +191,7 @@ setCustomer("");
 setProductName("");
 setQuantity("");
 setPrice("");
+setEditingId(null);
 };
 
 /* ================= PDF DATA ================= */
@@ -180,18 +226,13 @@ return (
 
 <div className="sales-group">
 <label>Customer</label>
-<select
-value={customer}
-onChange={(e) => setCustomer(e.target.value)}
->
+<select value={customer} onChange={(e) => setCustomer(e.target.value)}>
 <option value="">Select Customer</option>
-
 {customerOptions.map((cust) => (
 <option key={cust.S_No} value={cust.Cus_Name}>
 {cust.Cus_Name}
 </option>
 ))}
-
 </select>
 </div>
 
@@ -207,20 +248,16 @@ const selected = productOptions.find(
 
 setProductName(e.target.value);
 
-if (selected) {
-setPrice(selected.Price || "");
-}
+if (selected) setPrice(selected.Price || "");
 
 }}
 >
 <option value="">Select Product</option>
-
 {productOptions.map((item) => (
 <option key={item.Item_ID} value={item.ItemName}>
 {item.ItemName}
 </option>
 ))}
-
 </select>
 </div>
 
@@ -251,20 +288,6 @@ onChange={(e) => setPrice(e.target.value)}
 <div className="sales-row">
 
 <div className="sales-group">
-<label>SGST (%)</label>
-<input type="number" value={sgst} readOnly />
-</div>
-
-<div className="sales-group">
-<label>CGST (%)</label>
-<input type="number" value={cgst} readOnly />
-</div>
-
-</div>
-
-<div className="sales-row">
-
-<div className="sales-group">
 <label>Sub Total</label>
 <input type="text" value={subTotal} readOnly />
 </div>
@@ -275,15 +298,21 @@ onChange={(e) => setPrice(e.target.value)}
 </div>
 
 <div className="sales-group">
-<label>Total Amount</label>
+<label>Total</label>
 <input type="text" value={totalAmount} readOnly />
 </div>
 
 </div>
 
-<button className="sales-add-btn" onClick={addSales}>
-Add Sales
+<button className="sales-add-btn" onClick={handleSaveSales}>
+{editingId ? "Update Sales" : "Add Sales"}
 </button>
+
+{editingId && (
+<button className="sales-cancel-btn" onClick={clearForm}>
+Cancel Edit
+</button>
+)}
 
 </div>
 
@@ -291,6 +320,9 @@ Add Sales
 
 <div className="sales-table-card">
 
+{loading ? (
+<h3>Loading Sales...</h3>
+) : (
 <table className="sales-table">
 
 <thead>
@@ -300,9 +332,6 @@ Add Sales
 <th>Product</th>
 <th>Qty</th>
 <th>Price</th>
-<th>SGST</th>
-<th>CGST</th>
-<th>Sub Total</th>
 <th>GST</th>
 <th>Total</th>
 <th>Action</th>
@@ -315,9 +344,7 @@ Add Sales
 
 {sales.length === 0 ? (
 <tr>
-<td colSpan="13" className="sales-empty">
-No Sales Records
-</td>
+<td colSpan="10">No Sales Records</td>
 </tr>
 ) : (
 sales.map((item) => (
@@ -327,19 +354,25 @@ sales.map((item) => (
 <td>{item.productName}</td>
 <td>{item.quantity}</td>
 <td>{item.price}</td>
-<td>{item.sgst}</td>
-<td>{item.cgst}</td>
-<td>{item.subTotal}</td>
 <td>{item.gstAmount}</td>
 <td>{item.totalAmount}</td>
 
 <td>
+
+<button
+className="sales-edit-btn"
+onClick={() => editSale(item)}
+>
+Edit
+</button>
+
 <button
 className="sales-delete-btn"
 onClick={() => deleteSale(item.id)}
 >
 Delete
 </button>
+
 </td>
 
 <td>{item.created}</td>
@@ -352,6 +385,7 @@ Delete
 </tbody>
 
 </table>
+)}
 
 </div>
 
@@ -371,11 +405,10 @@ onChange={() => setSelectedBank("bank1")}
 />
 
 <h4>Pay To</h4>
-
 <p>Bank Name: BANK OF BARODA</p>
-<p>Bank Account No: 75220200001446</p>
-<p>Bank IFSC Code: BARBOVJMAAN</p>
-<p>Account Holder's Name: SHREE AANDAVAR TOOLING</p>
+<p>Account No: 75220200001446</p>
+<p>IFSC: BARBOVJMAAN</p>
+<p>Account Holder: SHREE AANDAVAR TOOLING</p>
 
 </label>
 
