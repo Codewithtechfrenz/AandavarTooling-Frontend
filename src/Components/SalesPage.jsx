@@ -133,7 +133,7 @@ try {
 let res;
 
 if (editingId) {
-res = await api.put("/sales/updateSales", payload);
+res = await api.post("/sales/updateSales", payload);
 } else {
 res = await api.post("/sales/addsales", payload);
 }
