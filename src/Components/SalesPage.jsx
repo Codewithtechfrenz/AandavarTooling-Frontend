@@ -42,7 +42,7 @@ try {
 
 setLoading(true);
 
-const res = await api.get("/sales/getSales");
+const res = await api.get("/sales/getSale");
 
 if (res.data?.status === 1) {
 
