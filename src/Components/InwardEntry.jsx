@@ -155,6 +155,9 @@ function InwardEntry() {
 
           <div className="ie-group">
             <label>Item Name</label>
+
+
+            
             <select
               value={selectedItem?.ItemID || ""}
               onChange={handleItemChange}
