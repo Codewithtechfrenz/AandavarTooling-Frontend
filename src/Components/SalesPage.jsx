@@ -9,6 +9,9 @@ function SalesPage() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+
   const [customer, setCustomer] = useState("");
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -22,13 +25,25 @@ function SalesPage() {
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
 
-  const [selectedBank, setSelectedBank] = useState("bank1");
-
   /* ================= CALCULATIONS ================= */
 
   const subTotal = quantity && price ? quantity * price : 0;
   const gstAmount = subTotal * ((sgst + cgst) / 100);
   const totalAmount = subTotal + gstAmount;
+
+  /* ================= AUTO INVOICE ================= */
+
+  useEffect(() => {
+    generateInvoice();
+  }, []);
+
+  const generateInvoice = () => {
+    const inv = "INV-" + Date.now();
+    setInvoiceNo(inv);
+
+    const today = new Date().toISOString().split("T")[0];
+    setInvoiceDate(today);
+  };
 
   /* ================= FETCH SALES ================= */
 
@@ -39,36 +54,15 @@ function SalesPage() {
   const fetchSales = async () => {
     try {
       setLoading(true);
-
-      // FIXED API ROUTE
       const res = await api.get("/sales/getSales");
 
       if (res.data?.status === 1) {
-        const formatted = res.data.data.map((item) => ({
-          id: item.Sale_ID,
-          customer: item.Customer_Name,
-          productName: item.Product_Name,
-          quantity: Number(item.Quantity),
-          price: Number(item.Price),
-          sgst: Number(item.SGST),
-          cgst: Number(item.CGST),
-          subTotal: Number(item.Sub_Total),
-          gstAmount: Number(item.GST_Total),
-          totalAmount: Number(item.Total_Amount),
-          created: item.CreatedDate
-            ? new Date(item.CreatedDate).toLocaleDateString()
-            : "-",
-          updated: item.UpdatedDate
-            ? new Date(item.UpdatedDate).toLocaleDateString()
-            : "-"
-        }));
-
-        setSales(formatted);
+        setSales(res.data.data);
       } else {
         setSales([]);
       }
     } catch (err) {
-      console.error("Fetch Sales Error:", err.response?.data || err.message);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -78,12 +72,8 @@ function SalesPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      try {
-        const res = await api.get("/items/getItems");
-        setProductOptions(res.data?.data || []);
-      } catch (err) {
-        console.error("Product Error:", err);
-      }
+      const res = await api.get("/items/getItems");
+      setProductOptions(res.data?.data || []);
     };
     fetchProducts();
   }, []);
@@ -92,26 +82,19 @@ function SalesPage() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      try {
-        const res = await api.get("/customers/getCustomers");
-        setCustomerOptions(res.data?.data || []);
-      } catch (err) {
-        console.error("Customer Error:", err);
-      }
+      const res = await api.get("/customers/getCustomers");
+      setCustomerOptions(res.data?.data || []);
     };
     fetchCustomers();
   }, []);
 
-  /* ================= ADD / UPDATE SALES ================= */
+  /* ================= SAVE SALES ================= */
 
   const handleSaveSales = async () => {
-    if (!customer || !productName) {
-      alert("Customer and Product required");
-      return;
-    }
-
     const payload = {
       Sale_ID: editingId,
+      Invoice_No: invoiceNo,
+      Invoice_Date: invoiceDate,
       Customer_Name: customer,
       Product_Name: productName,
       Quantity: Number(quantity),
@@ -132,45 +115,34 @@ function SalesPage() {
         res = await api.post("/sales/addsales", payload);
       }
 
-      console.log("API Response:", res.data);
-
-      if (res.data?.status === 1) {
-        await fetchSales();
+      if (res.data.status === 1) {
+        fetchSales();
         clearForm();
-      } else {
-        alert(res.data?.message || "Operation Failed");
+        generateInvoice();
       }
     } catch (err) {
-      console.error("Save Error:", err.response?.data || err.message);
-      alert("Server Error: API route issue");
+      console.error(err);
     }
   };
 
-  /* ================= EDIT SALES ================= */
+  /* ================= EDIT ================= */
 
   const editSale = (item) => {
-    setEditingId(item.id);
-    setCustomer(item.customer);
-    setProductName(item.productName);
-    setQuantity(item.quantity);
-    setPrice(item.price);
+    setEditingId(item.Sale_ID);
+    setInvoiceNo(item.Invoice_No);
+    setInvoiceDate(item.Invoice_Date);
+    setCustomer(item.Customer_Name);
+    setProductName(item.Product_Name);
+    setQuantity(item.Quantity);
+    setPrice(item.Price);
   };
 
-  /* ================= DELETE SALES ================= */
+  /* ================= DELETE ================= */
 
   const deleteSale = async (id) => {
-    const confirmDelete = window.confirm("Delete this sale?");
-    if (!confirmDelete) return;
-
-    try {
-      await api.delete(`/sales/deleteSales/${id}`);
-      await fetchSales();
-    } catch (err) {
-      console.error("Delete Error:", err);
-    }
+    await api.delete(`/sales/deleteSales/${id}`);
+    fetchSales();
   };
-
-  /* ================= CLEAR FORM ================= */
 
   const clearForm = () => {
     setCustomer("");
@@ -180,9 +152,11 @@ function SalesPage() {
     setEditingId(null);
   };
 
-  /* ================= PDF DATA ================= */
+  /* ================= PDF ================= */
 
   const saleData = {
+    invoiceNo,
+    invoiceDate,
     customerName: customer,
     product: productName,
     quantity,
@@ -199,7 +173,6 @@ function SalesPage() {
 
       <div className="sales-header">
         <h1>Sales Page</h1>
-        <p>Manage Sales Transactions</p>
       </div>
 
       {/* FORM */}
@@ -207,16 +180,33 @@ function SalesPage() {
       <div className="sales-form">
         <div className="sales-row">
           <div className="sales-group">
+            <label>Invoice No</label>
+            <input
+              value={invoiceNo}
+              onChange={(e) => setInvoiceNo(e.target.value)}
+            />
+          </div>
+
+          <div className="sales-group">
+            <label>Invoice Date</label>
+            <input
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="sales-row">
+          <div className="sales-group">
             <label>Customer</label>
             <select
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
             >
-              <option value="">Select Customer</option>
-              {customerOptions.map((cust) => (
-                <option key={cust.S_No} value={cust.Cus_Name}>
-                  {cust.Cus_Name}
-                </option>
+              <option value="">Select</option>
+              {customerOptions.map((c) => (
+                <option key={c.S_No}>{c.Cus_Name}</option>
               ))}
             </select>
           </div>
@@ -225,21 +215,11 @@ function SalesPage() {
             <label>Product</label>
             <select
               value={productName}
-              onChange={(e) => {
-                const selected = productOptions.find(
-                  (p) => p.ItemName === e.target.value
-                );
-
-                setProductName(e.target.value);
-
-                if (selected) setPrice(selected.Price || "");
-              }}
+              onChange={(e) => setProductName(e.target.value)}
             >
-              <option value="">Select Product</option>
-              {productOptions.map((item) => (
-                <option key={item.Item_ID} value={item.ItemName}>
-                  {item.ItemName}
-                </option>
+              <option value="">Select</option>
+              {productOptions.map((p) => (
+                <option key={p.Item_ID}>{p.ItemName}</option>
               ))}
             </select>
           </div>
@@ -268,117 +248,74 @@ function SalesPage() {
         <div className="sales-row">
           <div className="sales-group">
             <label>Sub Total</label>
-            <input type="text" value={subTotal} readOnly />
+            <input value={subTotal} readOnly />
           </div>
 
           <div className="sales-group">
-            <label>GST Amount</label>
-            <input type="text" value={gstAmount} readOnly />
+            <label>GST</label>
+            <input value={gstAmount} readOnly />
           </div>
 
           <div className="sales-group">
             <label>Total</label>
-            <input type="text" value={totalAmount} readOnly />
+            <input value={totalAmount} readOnly />
           </div>
         </div>
 
         <button className="sales-add-btn" onClick={handleSaveSales}>
           {editingId ? "Update Sales" : "Add Sales"}
         </button>
-
-        {editingId && (
-          <button className="sales-cancel-btn" onClick={clearForm}>
-            Cancel Edit
-          </button>
-        )}
       </div>
 
-      {/* TABLE */}
+      {/* GRID */}
 
       <div className="sales-table-card">
-        {loading ? (
-          <h3>Loading Sales...</h3>
-        ) : (
-          <table className="sales-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>GST</th>
-                <th>Total</th>
-                <th>Action</th>
-                <th>Created</th>
-                <th>Updated</th>
+        <table className="sales-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Invoice</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>SGST</th>
+              <th>CGST</th>
+              <th>SubTotal</th>
+              <th>GST</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {sales.map((item) => (
+              <tr key={item.Sale_ID}>
+                <td>{item.Sale_ID}</td>
+                <td>{item.Invoice_No}</td>
+                <td>{item.Invoice_Date}</td>
+                <td>{item.Customer_Name}</td>
+                <td>{item.Product_Name}</td>
+                <td>{item.Quantity}</td>
+                <td>{item.Price}</td>
+                <td>{item.SGST}</td>
+                <td>{item.CGST}</td>
+                <td>{item.Sub_Total}</td>
+                <td>{item.GST_Total}</td>
+                <td>{item.Total_Amount}</td>
+
+                <td>
+                  <button onClick={() => editSale(item)}>Edit</button>
+                  <button onClick={() => deleteSale(item.Sale_ID)}>
+                    Delete
+                  </button>
+                </td>
               </tr>
-            </thead>
-
-            <tbody>
-              {sales.length === 0 ? (
-                <tr>
-                  <td colSpan="10">No Sales Records</td>
-                </tr>
-              ) : (
-                sales.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.id}</td>
-                    <td>{item.customer}</td>
-                    <td>{item.productName}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.price}</td>
-                    <td>{item.gstAmount}</td>
-                    <td>{item.totalAmount}</td>
-
-                    <td>
-                      <button
-                        className="sales-edit-btn"
-                        onClick={() => editSale(item)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="sales-delete-btn"
-                        onClick={() => deleteSale(item.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-
-                    <td>{item.created}</td>
-                    <td>{item.updated}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {/* BANK DETAILS */}
-
-      <div className="bank-section">
-        <div className="bank-card">
-          <label>
-            <input
-              type="radio"
-              name="bank"
-              checked={selectedBank === "bank1"}
-              onChange={() => setSelectedBank("bank1")}
-            />
-
-            <h4>Pay To</h4>
-            <p>Bank Name: BANK OF BARODA</p>
-            <p>Account No: 75220200001446</p>
-            <p>IFSC: BARBOVJMAAN</p>
-            <p>Account Holder: SHREE AANDAVAR TOOLING</p>
-          </label>
-        </div>
-      </div>
-
-      {/* PDF */}
 
       <div className="sales-pdf-btn">
         <InvoicePDF sale={saleData} />
