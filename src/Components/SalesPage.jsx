@@ -14,21 +14,40 @@ const [productName, setProductName] = useState("");
 const [quantity, setQuantity] = useState("");
 const [price, setPrice] = useState("");
 
-const [sgst, setSgst] = useState(9);
-const [cgst, setCgst] = useState(9);
+const [sgst] = useState(9);
+const [cgst] = useState(9);
 
 const [selectedBank, setSelectedBank] = useState("bank1");
 
 const [productOptions, setProductOptions] = useState([]);
 const [customerOptions, setCustomerOptions] = useState([]);
 
-const [editingId, setEditingId] = useState(null);
-
 /* ================= CALCULATIONS ================= */
 
 const subTotal = quantity && price ? quantity * price : 0;
 const gstAmount = subTotal * ((Number(sgst) + Number(cgst)) / 100);
 const totalAmount = subTotal + gstAmount;
+
+/* ================= FETCH SALES ================= */
+
+useEffect(() => {
+fetchSales();
+}, []);
+
+const fetchSales = async () => {
+try {
+const res = await api.get("/getSales");
+
+if (res.data?.status === 1) {
+setSales(res.data.data);
+} else {
+setSales([]);
+}
+
+} catch (err) {
+console.error("Sales Fetch Error:", err);
+}
+};
 
 /* ================= FETCH PRODUCTS ================= */
 
@@ -58,7 +77,7 @@ console.error("Customer Error:", err);
 fetchCustomers();
 }, []);
 
-/* ================= ADD / UPDATE SALES ================= */
+/* ================= ADD SALES ================= */
 
 const addSales = async () => {
 
@@ -81,27 +100,11 @@ total: totalAmount
 
 try {
 
-const res = await api.post("/sales/addsales", payload);
+const res = await api.post("/addsales", payload);
 
 if (res.data?.status === 1) {
 
-const newSale = {
-id: res.data.Sale_ID || sales.length + 1,
-customer,
-productName,
-quantity,
-price,
-sgst,
-cgst,
-subTotal,
-gstAmount,
-totalAmount,
-created: new Date().toLocaleDateString(),
-updated: new Date().toLocaleDateString()
-};
-
-setSales([...sales, newSale]);
-
+await fetchSales();
 clearForm();
 
 } else {
@@ -112,19 +115,6 @@ alert(res.data?.message || "Failed");
 console.error("Sales Save Error:", err);
 alert("Server Error");
 }
-};
-
-/* ================= EDIT SALES ================= */
-
-const editSale = (item) => {
-
-setEditingId(item.id);
-setCustomer(item.customer);
-setProductName(item.productName);
-setQuantity(item.quantity);
-setPrice(item.price);
-setSgst(item.sgst);
-setCgst(item.cgst);
 
 };
 
@@ -137,14 +127,16 @@ if (!confirmDelete) return;
 
 try {
 
-await api.delete(`/sales/deleteSales/${id}`);
+const res = await api.delete(`/deleteSales/${id}`);
 
-const updated = sales.filter((item) => item.id !== id);
-setSales(updated);
+if (res.data?.status === 1) {
+await fetchSales();
+}
 
 } catch (err) {
 console.error("Delete Error:", err);
 }
+
 };
 
 /* ================= CLEAR FORM ================= */
@@ -154,9 +146,6 @@ setCustomer("");
 setProductName("");
 setQuantity("");
 setPrice("");
-setSgst(9);
-setCgst(9);
-setEditingId(null);
 };
 
 /* ================= PDF DATA ================= */
@@ -226,8 +215,8 @@ setPrice(selected.Price || "");
 >
 <option value="">Select Product</option>
 
-{productOptions.map((item, i) => (
-<option key={i} value={item.ItemName}>
+{productOptions.map((item) => (
+<option key={item.Item_ID} value={item.ItemName}>
 {item.ItemName}
 </option>
 ))}
@@ -293,7 +282,7 @@ onChange={(e) => setPrice(e.target.value)}
 </div>
 
 <button className="sales-add-btn" onClick={addSales}>
-{editingId ? "Update Sales" : "Add Sales"}
+Add Sales
 </button>
 
 </div>
@@ -345,21 +334,12 @@ sales.map((item) => (
 <td>{item.totalAmount}</td>
 
 <td>
-
-<button
-className="sales-edit-btn"
-onClick={() => editSale(item)}
->
-Edit
-</button>
-
 <button
 className="sales-delete-btn"
 onClick={() => deleteSale(item.id)}
 >
 Delete
 </button>
-
 </td>
 
 <td>{item.created}</td>
