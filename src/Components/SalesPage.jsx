@@ -110,9 +110,10 @@ function SalesPage() {
       let res;
 
       if (editingId) {
-        res = await api.post("/sales/updateSales", payload);
-      } else {
         res = await api.post("/sales/addsales", payload);
+        
+      } else {
+        res = await api.post("/sales/updateSales", payload);
       }
 
       if (res.data.status === 1) {
