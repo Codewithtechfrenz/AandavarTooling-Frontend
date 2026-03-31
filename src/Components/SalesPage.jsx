@@ -140,7 +140,7 @@ function SalesPage() {
   /* ================= DELETE ================= */
 
   const deleteSale = async (id) => {
-    await api.delete(`/sales/deleteSales/${id}`);
+    await api.post(`/sales/deleteSales/${id}`);
     fetchSales();
   };
 
