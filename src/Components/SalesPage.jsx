@@ -5,150 +5,178 @@ import Topbar from "../Components/Topbar";
 import InvoicePDF from "../Components/InvoicePDF";
 import "../CSS/SalesPage.css";
 
-function SalesPage(){
+function SalesPage() {
 
-const [sales,setSales] = useState([]);
+const [sales, setSales] = useState([]);
 
-const [customer,setCustomer] = useState("");
-const [productName,setProductName] = useState("");
-const [description,setDescription] = useState("");
-const [quantity,setQuantity] = useState("");
-const [price,setPrice] = useState("");
-const [sgst,setSgst] = useState("");
-const [cgst,setCgst] = useState("");
+const [customer, setCustomer] = useState("");
+const [productName, setProductName] = useState("");
+const [quantity, setQuantity] = useState("");
+const [price, setPrice] = useState("");
 
-const [selectedBank,setSelectedBank] = useState("bank1");
+const [sgst, setSgst] = useState(9);
+const [cgst, setCgst] = useState(9);
 
-const [productOptions,setProductOptions] = useState([]);
-const [customerOptions,setCustomerOptions] = useState([]);
+const [selectedBank, setSelectedBank] = useState("bank1");
+
+const [productOptions, setProductOptions] = useState([]);
+const [customerOptions, setCustomerOptions] = useState([]);
+
+const [editingId, setEditingId] = useState(null);
+
+/* ================= CALCULATIONS ================= */
 
 const subTotal = quantity && price ? quantity * price : 0;
-const gstTotal = subTotal + (subTotal * ((Number(sgst)+Number(cgst))/100));
+const gstAmount = subTotal * ((Number(sgst) + Number(cgst)) / 100);
+const totalAmount = subTotal + gstAmount;
 
 /* ================= FETCH PRODUCTS ================= */
-useEffect(()=>{
-  const fetchProducts = async () => {
-    try {
-      const res = await api.get("/activeitems/activeitem");
-      setProductOptions(res.data?.data || []);
-    } catch(err){
-      console.error("Product Error:", err);
-      setProductOptions([]);
-    }
-  };
-  fetchProducts();
-},[]);
+
+useEffect(() => {
+const fetchProducts = async () => {
+try {
+const res = await api.get("/items/getItems");
+setProductOptions(res.data?.data || []);
+} catch (err) {
+console.error("Product Error:", err);
+}
+};
+fetchProducts();
+}, []);
 
 /* ================= FETCH CUSTOMERS ================= */
-useEffect(()=>{
-  const fetchCustomers = async () => {
-    try {
-      const res = await api.get("/custdrop/getCustomers");
-      setCustomerOptions(res.data?.data || []);
-    } catch(err){
-      console.error("Customer Error:", err);
-      setCustomerOptions([]);
-    }
-  };
-  fetchCustomers();
-},[]);
 
-const saleData = {
-id:198,
-date:"28-02-2026",
-customerName:"PKM AUTOCOM (P) LTD",
-customerAddress:"Madurai",
-product:"70423 1333",
-quantity:12550,
-price:5.75,
-gst:18,
-subtotal:72162.5,
-gstAmount:12989.25,
-total:85151.75
+useEffect(() => {
+const fetchCustomers = async () => {
+try {
+const res = await api.get("/customers/getCustomers");
+setCustomerOptions(res.data?.data || []);
+} catch (err) {
+console.error("Customer Error:", err);
+}
 };
+fetchCustomers();
+}, []);
 
-/* ================= ADD SALES ================= */
+/* ================= ADD / UPDATE SALES ================= */
+
 const addSales = async () => {
 
-if(!productName || !customer) return;
+if (!productName || !customer) {
+alert("Customer and Product required");
+return;
+}
 
 const payload = {
-  customer_name: customer,
-  product_name: productName,
-  description: description,
-  quantity: Number(quantity),
-  price: Number(price),
-  sgst: Number(sgst),
-  cgst: Number(cgst),
-  subtotal: subTotal,
-  total: gstTotal
+customer_name: customer,
+product_name: productName,
+quantity: Number(quantity),
+price: Number(price),
+sgst: Number(sgst),
+cgst: Number(cgst),
+subtotal: subTotal,
+gst_total: gstAmount,
+total: totalAmount
 };
 
-try{
+try {
 
-  const res = await api.post("/sales/addsales", payload);
+const res = await api.post("/sales/addsales", payload);
 
-  if(res.data?.status === 1){
+if (res.data?.status === 1) {
 
-    const newSale = {
-      id: sales.length + 1,
-      customer,
-      productName,
-      description,
-      quantity,
-      price,
-      cgst,
-      subTotal,
-      gstTotal,
-      created:new Date().toLocaleDateString(),
-      updated:new Date().toLocaleDateString()
-    };
+const newSale = {
+id: res.data.Sale_ID || sales.length + 1,
+customer,
+productName,
+quantity,
+price,
+sgst,
+cgst,
+subTotal,
+gstAmount,
+totalAmount,
+created: new Date().toLocaleDateString(),
+updated: new Date().toLocaleDateString()
+};
 
-    setSales([...sales,newSale]);
+setSales([...sales, newSale]);
 
-    setCustomer("");
-    setProductName("");
-    setDescription("");
-    setQuantity("");
-    setPrice("");
-    setSgst("");
-    setCgst("");
+clearForm();
 
-  }else{
-    alert(res.data?.message || "Failed");
-  }
-
-}catch(err){
-  console.error("Sales Save Error:", err);
-  alert("Server Error");
+} else {
+alert(res.data?.message || "Failed");
 }
+
+} catch (err) {
+console.error("Sales Save Error:", err);
+alert("Server Error");
+}
+};
+
+/* ================= EDIT SALES ================= */
+
+const editSale = (item) => {
+
+setEditingId(item.id);
+setCustomer(item.customer);
+setProductName(item.productName);
+setQuantity(item.quantity);
+setPrice(item.price);
+setSgst(item.sgst);
+setCgst(item.cgst);
 
 };
 
 /* ================= DELETE SALES ================= */
+
 const deleteSale = async (id) => {
 
 const confirmDelete = window.confirm("Are you sure?");
-if(!confirmDelete) return;
+if (!confirmDelete) return;
 
-try{
-  // await api.delete(`/sales/deletesales/${id}`);
-  const updated = sales.filter((item)=>item.id !== id);
-  setSales(updated);
-}catch(err){
-  console.error("Delete Error:", err);
+try {
+
+await api.delete(`/sales/deleteSales/${id}`);
+
+const updated = sales.filter((item) => item.id !== id);
+setSales(updated);
+
+} catch (err) {
+console.error("Delete Error:", err);
 }
-
 };
 
-return(
+/* ================= CLEAR FORM ================= */
+
+const clearForm = () => {
+setCustomer("");
+setProductName("");
+setQuantity("");
+setPrice("");
+setSgst(9);
+setCgst(9);
+setEditingId(null);
+};
+
+/* ================= PDF DATA ================= */
+
+const saleData = {
+customerName: customer,
+product: productName,
+quantity,
+price,
+subtotal: subTotal,
+gstAmount,
+total: totalAmount
+};
+
+return (
 
 <div className="sales-page">
 
-<Sidebar/>
-<Topbar/>
-
-{/* HEADER */}
+<Sidebar />
+<Topbar />
 
 <div className="sales-header">
 <h1>Sales Page</h1>
@@ -161,67 +189,52 @@ return(
 
 <div className="sales-row">
 
-{/* CUSTOMER */}
 <div className="sales-group">
 <label>Customer</label>
 <select
 value={customer}
-onChange={(e)=>setCustomer(e.target.value)}
+onChange={(e) => setCustomer(e.target.value)}
 >
 <option value="">Select Customer</option>
 
-{customerOptions.map((cust, i) => (
-  <option key={i} value={cust.CustomerName}>
-    {cust.CustomerName}
-  </option>
+{customerOptions.map((cust) => (
+<option key={cust.S_No} value={cust.Cus_Name}>
+{cust.Cus_Name}
+</option>
 ))}
 
 </select>
 </div>
 
-{/* PRODUCT */}
 <div className="sales-group">
-<label>Product Name</label>
-
+<label>Product</label>
 <select
 value={productName}
-onChange={(e)=>{
-  const selected = productOptions.find(
-    (p)=>p.ItemName === e.target.value
-  );
+onChange={(e) => {
 
-  setProductName(e.target.value);
+const selected = productOptions.find(
+(p) => p.ItemName === e.target.value
+);
 
-  if(selected){
-    setPrice(selected.Price || "");
-  }
+setProductName(e.target.value);
+
+if (selected) {
+setPrice(selected.Price || "");
+}
+
 }}
 >
 <option value="">Select Product</option>
 
-{productOptions.map((option, i) => (
-  <option key={i} value={option.ItemName}>
-    {option.ItemName}
-  </option>
+{productOptions.map((item, i) => (
+<option key={i} value={item.ItemName}>
+{item.ItemName}
+</option>
 ))}
 
 </select>
-
 </div>
 
-</div>
-
-{/* DESCRIPTION */}
-
-<div className="sales-row">
-<div className="sales-group">
-<label>Description</label>
-<input
-type="text"
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
-/>
-</div>
 </div>
 
 <div className="sales-row">
@@ -231,38 +244,16 @@ onChange={(e)=>setDescription(e.target.value)}
 <input
 type="number"
 value={quantity}
-onChange={(e)=>setQuantity(e.target.value)}
+onChange={(e) => setQuantity(e.target.value)}
 />
 </div>
-
-</div>
-
-<div className="sales-row">
 
 <div className="sales-group">
 <label>Price</label>
 <input
 type="number"
 value={price}
-onChange={(e)=>setPrice(e.target.value)}
-/>
-</div>
-
-<div className="sales-group">
-<label>SGST</label>
-<input
-type="number"
-value={sgst}
-onChange={(e)=>setSgst(e.target.value)}
-/>
-</div>
-
-<div className="sales-group">
-<label>CGST</label>
-<input
-type="number"
-value={cgst}
-onChange={(e)=>setCgst(e.target.value)}
+onChange={(e) => setPrice(e.target.value)}
 />
 </div>
 
@@ -271,19 +262,38 @@ onChange={(e)=>setCgst(e.target.value)}
 <div className="sales-row">
 
 <div className="sales-group">
-<label>Sub Total Amount</label>
-<input type="text" value={subTotal} readOnly/>
+<label>SGST (%)</label>
+<input type="number" value={sgst} readOnly />
 </div>
 
 <div className="sales-group">
-<label>With GST Amount</label>
-<input type="text" value={gstTotal} readOnly/>
+<label>CGST (%)</label>
+<input type="number" value={cgst} readOnly />
+</div>
+
+</div>
+
+<div className="sales-row">
+
+<div className="sales-group">
+<label>Sub Total</label>
+<input type="text" value={subTotal} readOnly />
+</div>
+
+<div className="sales-group">
+<label>GST Amount</label>
+<input type="text" value={gstAmount} readOnly />
+</div>
+
+<div className="sales-group">
+<label>Total Amount</label>
+<input type="text" value={totalAmount} readOnly />
 </div>
 
 </div>
 
 <button className="sales-add-btn" onClick={addSales}>
-Add Sales
+{editingId ? "Update Sales" : "Add Sales"}
 </button>
 
 </div>
@@ -298,13 +308,14 @@ Add Sales
 <tr>
 <th>ID</th>
 <th>Customer</th>
-<th>Product Name</th>
-<th>Description</th>
-<th>Quantity</th>
+<th>Product</th>
+<th>Qty</th>
 <th>Price</th>
+<th>SGST</th>
 <th>CGST</th>
-<th>Sub Total Amount</th>
-<th>With GST Amount</th>
+<th>Sub Total</th>
+<th>GST</th>
+<th>Total</th>
 <th>Action</th>
 <th>Created</th>
 <th>Updated</th>
@@ -313,41 +324,50 @@ Add Sales
 
 <tbody>
 
-{sales.length === 0 ?(
-
+{sales.length === 0 ? (
 <tr>
-<td colSpan="12" className="sales-empty">
+<td colSpan="13" className="sales-empty">
 No Sales Records
 </td>
 </tr>
-
-):(sales.map((item)=>(
+) : (
+sales.map((item) => (
 <tr key={item.id}>
 <td>{item.id}</td>
 <td>{item.customer}</td>
 <td>{item.productName}</td>
-<td>{item.description}</td>
 <td>{item.quantity}</td>
 <td>{item.price}</td>
+<td>{item.sgst}</td>
 <td>{item.cgst}</td>
 <td>{item.subTotal}</td>
-<td>{item.gstTotal}</td>
+<td>{item.gstAmount}</td>
+<td>{item.totalAmount}</td>
 
 <td>
-<button className="sales-edit-btn">Edit</button>
+
+<button
+className="sales-edit-btn"
+onClick={() => editSale(item)}
+>
+Edit
+</button>
+
 <button
 className="sales-delete-btn"
-onClick={()=>deleteSale(item.id)}
+onClick={() => deleteSale(item.id)}
 >
 Delete
 </button>
+
 </td>
 
 <td>{item.created}</td>
 <td>{item.updated}</td>
 
 </tr>
-)))}
+))
+)}
 
 </tbody>
 
@@ -355,7 +375,7 @@ Delete
 
 </div>
 
-{/* BANK */}
+{/* BANK DETAILS */}
 
 <div className="bank-section">
 
@@ -366,16 +386,16 @@ Delete
 <input
 type="radio"
 name="bank"
-checked={selectedBank==="bank1"}
-onChange={()=>setSelectedBank("bank1")}
+checked={selectedBank === "bank1"}
+onChange={() => setSelectedBank("bank1")}
 />
 
 <h4>Pay To</h4>
 
-<p>Bank Name: xxxxxx</p>
-<p>Bank Account No: xxxxxx</p>
-<p>Bank IFSC Code: xxxxxx</p>
-<p>Bank Holder's Name: xxxxxx</p>
+<p>Bank Name: BANK OF BARODA</p>
+<p>Bank Account No: 75220200001446</p>
+<p>Bank IFSC Code: BARBOVJMAAN</p>
+<p>Account Holder's Name: SHREE AANDAVAR TOOLING</p>
 
 </label>
 
@@ -386,13 +406,11 @@ onChange={()=>setSelectedBank("bank1")}
 {/* PDF */}
 
 <div className="sales-pdf-btn">
-<InvoicePDF sale={saleData}/>
+<InvoicePDF sale={saleData} />
 </div>
 
 </div>
-
 );
-
 }
 
 export default SalesPage;
