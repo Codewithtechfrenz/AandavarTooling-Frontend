@@ -219,16 +219,13 @@ const Sidebar = ({ collapsed }) => {
           {!collapsed && <span>Tool Stock</span>}
         </div>
 
-
-
-
-
-
-
-
-
-
-
+        <div
+          className={`menu-item ${isActive("/dashboard/InvoiceHistory") ? "active" : ""}`}
+          onClick={() => navigate("/dashboard/InvoiceHistory")}>
+          <i className="fa fa-warehouse"></i>
+          {!collapsed && <span>Invoice History</span>}
+        </div>
+          </div>
 
 
 
@@ -240,7 +237,7 @@ const Sidebar = ({ collapsed }) => {
           <i className="fa fa-chart-bar"></i>
           {!collapsed && <span>Reports</span>}
         </div>
-      </div>
+     
 
       {/* ===== FOOTER ===== */}
       <div className="sidebar-footer">

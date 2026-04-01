@@ -20,7 +20,7 @@ import ToolInwardEntry from "./Components/ToolInwardEntry";
 import DeliveryChallan from "./Components/Deliverychallan";
 import Returndeliverychallan from "./Components/Returndeliverychallan";
 import Toolstack from "./Components/Toolstack";
-
+import InvoiceHistory from "./Components/InvoiceHistory";
 
 
 function App() {
@@ -47,6 +47,7 @@ function App() {
          <Route path="/dashboard/DeliveryChallan" element={<DeliveryChallan />} />
          <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
           <Route path="/dashboard/Toolstack" element={<Toolstack />} />
+          <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
 
       </Routes>
     </BrowserRouter>
