@@ -491,7 +491,7 @@ function InvoiceTemplate(props) {
           </div>
 
           <div className="authorized">
-            <b>____________________</b>
+            <p>____________________</p>
             <b>Authorized Signatory</b>
             <p>M. PRABAHARAN</p>
           </div>
@@ -499,7 +499,7 @@ function InvoiceTemplate(props) {
         </div>
 
         <div className="footer-right">
-          <b>___________________________</b>
+          <p>___________________________</p>
           <b>Receiver's Seal & Signature</b>
         </div>
 
