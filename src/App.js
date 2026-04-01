@@ -52,7 +52,7 @@ function App() {
         <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
 
         {/* FIXED ROUTE */}
-        {/* <Route path="/dashboard/invoice/:invoiceNo" element={<InvoiceTemplate />} /> */}
+        <Route path="/dashboard/invoice/:invoiceNo" element={<InvoiceTemplate />} />
       </Routes>
     </BrowserRouter>
   );
