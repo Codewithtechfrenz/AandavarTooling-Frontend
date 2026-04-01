@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Axios instance with baseURL
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import InvoicePDF from "../Components/InvoicePDF";
@@ -8,14 +8,13 @@ import "../CSS/SalesPage.css";
 function SalesPage() {
   const [invoiceNo, setInvoiceNo] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
+
   const [customer, setCustomer] = useState({});
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
 
   const [itemList, setItemList] = useState([]);
-  const [editingItemIndex, setEditingItemIndex] = useState(null);
-
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
 
@@ -24,156 +23,152 @@ function SalesPage() {
 
   const [loading, setLoading] = useState(false);
 
-  /* ================= AUTO LOAD ================= */
+  /* LOAD PAGE */
   useEffect(() => {
-    generateInvoice();
+    getInvoiceNumber();
     fetchProducts();
     fetchCustomers();
   }, []);
 
-  /* ================= GENERATE INVOICE ================= */
-  const generateInvoice = () => {
-    setInvoiceNo("INV-" + Date.now());
-    setInvoiceDate(new Date().toISOString().split("T")[0]);
+  /* GET INVOICE NUMBER */
+  const getInvoiceNumber = async () => {
+    try {
+      const res = await api.get("/sales/getInvoiceNumber");
+
+      if (res.data.status === 1) {
+        setInvoiceNo(res.data.invoiceNo);
+      }
+
+      setInvoiceDate(new Date().toISOString().split("T")[0]);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  /* ================= FETCH PRODUCTS ================= */
+  /* FETCH PRODUCTS */
   const fetchProducts = async () => {
     try {
       const res = await api.get("/items/getItems");
-      setProductOptions(res.data?.data || []);
+      setProductOptions(res.data.data || []);
     } catch (err) {
-      console.error("Product API Error:", err);
+      console.error(err);
     }
   };
 
-  /* ================= FETCH CUSTOMERS ================= */
+  /* FETCH CUSTOMERS */
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/customers/getCustomers");
-      setCustomerOptions(res.data?.data || []);
+      setCustomerOptions(res.data.data || []);
     } catch (err) {
-      console.error("Customer API Error:", err);
+      console.error(err);
     }
   };
 
-  /* ================= GET CUSTOMER DETAILS ================= */
+  /* GET CUSTOMER DETAILS */
   const handleCustomerChange = async (id) => {
     try {
-      const res = await api.post("/customers/getCustomer", {
-        S_No: id,
-      });
+      const res = await api.post("/customers/getCustomer", { S_No: id });
 
-      if (res.data?.status === 1) {
+      if (res.data.status === 1) {
         setCustomer(res.data.data);
       }
     } catch (err) {
-      console.error("Customer Fetch Error:", err);
+      console.error(err);
     }
   };
 
-  /* ================= ADD/UPDATE ITEM IN GRID ================= */
-  const addItem = () => {
+  /* ADD ITEM + SAVE TO DATABASE */
+  const addItem = async () => {
     if (!productName || !quantity || !price) {
-      alert("Please fill product, quantity, and price");
+      alert("Enter product details");
       return;
     }
 
-    const newItem = {
-      productName,
-      quantity: Number(quantity),
-      price: Number(price),
-      subTotal: Number(quantity) * Number(price),
-      gstAmount:
-        Number(quantity) * Number(price) * ((sgst + cgst) / 100),
-      total:
-        Number(quantity) *
-        Number(price) *
-        (1 + (sgst + cgst) / 100),
-    };
-
-    if (editingItemIndex !== null) {
-      const updatedItems = [...itemList];
-      updatedItems[editingItemIndex] = newItem;
-      setItemList(updatedItems);
-      setEditingItemIndex(null);
-    } else {
-      setItemList([...itemList, newItem]);
-    }
-
-    setProductName("");
-    setQuantity("");
-    setPrice("");
-  };
-
-  const editItem = (index) => {
-    const item = itemList[index];
-    setProductName(item.productName);
-    setQuantity(item.quantity);
-    setPrice(item.price);
-    setEditingItemIndex(index);
-  };
-
-  const deleteItem = (index) => {
-    const updatedItems = itemList.filter((_, i) => i !== index);
-    setItemList(updatedItems);
-  };
-
-  /* ================= TOTALS ================= */
-  const subTotal = itemList.reduce((acc, item) => acc + item.subTotal, 0);
-  const gstAmount = itemList.reduce((acc, item) => acc + item.gstAmount, 0);
-  const totalAmount = itemList.reduce((acc, item) => acc + item.total, 0);
-
-  /* ================= CLEAR FORM ================= */
-  const clearForm = () => {
-    setCustomer({});
-    setProductName("");
-    setQuantity("");
-    setPrice("");
-    setEditingItemIndex(null);
-    setItemList([]);
-    generateInvoice();
-  };
-
-  /* ================= SAVE INVOICE TO BACKEND ================= */
-  const saveInvoice = async () => {
-    if (!customer?.Cus_Name || itemList.length === 0) {
-      alert("Select customer and add at least one item");
+    if (!customer?.Cus_Name) {
+      alert("Select customer first");
       return;
     }
 
     setLoading(true);
 
     try {
-      for (const item of itemList) {
-        const payload = {
-          Invoice_No: invoiceNo,
-          Invoice_Date: invoiceDate,
-          Customer_Name: customer.Cus_Name,
-          Product_Name: item.productName,
-          Quantity: item.quantity,
-          Price: item.price,
-          SGST: sgst,
-          CGST: cgst,
-          Sub_Total: item.subTotal,
-          GST_Total: item.gstAmount,
-          Total_Amount: item.total,
-        };
+      const subTotal = Number(quantity) * Number(price);
+      const gstAmount = subTotal * ((sgst + cgst) / 100);
+      const total = subTotal + gstAmount;
 
-        await api.post("/sales/addsales", payload);
-      }
+      await api.post("/sales/addsales", {
+        Invoice_No: invoiceNo,
+        Invoice_Date: invoiceDate,
+        Customer_Name: customer.Cus_Name,
+        Customer_Address: customer.Cus_Address,
+        Customer_Phone: customer.Cus_Phno,
+        Customer_GSTIN: customer.Cus_GSTIN,
+        Product_Name: productName,
+        Quantity: quantity,
+        Price: price,
+        SGST: sgst,
+        CGST: cgst,
+        Sub_Total: subTotal,
+        GST_Total: gstAmount,
+        Total_Amount: total,
+      });
 
-      alert("Invoice saved successfully!");
-      clearForm();
-    } catch (err) {
-      console.error("Save Error:", err);
-      alert("Error saving invoice");
-    } finally {
-      setLoading(false);
+      const newItem = {
+        productName,
+        quantity,
+        price,
+        subTotal,
+        gstAmount,
+        total,
+      };
+
+      setItemList([...itemList, newItem]);
+
+      setProductName("");
+      setQuantity("");
+      setPrice("");
+    } catch (error) {
+      console.error(error);
+      alert("Item save failed");
     }
+
+    setLoading(false);
   };
 
-  /* ================= PDF DATA ================= */
+  /* DELETE ITEM (ONLY FRONTEND) */
+  const deleteItem = (index) => {
+    const updated = itemList.filter((_, i) => i !== index);
+    setItemList(updated);
+  };
+
+  /* TOTALS */
+  const subTotal = itemList.reduce((sum, item) => sum + item.subTotal, 0);
+  const gstAmount = itemList.reduce((sum, item) => sum + item.gstAmount, 0);
+  const totalAmount = itemList.reduce((sum, item) => sum + item.total, 0);
+
+  /* CLEAR FORM */
+  const clearForm = () => {
+    setCustomer({});
+    setProductName("");
+    setQuantity("");
+    setPrice("");
+    setItemList([]);
+    getInvoiceNumber();
+  };
+
+  /* SAVE INVOICE (NO API NOW) */
+  const saveInvoice = () => {
+    if (itemList.length === 0) {
+      alert("No items added");
+      return;
+    }
+
+    alert("Invoice Completed Successfully");
+    clearForm();
+  };
+
+  /* PDF DATA */
   const saleData = {
     invoiceNo,
     invoiceDate,
@@ -193,18 +188,21 @@ function SalesPage() {
       <Topbar />
 
       <div className="sales-header">
-        <h1>Sales Page</h1>
+        <h1>Sales</h1>
       </div>
 
       <div className="sales-form">
         <div className="sales-row">
           <div className="sales-group">
             <label>Invoice No</label>
-            <input value={invoiceNo} readOnly />
+            <input
+              value={invoiceNo}
+              onChange={(e) => setInvoiceNo(e.target.value)}
+            />
           </div>
 
           <div className="sales-group">
-            <label>Invoice Date</label>
+            <label>Date</label>
             <input
               type="date"
               value={invoiceDate}
@@ -265,81 +263,51 @@ function SalesPage() {
           </div>
         </div>
 
-        <button className="sales-add-btn" onClick={addItem} disabled={loading}>
-          {editingItemIndex !== null ? "Update Item" : "Add Item"}
+        <button className="add-btn" onClick={addItem}>
+          {loading ? "Saving..." : "Add Item"}
         </button>
 
-        <div className="sales-table-container">
-          <h2>Invoice Items</h2>
+        <table className="sales-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Subtotal</th>
+              <th>GST</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
 
-          <table className="sales-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Subtotal</th>
-                <th>GST</th>
-                <th>Total</th>
-                <th>Action</th>
+          <tbody>
+            {itemList.map((item, index) => (
+              <tr key={index}>
+                <td>{item.productName}</td>
+                <td>{item.quantity}</td>
+                <td>{item.price}</td>
+                <td>{item.subTotal}</td>
+                <td>{item.gstAmount}</td>
+                <td>{item.total}</td>
+                <td>
+                  <button onClick={() => deleteItem(index)}>Delete</button>
+                </td>
               </tr>
-            </thead>
+            ))}
+          </tbody>
+        </table>
 
-            <tbody>
-              {itemList.length === 0 ? (
-                <tr>
-                  <td colSpan="7">No items added</td>
-                </tr>
-              ) : (
-                itemList.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.productName}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.price}</td>
-                    <td>{item.subTotal}</td>
-                    <td>{item.gstAmount}</td>
-                    <td>{item.total}</td>
-                    <td>
-                      <button
-                        className="edit-btn"
-                        onClick={() => editItem(index)}
-                        disabled={loading}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="delete-btn"
-                        onClick={() => deleteItem(index)}
-                        disabled={loading}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-
-          <div className="sales-totals">
-            <p>Subtotal: {subTotal}</p>
-            <p>GST: {gstAmount}</p>
-            <p>Total: {totalAmount}</p>
-          </div>
-
-          <div className="sales-pdf-btn">
-            <InvoicePDF sale={saleData} />
-          </div>
-
-          <button
-            className="sales-save-btn"
-            onClick={saveInvoice}
-            disabled={loading}
-          >
-            {loading ? "Saving..." : "Save Invoice"}
-          </button>
+        <div className="totals">
+          <p>Subtotal: {subTotal}</p>
+          <p>GST: {gstAmount}</p>
+          <p>Total: {totalAmount}</p>
         </div>
+
+        <InvoicePDF sale={saleData} />
+
+        <button className="save-btn" onClick={saveInvoice}>
+          Finish Invoice
+        </button>
       </div>
     </div>
   );
