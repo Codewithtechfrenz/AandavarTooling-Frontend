@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../api"; // Assuming you have an api.js for backend calls
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import InvoicePDF from "../Components/InvoicePDF";
@@ -39,7 +40,7 @@ function SalesPage() {
   /* ================= FETCH PRODUCTS ================= */
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8001/items/getItems");
+      const res = await fetch("/items/getItems");
       const data = await res.json();
       setProductOptions(data.data || []);
     } catch (err) {
@@ -50,7 +51,7 @@ function SalesPage() {
   /* ================= FETCH CUSTOMERS ================= */
   const fetchCustomers = async () => {
     try {
-      const res = await fetch("http://localhost:8001/customers/getCustomers");
+      const res = await fetch("/customers/getCustomers");
       const data = await res.json();
       setCustomerOptions(data.data || []);
     } catch (err) {
@@ -61,7 +62,7 @@ function SalesPage() {
   /* ================= GET CUSTOMER DETAILS ================= */
   const handleCustomerChange = async (id) => {
     try {
-      const res = await fetch("http://localhost:8001/customers/getCustomer", {
+      const res = await fetch("/customers/getCustomer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ S_No: id }),
@@ -157,7 +158,7 @@ function SalesPage() {
           Total_Amount: item.total,
         };
  
-        await fetch("http://localhost:8001/sales/addsales", {
+        await fetch("/sales/addsales", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
