@@ -157,15 +157,15 @@ function InwardEntry() {
             <label>Item Name</label>
 
 
-            
+
             <select
-              value={selectedItem?.ItemID || ""}
+              value={selectedItem?.ItemName || ""}
               onChange={handleItemChange}
             >
               <option value="">Select Item</option>
               {products.length > 0 ? (
                 products.map((item) => (
-                  <option key={item.ItemID} value={item.ItemID}>
+                  <option key={item.ItemName} value={item.ItemName}>
                     {item.ItemName}
                   </option>
                 ))
