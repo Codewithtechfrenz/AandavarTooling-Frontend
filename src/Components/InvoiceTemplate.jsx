@@ -9,13 +9,15 @@ function InvoiceTemplate() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetchInvoice();
-  }, []);
+    if (invoiceNo) {
+      fetchInvoice();
+    }
+  }, [invoiceNo]);
 
   const fetchInvoice = async () => {
     try {
       const res = await axios.get(
-        `https://admin.shreeaandavartooling.in/backend/sales/invoice/${invoiceNo}`
+        `https://admin.shreeaandavartooling.in/backend/sales/invoice/${encodeURIComponent(invoiceNo)}`
       );
 
       if (res.data.status === 1) {
@@ -23,7 +25,7 @@ function InvoiceTemplate() {
         setItems(res.data.items);
       }
     } catch (error) {
-      console.log(error);
+      console.log("Invoice fetch error:", error);
     }
   };
 
@@ -31,21 +33,18 @@ function InvoiceTemplate() {
 
   return (
     <div id="invoice" className="invoice-container">
-
       <img
         src="/AandavarLogo2.png"
         alt="Watermark Logo"
         className="invoice-watermark"
       />
 
-      {/* TOP BAR */}
       <div className="top-bar">
         <div>📞 9944130610</div>
         <div>✉ prabusangari690@gmail.com</div>
         <div>📍 5/520 D, kabeer Nagar MasthanPatti Madurai - 20</div>
       </div>
 
-      {/* COMPANY HEADER */}
       <div className="company-header">
         <div className="company-left">
           <div className="logo-text-wrapper">
@@ -63,7 +62,6 @@ function InvoiceTemplate() {
         </div>
       </div>
 
-      {/* BILL DETAILS */}
       <div className="bill-details">
         <div className="bill-left">
           <h4>Bill To</h4>
@@ -81,7 +79,6 @@ function InvoiceTemplate() {
         </div>
       </div>
 
-      {/* PRODUCT TABLE */}
       <table className="invoice-table">
         <thead>
           <tr>
@@ -110,7 +107,6 @@ function InvoiceTemplate() {
         </tbody>
       </table>
 
-      {/* TOTAL */}
       <div className="payment-wrapper">
         <div className="payto">
           <h4>Pay To:</h4>
@@ -139,7 +135,6 @@ function InvoiceTemplate() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }

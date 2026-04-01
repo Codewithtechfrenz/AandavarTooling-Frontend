@@ -23,13 +23,14 @@ import Toolstack from "./Components/Toolstack";
 import InvoiceHistory from "./Components/InvoiceHistory";
 import InvoiceTemplate from "./Components/InvoiceTemplate";
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+
         <Route path="/dashboard/*" element={<Dashboard />} />
+
         <Route path="/dashboard/categories" element={<CategoryMaster />} />
         <Route path="/dashboard/machines" element={<MachineMaster />} />
         <Route path="/dashboard/workers" element={<WorkerMaster />} />
@@ -49,8 +50,9 @@ function App() {
         <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
         <Route path="/dashboard/Toolstack" element={<Toolstack />} />
         <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
-        <Route path="/invoice/:invoiceNo" element={<InvoiceTemplate />} />
 
+        {/* FIXED ROUTE */}
+        <Route path="/dashboard/invoice/:invoiceNo" element={<InvoiceTemplate />} />
       </Routes>
     </BrowserRouter>
   );
