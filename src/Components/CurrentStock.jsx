@@ -15,7 +15,7 @@ function CurrentStock() {
     setLoading(true);
 
     try {
-      const res = await api.get("/currentstock/getCurrentStock");
+      const res = await api.get("/currentstock/getCurrentStocks");
 
       if (res.data.status === 1 && Array.isArray(res.data.data)) {
         const formatted = res.data.data.map((item) => ({

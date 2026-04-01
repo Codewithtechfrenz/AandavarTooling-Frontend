@@ -21,6 +21,7 @@ import DeliveryChallan from "./Components/Deliverychallan";
 import Returndeliverychallan from "./Components/Returndeliverychallan";
 import Toolstack from "./Components/Toolstack";
 import InvoiceHistory from "./Components/InvoiceHistory";
+import InvoiceTemplate from "./Components/InvoiceTemplate";
 
 
 function App() {
@@ -44,10 +45,11 @@ function App() {
         <Route path="/dashboard/SalesPage" element={<SalesPage />} />
         <Route path="/dashboard/ToolMaster" element={<ToolMaster />} />
         <Route path="/dashboard/ToolInwardEntry" element={<ToolInwardEntry />} />
-         <Route path="/dashboard/DeliveryChallan" element={<DeliveryChallan />} />
-         <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
+        <Route path="/dashboard/DeliveryChallan" element={<DeliveryChallan />} />
+        <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
         <Route path="/dashboard/Toolstack" element={<Toolstack />} />
-          <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
+        <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
+        <Route path="/invoice/:invoiceNo" element={<InvoiceTemplate />} />
 
       </Routes>
     </BrowserRouter>

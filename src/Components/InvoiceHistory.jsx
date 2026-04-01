@@ -5,6 +5,7 @@ import Topbar from "../Components/Topbar";
 import { useNavigate } from "react-router-dom";
 import "../CSS/SalesPage.css";
 
+
 function InvoiceHistory() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
