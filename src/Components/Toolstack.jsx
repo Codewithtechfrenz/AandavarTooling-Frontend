@@ -6,12 +6,14 @@ import "../CSS/CurrentStock.css";
 
 function ToolStack() {
   const [stockList, setStockList] = useState([]);
+  const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   /* ========== FETCH TOOL CURRENT STOCK FROM API ========== */
   const fetchStock = async () => {
     try {
-      const res = await api.get("/Toolstock/getToolStock"); // ✅ use api
+      const res = await api.get("/Toolstock/getToolStock");
 
       if (res.data.status === 1 && Array.isArray(res.data.data)) {
         const formatted = res.data.data.map((item) => ({
@@ -25,12 +27,15 @@ function ToolStack() {
         }));
 
         setStockList(formatted);
+        setFilteredList(formatted);
       } else {
         setStockList([]);
+        setFilteredList([]);
       }
     } catch (err) {
       console.error("Error fetching tool stock:", err);
       setStockList([]);
+      setFilteredList([]);
     } finally {
       setLoading(false);
     }
@@ -40,10 +45,25 @@ function ToolStack() {
     fetchStock();
   }, []);
 
+  /* ========== HANDLE SEARCH ========== */
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    const filtered = stockList.filter(
+      (item) =>
+        item.toolName.toLowerCase().includes(term) ||
+        item.uom.toLowerCase().includes(term) ||
+        item.id.toString().includes(term)
+    );
+
+    setFilteredList(filtered);
+  };
+
   /* DELETE (UI only, optional) */
   const handleDelete = (index) => {
-    const data = stockList.filter((_, i) => i !== index);
-    setStockList(data);
+    const data = filteredList.filter((_, i) => i !== index);
+    setFilteredList(data);
   };
 
   return (
@@ -57,6 +77,16 @@ function ToolStack() {
           <h1>Tool Stock</h1>
           <p>Real-time tool inventory levels</p>
         </div>
+      </div>
+
+      {/* SEARCH */}
+      <div className="cs-search">
+        <input
+          type="text"
+          placeholder="Search by Tool Name, UOM or ID"
+          value={searchTerm}
+          onChange={handleSearch}
+        />
       </div>
 
       {/* TABLE */}
@@ -77,14 +107,14 @@ function ToolStack() {
             </thead>
 
             <tbody>
-              {stockList.length === 0 ? (
+              {filteredList.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="cs-empty">
                     No Tool Stock Available
                   </td>
                 </tr>
               ) : (
-                stockList.map((item, index) => (
+                filteredList.map((item, index) => (
                   <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{item.toolName}</td>
