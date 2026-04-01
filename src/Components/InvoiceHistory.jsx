@@ -36,7 +36,7 @@ function InvoiceHistory() {
 
   /* ================= VIEW INVOICE ================= */
   const viewInvoice = (invoiceNo) => {
-    navigate(`/invoice-view/${invoiceNo}`);
+    navigate(`/dashboard/invoice/${invoiceNo}`);
   };
 
   return (

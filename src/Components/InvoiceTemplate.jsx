@@ -276,7 +276,7 @@ import "../CSS/InvoiceTemplate.css";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
-/* ================= NUMBER TO WORDS ================= */
+/* NUMBER TO WORDS */
 function numberToWords(num) {
   const a = [
     "", "One", "Two", "Three", "Four", "Five", "Six",
@@ -302,7 +302,15 @@ function numberToWords(num) {
     return inWords(Math.floor(n / 10000000)) + " Crore " + inWords(n % 10000000);
   };
 
-  return inWords(num) + " Rupees Only";
+  const rupees = Math.floor(num);
+  const paise = Math.round((num - rupees) * 100);
+
+  let result = inWords(rupees) + " Rupees";
+  if (paise > 0) {
+    result += " and " + inWords(paise) + " Paise";
+  }
+
+  return result + " Only";
 }
 
 function InvoiceTemplate(props) {
@@ -321,7 +329,9 @@ function InvoiceTemplate(props) {
   const fetchInvoice = async () => {
     try {
       const res = await axios.get(
-        `https://admin.shreeaandavartooling.in/backend/sales/invoice/${encodeURIComponent(invoiceNo)}`
+        `https://admin.shreeaandavartooling.in/backend/sales/invoice/${encodeURIComponent(
+          invoiceNo
+        )}`
       );
 
       if (res.data.status === 1) {
@@ -335,27 +345,30 @@ function InvoiceTemplate(props) {
 
   if (!invoice) return <div>Loading Invoice...</div>;
 
-  const amountInWords = numberToWords(
-    Math.round(invoice.Total_Amount || 0)
-  );
+  /* GST SPLIT */
+  const cgst = (invoice.GST_Total || 0) / 2;
+  const sgst = (invoice.GST_Total || 0) / 2;
+
+  const amountInWords = numberToWords(invoice.Total_Amount || 0);
 
   return (
     <div id="invoice" className="invoice-container">
 
+      {/* Watermark */}
       <img
         src="/AandavarLogo2.png"
-        alt="Watermark Logo"
+        alt="Watermark"
         className="invoice-watermark"
       />
 
-      {/* TOP BAR */}
+      {/* Top bar */}
       <div className="top-bar">
         <div>📞 9944130610</div>
         <div>✉ prabusangari690@gmail.com</div>
         <div>📍 5/520 D, Kabeer Nagar MasthanPatti Madurai - 20</div>
       </div>
 
-      {/* COMPANY HEADER */}
+      {/* Header */}
       <div className="company-header">
         <div className="company-left">
           <div className="logo-text-wrapper">
@@ -363,7 +376,7 @@ function InvoiceTemplate(props) {
             <div className="company-info">
               <h2>SHREE AANDAVAR TOOLING</h2>
               <p>GSTIN: 33BYPPP7144R1Z0</p>
-              <p>State: 33-Tamil Nadu</p>
+              <p>State: 33 - Tamil Nadu</p>
             </div>
           </div>
         </div>
@@ -373,61 +386,61 @@ function InvoiceTemplate(props) {
         </div>
       </div>
 
-      {/* BILL DETAILS */}
+      {/* Bill Details */}
       <div className="bill-details">
         <div className="bill-left">
           <h4>Bill To</h4>
-          <p><b>Company Name: {invoice.Customer_Name}</b></p>
-          <p>Address: {invoice.Customer_Address}</p>
-          <p>Contact No: {invoice.Customer_Phone}</p>
-          <p>GSTIN Number: {invoice.Customer_GSTIN}</p>
-          <p>State: Tamil Nadu</p>
+          <p><b>{invoice.Customer_Name}</b></p>
+          <p>{invoice.Customer_Address}</p>
+          <p>Phone: {invoice.Customer_Phone}</p>
+          <p>GSTIN: {invoice.Customer_GSTIN}</p>
         </div>
 
         <div className="bill-right">
-          <p>Invoice No: {invoice.Invoice_No}</p>
-          <p>Date: {invoice.Invoice_Date}</p>
-          <p>Place of Supply: Tamil Nadu</p>
+          <p><b>Invoice No:</b> {invoice.Invoice_No}</p>
+          <p>
+            <b>Date:</b>{" "}
+            {new Date(invoice.Invoice_Date).toLocaleDateString()}
+          </p>
+          <p><b>Place:</b> Tamil Nadu</p>
         </div>
       </div>
 
-      {/* PRODUCT TABLE */}
+      {/* Items Table */}
       <table className="invoice-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Item Name</th>
-            <th>HSN/SAC</th>
             <th>Quantity</th>
-            <th>Price/unit</th>
-            <th>GST</th>
-            <th>Amount</th>
+            <th>Price</th>
+            <th>GST %</th>
+            <th>Total</th>
           </tr>
         </thead>
 
         <tbody>
           {items.map((item, index) => (
-            <tr key={index}>
+            <tr key={item.Sale_ID}>
               <td>{index + 1}</td>
               <td>{item.Product_Name}</td>
-              <td>-</td>
               <td>{item.Quantity}</td>
               <td>{item.Price}</td>
-              <td>{item.SGST + item.CGST}%</td>
+              <td>{item.CGST + item.SGST}%</td>
               <td>{item.Total_Amount}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* TOTAL SECTION */}
+      {/* Payment + Total */}
       <div className="payment-wrapper">
         <div className="payto">
-          <h4>Pay To:</h4>
-          <p>Bank Name: BANK OF BARODA</p>
-          <p>Bank Account No: 75220200001446</p>
-          <p>Bank IFSC Code: BARBOVJMAAN</p>
-          <p>Account Holder's Name: SHREE AANDAVAR TOOLING</p>
+          <h4>Bank Details</h4>
+          <p>Bank: BANK OF BARODA</p>
+          <p>A/C No: 75220200001446</p>
+          <p>IFSC: BARBOVJMAAN</p>
+          <p>Name: SHREE AANDAVAR TOOLING</p>
         </div>
 
         <div className="total-box">
@@ -440,12 +453,12 @@ function InvoiceTemplate(props) {
 
               <tr>
                 <td>CGST</td>
-                <td>{invoice.CGST}</td>
+                <td>{cgst.toFixed(2)}</td>
               </tr>
 
               <tr>
                 <td>SGST</td>
-                <td>{invoice.SGST}</td>
+                <td>{sgst.toFixed(2)}</td>
               </tr>
 
               <tr>
@@ -462,35 +475,31 @@ function InvoiceTemplate(props) {
         </div>
       </div>
 
-      {/* FOOTER SECTION */}
+      {/* Footer */}
       <div className="invoice-footer">
 
-        {/* LEFT SIDE */}
         <div className="footer-left">
 
           <div className="amount-words">
-            <p><b>Invoice Amount In Words</b></p>
+            <b>Invoice Amount In Words</b>
             <p>{amountInWords}</p>
           </div>
 
           <div className="terms">
             <p>Thank you for doing business with us.</p>
-            <p>For:SHREE AANDAVAR TOOLING</p>
-           
-           
+            <p>For: SHREE AANDAVAR TOOLING</p>
           </div>
 
           <div className="authorized">
-            <p><b>Authorized Signatory</b></p>
+            <b>Authorized Signatory</b>
             <p>M. PRABAHARAN</p>
           </div>
 
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="footer-right">
-          <p><b>Receiver's Seal & Signature</b></p>
-          <div className="seal-box">$</div>
+          <b>Receiver's Seal & Signature</b>
+          <p>___________________________</p>
         </div>
 
       </div>

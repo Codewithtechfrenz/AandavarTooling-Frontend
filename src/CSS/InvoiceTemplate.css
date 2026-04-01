@@ -330,3 +330,20 @@
   font-size: 30px;
   margin-top: 10px;
 }
+
+
+
+
+.authorized {
+  margin-top: 70px;
+}
+
+.seal-box {
+  height: 120px;
+  border: 2px dashed #000;
+  margin-top: 10px;
+}
+
+.total-row {
+  font-weight: bold;
+}
