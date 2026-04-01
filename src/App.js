@@ -46,7 +46,7 @@ function App() {
         <Route path="/dashboard/ToolInwardEntry" element={<ToolInwardEntry />} />
          <Route path="/dashboard/DeliveryChallan" element={<DeliveryChallan />} />
          <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
-          <Route path="/dashboard/Toolstack" element={<Toolstack />} />
+        <Route path="/dashboard/Toolstack" element={<Toolstack />} />
           <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
 
       </Routes>
