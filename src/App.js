@@ -20,7 +20,7 @@ import ToolInwardEntry from "./Components/ToolInwardEntry";
 import DeliveryChallan from "./Components/Deliverychallan";
 import Returndeliverychallan from "./Components/Returndeliverychallan";
 import Toolstack from "./Components/Toolstack";
-import InvoiceHistory from "./Components/InvoiceHistory";
+import   from "./Components/InvoiceHistory";
 
 
 function App() {
