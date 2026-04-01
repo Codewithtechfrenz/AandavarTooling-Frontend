@@ -10,6 +10,7 @@ function InwardEntry() {
 
   /* STATES */
   const [products, setProducts] = useState([]);
+  const [itemCodes, setItemCodes] = useState([]);
   const [uoms, setUoms] = useState([]);
 
   const [selectedItem, setSelectedItem] = useState(null);
@@ -18,33 +19,40 @@ function InwardEntry() {
   const [qty, setQty] = useState("");
   const [rate, setRate] = useState("");
 
+  /* HELPER TO EXTRACT ARRAY FROM API RESPONSE */
+  const extractList = (res) => {
+    if (Array.isArray(res.data)) return res.data;
+    if (res.data?.status === 1 && Array.isArray(res.data.data)) return res.data.data;
+    if (Array.isArray(res.data?.data)) return res.data.data;
+    return [];
+  };
+
   /* LOAD DATA */
   useEffect(() => {
     loadProducts();
+    loadItemCodes();
     loadUoms();
   }, []);
 
-  /* FETCH PRODUCTS */
+  /* FETCH ITEM NAMES */
   const loadProducts = async () => {
     try {
-      const res = await api.get("/activeitems/activeitem");
-
-      console.log("Products API Response:", res);
-
-      let list = [];
-
-      if (Array.isArray(res.data)) {
-        list = res.data;
-      } else if (Array.isArray(res.data.data)) {
-        list = res.data.data;
-      } else if (res.data.status === 1 && Array.isArray(res.data.data)) {
-        list = res.data.data;
-      }
-
-      setProducts(list);
+      const res = await api.get("/items/activeitem");
+      setProducts(extractList(res));
     } catch (error) {
       console.error("Product API Error:", error);
       setProducts([]);
+    }
+  };
+
+  /* FETCH ITEM CODES */
+  const loadItemCodes = async () => {
+    try {
+      const res = await api.get("/items/activeitemcode");
+      setItemCodes(extractList(res));
+    } catch (error) {
+      console.error("Item Code API Error:", error);
+      setItemCodes([]);
     }
   };
 
@@ -52,20 +60,7 @@ function InwardEntry() {
   const loadUoms = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-
-      console.log("UOM API Response:", res);
-
-      let list = [];
-
-      if (Array.isArray(res.data)) {
-        list = res.data;
-      } else if (Array.isArray(res.data.data)) {
-        list = res.data.data;
-      } else if (res.data.status === 1 && Array.isArray(res.data.data)) {
-        list = res.data.data;
-      }
-
-      setUoms(list);
+      setUoms(extractList(res));
     } catch (error) {
       console.error("UOM API Error:", error);
       setUoms([]);
@@ -75,11 +70,13 @@ function InwardEntry() {
   /* ITEM NAME CHANGE */
   const handleItemChange = (e) => {
     const id = e.target.value;
+    if (!id) {
+      setSelectedItem(null);
+      setItemCode("");
+      return;
+    }
 
-    const item = products.find(
-      (p) => String(p.ItemID) === String(id)
-    );
-
+    const item = products.find((p) => String(p.ItemID) === String(id));
     if (item) {
       setSelectedItem(item);
       setItemCode(item.ItemCode);
@@ -89,29 +86,31 @@ function InwardEntry() {
   /* ITEM CODE CHANGE */
   const handleCodeChange = (e) => {
     const code = e.target.value;
+    setItemCode(code);
 
-    const item = products.find(
-      (p) => p.ItemCode === code
-    );
+    if (!code) {
+      setSelectedItem(null);
+      return;
+    }
 
+    const item = products.find((p) => p.ItemCode === code);
     if (item) {
       setSelectedItem(item);
-      setItemCode(item.ItemCode);
     }
   };
 
   /* SUBMIT */
   const handleSubmit = async () => {
-    if (!selectedItem || !qty || !rate || !uom) {
-      alert("Please fill all fields");
+    if (!selectedItem || !uom || !qty || isNaN(qty) || !rate || isNaN(rate)) {
+      alert("Please fill all fields correctly");
       return;
     }
 
     const payload = {
       ItemID: selectedItem.ItemID,
-      ItemName: selectedItem.ItemName,
-      ItemCode: selectedItem.ItemCode,
-      UOMName: uom,
+      ItemName: selectedItem.ItemName.trim(),
+      ItemCode: itemCode.trim(),
+      UOMName: uom.trim(),
       Quantity: Number(qty),
       Rate: Number(rate),
       Status: "Completed",
@@ -119,11 +118,8 @@ function InwardEntry() {
 
     try {
       const res = await api.post("/inward/iteminward", payload);
-
       alert(res.data.message || "Saved successfully");
-
       resetForm();
-
       navigate("/current-stock", { state: { refresh: true } });
     } catch (error) {
       console.error("Submit Error:", error);
@@ -151,27 +147,17 @@ function InwardEntry() {
 
       <div className="ie-form">
 
+        {/* ROW 1 */}
         <div className="ie-row">
-
           <div className="ie-group">
             <label>Item Name</label>
-
-
-
-            <select
-              value={selectedItem?.ItemName || ""}
-              onChange={handleItemChange}
-            >
+            <select value={selectedItem?.ItemID || ""} onChange={handleItemChange}>
               <option value="">Select Item</option>
-              {products.length > 0 ? (
-                products.map((item) => (
-                  <option key={item.ItemName} value={item.ItemName}>
-                    {item.ItemName}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No Items Found</option>
-              )}
+              {products.map((item) => (
+                <option key={item.ItemID} value={item.ItemID}>
+                  {item.ItemName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -179,35 +165,26 @@ function InwardEntry() {
             <label>Item Code</label>
             <select value={itemCode} onChange={handleCodeChange}>
               <option value="">Select Code</option>
-              {products.length > 0 ? (
-                products.map((item) => (
-                  <option key={item.ItemCode} value={item.ItemCode}>
-                    {item.ItemCode}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No Codes Found</option>
-              )}
+              {itemCodes.map((item) => (
+                <option key={item.ItemCode} value={item.ItemCode}>
+                  {item.ItemCode}
+                </option>
+              ))}
             </select>
           </div>
-
         </div>
 
+        {/* ROW 2 */}
         <div className="ie-row">
-
           <div className="ie-group">
             <label>UOM</label>
             <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
-              {uoms.length > 0 ? (
-                uoms.map((u, i) => (
-                  <option key={i} value={u.UOMName || u}>
-                    {u.UOMName || u}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No UOM Found</option>
-              )}
+              {uoms.map((u) => (
+                <option key={u.UOMName || u} value={u.UOMName || u}>
+                  {u.UOMName || u}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -219,9 +196,9 @@ function InwardEntry() {
               onChange={(e) => setQty(e.target.value)}
             />
           </div>
-
         </div>
 
+        {/* ROW 3 */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
@@ -236,7 +213,6 @@ function InwardEntry() {
         <button className="ie-btn" onClick={handleSubmit}>
           Submit
         </button>
-
       </div>
     </div>
   );
