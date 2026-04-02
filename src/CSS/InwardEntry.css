@@ -5,6 +5,8 @@
   background: gray;
   min-height: 100vh;
   font-family: "Segoe UI", sans-serif;
+  position: relative; /* 🔥 IMPORTANT */
+  z-index: 1;
 }
 
 
@@ -15,6 +17,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
+  position: relative;
+  z-index: 2;
 }
 
 .ie-header h1 {
@@ -38,6 +42,10 @@
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   margin-bottom: 25px;
+
+  position: relative;   /* 🔥 IMPORTANT */
+  z-index: 5;           /* 🔥 FIX OVERLAY */
+  overflow: visible;    /* 🔥 CRITICAL FIX */
 }
 
 
@@ -54,6 +62,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative; /* 🔥 IMPORTANT */
+  z-index: 6;
 }
 
 .ie-group label {
@@ -72,18 +82,30 @@
   border-radius: 6px;
   border: 1px solid #dcdcdc;
   font-size: 14px;
-  background: #ffffff;
-  color: #000; /* ✅ FIX: ensure visible text */
+
+  background: #ffffff !important;
+  color: #000 !important;
+
   transition: all 0.2s ease;
+
+  position: relative;   /* 🔥 IMPORTANT */
+  z-index: 10;          /* 🔥 FIX DROPDOWN STACK */
 }
 
-/* 🔥 CRITICAL FIX: OPTION VISIBILITY */
+/* 🔥 FIX: Browser dropdown rendering */
+.ie-group select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+}
+
+/* 🔥 CRITICAL: OPTION VISIBILITY */
 .ie-group select option {
   color: #000 !important;
   background-color: #ffffff !important;
 }
 
-/* Optional: better dropdown hover visibility (browser dependent) */
+/* (Optional) hover effect */
 .ie-group select option:hover {
   background-color: #f2f3f7;
   color: #000;
