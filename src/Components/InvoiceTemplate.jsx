@@ -376,7 +376,7 @@ function InvoiceTemplate(props) {
             <img src={logo} alt="Logo" className="company-logo" />
             <div className="company-info">
               <h2>SHREE AANDAVAR TOOLING</h2>
-              <p>GSTIN: 33BYPPP7144R1Z0</p>
+              <p>GSTIN: 33BVBPP7144R1Z0</p>
               <p>State: 33 - Tamil Nadu</p>
             </div>
           </div>
