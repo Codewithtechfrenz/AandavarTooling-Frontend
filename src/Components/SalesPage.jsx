@@ -265,10 +265,10 @@ function SalesPage() {
 
         <button className="add-btn" onClick={addItem}>
           {loading ? "Saving..." : "Add Item"}
-        </button>
+        </button><br></br>
 
         <table className="sales-table">
-          <thead>
+          <thead><br></br>
             <tr>
               <th>Product</th>
               <th>Qty</th>
@@ -297,13 +297,13 @@ function SalesPage() {
           </tbody>
         </table>
 
-        <div className="totals">
+        <div className="totals"><br></br>
           <p>Subtotal: {subTotal}</p>
           <p>GST: {gstAmount}</p>
           <p>Total: {totalAmount}</p>
-        </div>
+        </div><br></br>
 
-        <InvoicePDF sale={saleData} />
+        <InvoicePDF sale={saleData} /><br></br>
 
         <button className="save-btn" onClick={saveInvoice}>
           Finish Invoice
