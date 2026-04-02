@@ -8,7 +8,6 @@ import api from "../api";
 function InwardEntry() {
   const navigate = useNavigate();
 
-  /* STATES */
   const [products, setProducts] = useState([]);
   const [itemCodes, setItemCodes] = useState([]);
   const [uoms, setUoms] = useState([]);
@@ -19,46 +18,52 @@ function InwardEntry() {
   const [qty, setQty] = useState("");
   const [rate, setRate] = useState("");
 
-  /* HELPERS */
+  /* SAFE DATA EXTRACTOR */
   const extractList = (res) => {
-    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
 
-    if (Array.isArray(res.data?.data)) return res.data.data;
-
-    const nested = res.data?.data
-      ? Object.values(res.data.data).find((val) => Array.isArray(val))
-      : null;
-
-    if (nested) return nested;
+    if (res?.data?.data) {
+      const nested = Object.values(res.data.data).find((v) =>
+        Array.isArray(v)
+      );
+      if (nested) return nested;
+    }
 
     return [];
   };
 
-  /* API CALLS */
   useEffect(() => {
     loadProducts();
     loadItemCodes();
     loadUoms();
   }, []);
 
-  /* ✅ FIXED PRODUCTS LOADER */
+  /* PRODUCTS */
   const loadProducts = async () => {
     try {
       const res = await api.get("/items/activeitem");
 
-      console.log("RAW API:", res.data);
-
       const list = extractList(res);
 
-      console.log("Extracted List:", list);
+      const normalized = list
+        .map((item) => ({
+          ItemName: String(
+            item.ItemName ||
+              item.itemName ||
+              item.item_name ||
+              ""
+          ).trim(),
+          ItemCode: String(
+            item.ItemCode ||
+              item.itemCode ||
+              item.item_code ||
+              ""
+          ).trim(),
+        }))
+        .filter((i) => i.ItemName && i.ItemCode);
 
-      // ✅ Normalize keys (MAIN FIX)
-      const normalized = list.map((item) => ({
-        ItemName: item.ItemName || item.itemName || item.item_name || "",
-        ItemCode: item.ItemCode || item.itemCode || item.item_code || "",
-      }));
-
-      console.log("Normalized:", normalized);
+      console.log("Products:", normalized);
 
       setProducts(normalized);
     } catch (err) {
@@ -70,11 +75,8 @@ function InwardEntry() {
   const loadItemCodes = async () => {
     try {
       const res = await api.get("/activeitems/activeitemcode");
-      const list = extractList(res);
-      console.log("Item Codes:", list);
-      setItemCodes(list);
-    } catch (err) {
-      console.error("Item Code Load Error:", err);
+      setItemCodes(extractList(res));
+    } catch {
       setItemCodes([]);
     }
   };
@@ -82,60 +84,39 @@ function InwardEntry() {
   const loadUoms = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-      const list = extractList(res);
-      console.log("UOMs:", list);
-      setUoms(list);
-    } catch (err) {
-      console.error("UOM Load Error:", err);
+      setUoms(extractList(res));
+    } catch {
       setUoms([]);
     }
   };
 
-  /* HANDLE CHANGES */
+  /* HANDLERS */
   const handleItemChange = (e) => {
     const name = e.target.value;
     setSelectedItemName(name);
 
-    const item = products.find((p) => p.ItemName === name);
-
-    if (item) {
-      setItemCode(item.ItemCode);
-    } else {
-      setItemCode("");
-    }
+    const found = products.find((p) => p.ItemName === name);
+    setItemCode(found ? found.ItemCode : "");
   };
 
   const handleCodeChange = (e) => {
     const code = e.target.value;
     setItemCode(code);
 
-    const item = products.find((p) => p.ItemCode === code);
-
-    if (item) {
-      setSelectedItemName(item.ItemName);
-    } else {
-      setSelectedItemName("");
-    }
+    const found = products.find((p) => p.ItemCode === code);
+    setSelectedItemName(found ? found.ItemName : "");
   };
 
   const handleSubmit = async () => {
-    if (
-      !selectedItemName ||
-      !itemCode ||
-      !uom ||
-      !qty ||
-      isNaN(qty) ||
-      !rate ||
-      isNaN(rate)
-    ) {
-      alert("Please fill all fields correctly");
+    if (!selectedItemName || !itemCode || !uom || !qty || !rate) {
+      alert("Fill all fields");
       return;
     }
 
     const payload = {
-      ItemName: selectedItemName.trim(),
-      ItemCode: itemCode.trim(),
-      UOMName: uom.trim(),
+      ItemName: selectedItemName,
+      ItemCode: itemCode,
+      UOMName: uom,
       Quantity: Number(qty),
       Rate: Number(rate),
       Status: "Completed",
@@ -143,12 +124,13 @@ function InwardEntry() {
 
     try {
       const res = await api.post("/inward/iteminward", payload);
-      alert(res.data.message || "Saved successfully");
+      alert(res.data.message || "Saved");
+
       resetForm();
       navigate("/current-stock", { state: { refresh: true } });
     } catch (err) {
-      console.error("Submit Error:", err);
-      alert("Error saving inward entry");
+      console.error(err);
+      alert("Error saving");
     }
   };
 
@@ -170,7 +152,6 @@ function InwardEntry() {
       </div>
 
       <div className="ie-form">
-        {/* ITEM NAME & CODE */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Item Name</label>
@@ -179,7 +160,10 @@ function InwardEntry() {
 
               {products.length > 0 ? (
                 products.map((item, index) => (
-                  <option key={index} value={item.ItemName}>
+                  <option
+                    key={item.ItemCode + index}
+                    value={item.ItemName}
+                  >
                     {item.ItemName}
                   </option>
                 ))
@@ -193,23 +177,22 @@ function InwardEntry() {
             <label>Item Code</label>
             <select value={itemCode} onChange={handleCodeChange}>
               <option value="">Select Code</option>
-              {itemCodes.map((codeItem) => (
-                <option key={codeItem} value={codeItem}>
-                  {codeItem}
+              {itemCodes.map((code, i) => (
+                <option key={i} value={code}>
+                  {code}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* UOM & QUANTITY */}
         <div className="ie-row">
           <div className="ie-group">
             <label>UOM</label>
             <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
-              {uoms.map((u) => (
-                <option key={u.UOMName || u} value={u.UOMName || u}>
+              {uoms.map((u, i) => (
+                <option key={i} value={u.UOMName || u}>
                   {u.UOMName || u}
                 </option>
               ))}
@@ -226,7 +209,6 @@ function InwardEntry() {
           </div>
         </div>
 
-        {/* RATE */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
