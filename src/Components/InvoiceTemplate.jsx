@@ -272,7 +272,7 @@
 
 
 import React, { useEffect, useState } from "react";
-import {logo} from "../Assets/AandavarLogo1.png";
+import logo from "../Assets/AandavarLogo1.png";
 import "../CSS/InvoiceTemplate.css";
 import axios from "axios";
 import { useParams } from "react-router-dom";
