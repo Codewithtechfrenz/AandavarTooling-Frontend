@@ -41,31 +41,24 @@ function InwardEntry() {
     loadUoms();
   }, []);
 
-  /* ✅ FIXED PRODUCT LOADER */
+  /* ✅ FIXED PRODUCTS LOADER */
   const loadProducts = async () => {
     try {
       const res = await api.get("/items/activeitem");
 
+      console.log("RAW API:", res.data);
+
       const list = extractList(res);
-      console.log("API LIST:", list);
 
-      // ✅ Normalize + Filter (MAIN FIX)
-      const normalized = list
-        .map((item) => {
-          const name =
-            item.ItemName || item.itemName || item.item_name || "";
+      console.log("Extracted List:", list);
 
-          const code =
-            item.ItemCode || item.itemCode || item.item_code || "";
+      // ✅ Normalize keys (MAIN FIX)
+      const normalized = list.map((item) => ({
+        ItemName: item.ItemName || item.itemName || item.item_name || "",
+        ItemCode: item.ItemCode || item.itemCode || item.item_code || "",
+      }));
 
-          return {
-            ItemName: name,
-            ItemCode: code,
-          };
-        })
-        .filter((item) => item.ItemName && item.ItemCode);
-
-      console.log("FINAL PRODUCTS:", normalized);
+      console.log("Normalized:", normalized);
 
       setProducts(normalized);
     } catch (err) {
@@ -184,15 +177,16 @@ function InwardEntry() {
             <select value={selectedItemName} onChange={handleItemChange}>
               <option value="">Select Item</option>
 
-              {products.map((item, index) => (
-                <option key={index} value={item.ItemName}>
-                  {item.ItemName}
-                </option>
-              ))}
+              {products.length > 0 ? (
+                products.map((item, index) => (
+                  <option key={index} value={item.ItemName}>
+                    {item.ItemName}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Items Found</option>
+              )}
             </select>
-
-            {/* ✅ DEBUG (remove later) */}
-            <p>Items Count: {products.length}</p>
           </div>
 
           <div className="ie-group">
