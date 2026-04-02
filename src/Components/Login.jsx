@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import logo from "../Assets/AandavarLogo1.png";
 import { useNavigate } from "react-router-dom";
 import "../CSS/Login.css";
 
@@ -50,7 +51,7 @@ const LoginPage = () => {
           <div className="login-card">
             <div className="login-logo">
               <img
-                src="/AandavarLogo1.png" 
+                src={logo}
                 alt="Shree Aandavar Tooling"
                 className="login-brand-logo"
               />
