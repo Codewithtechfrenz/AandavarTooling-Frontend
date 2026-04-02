@@ -272,6 +272,7 @@
 
 
 import React, { useEffect, useState } from "react";
+import {logo} from "../Assets/AandavarLogo1.png";
 import "../CSS/InvoiceTemplate.css";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -372,7 +373,7 @@ function InvoiceTemplate(props) {
       <div className="company-header">
         <div className="company-left">
           <div className="logo-text-wrapper">
-            <img src="/AandavarLogo1.png" alt="Logo" className="company-logo" />
+            <img src={logo} alt="Logo" className="company-logo" />
             <div className="company-info">
               <h2>SHREE AANDAVAR TOOLING</h2>
               <p>GSTIN: 33BYPPP7144R1Z0</p>
