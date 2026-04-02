@@ -18,7 +18,7 @@ function InwardEntry() {
   const [qty, setQty] = useState("");
   const [rate, setRate] = useState("");
 
-  /* SAFE EXTRACT */
+  /* SAFE DATA EXTRACTOR */
   const extractList = (res) => {
     if (Array.isArray(res?.data)) return res.data;
     if (Array.isArray(res?.data?.data)) return res.data.data;
@@ -29,6 +29,7 @@ function InwardEntry() {
       );
       if (nested) return nested;
     }
+
     return [];
   };
 
@@ -62,7 +63,7 @@ function InwardEntry() {
         }))
         .filter((i) => i.ItemName && i.ItemCode);
 
-      console.log("PRODUCTS:", normalized);
+      console.log("Products:", normalized);
 
       setProducts(normalized);
     } catch (err) {
@@ -106,14 +107,6 @@ function InwardEntry() {
     setSelectedItemName(found ? found.ItemName : "");
   };
 
-  const resetForm = () => {
-    setSelectedItemName("");
-    setItemCode("");
-    setUom("");
-    setQty("");
-    setRate("");
-  };
-
   const handleSubmit = async () => {
     if (!selectedItemName || !itemCode || !uom || !qty || !rate) {
       alert("Fill all fields");
@@ -131,14 +124,22 @@ function InwardEntry() {
 
     try {
       const res = await api.post("/inward/iteminward", payload);
-      alert(res.data.message || "Saved Successfully");
+      alert(res.data.message || "Saved");
 
       resetForm();
       navigate("/current-stock", { state: { refresh: true } });
     } catch (err) {
-      console.error("Submit Error:", err);
-      alert("Error saving inward entry");
+      console.error(err);
+      alert("Error saving");
     }
+  };
+
+  const resetForm = () => {
+    setSelectedItemName("");
+    setItemCode("");
+    setUom("");
+    setQty("");
+    setRate("");
   };
 
   return (
@@ -152,14 +153,9 @@ function InwardEntry() {
 
       <div className="ie-form">
         <div className="ie-row">
-          {/* ITEM NAME */}
           <div className="ie-group">
             <label>Item Name</label>
-            <select
-              value={selectedItemName}
-              onChange={handleItemChange}
-              className="ie-select"
-            >
+            <select value={selectedItemName} onChange={handleItemChange}>
               <option value="">Select Item</option>
 
               {products.length > 0 ? (
@@ -177,7 +173,6 @@ function InwardEntry() {
             </select>
           </div>
 
-          {/* ITEM CODE */}
           <div className="ie-group">
             <label>Item Code</label>
             <select value={itemCode} onChange={handleCodeChange}>
@@ -191,7 +186,6 @@ function InwardEntry() {
           </div>
         </div>
 
-        {/* UOM + QTY */}
         <div className="ie-row">
           <div className="ie-group">
             <label>UOM</label>
@@ -215,7 +209,6 @@ function InwardEntry() {
           </div>
         </div>
 
-        {/* RATE */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
