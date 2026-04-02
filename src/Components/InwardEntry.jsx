@@ -21,16 +21,14 @@ function InwardEntry() {
 
   /* HELPERS */
   const extractList = (res) => {
-    // If res.data is already an array, return it
     if (Array.isArray(res.data)) return res.data;
 
-    // If res.data.data is an array, return it
     if (Array.isArray(res.data?.data)) return res.data.data;
 
-    // If nested array exists inside res.data.data
     const nested = res.data?.data
       ? Object.values(res.data.data).find((val) => Array.isArray(val))
       : null;
+
     if (nested) return nested;
 
     return [];
@@ -43,12 +41,26 @@ function InwardEntry() {
     loadUoms();
   }, []);
 
+  /* ✅ FIXED PRODUCTS LOADER */
   const loadProducts = async () => {
     try {
       const res = await api.get("/items/activeitem");
+
+      console.log("RAW API:", res.data);
+
       const list = extractList(res);
-      console.log("Products:", list); // DEBUG
-      setProducts(list);
+
+      console.log("Extracted List:", list);
+
+      // ✅ Normalize keys (MAIN FIX)
+      const normalized = list.map((item) => ({
+        ItemName: item.ItemName || item.itemName || item.item_name || "",
+        ItemCode: item.ItemCode || item.itemCode || item.item_code || "",
+      }));
+
+      console.log("Normalized:", normalized);
+
+      setProducts(normalized);
     } catch (err) {
       console.error("Product Load Error:", err);
       setProducts([]);
@@ -59,7 +71,7 @@ function InwardEntry() {
     try {
       const res = await api.get("/activeitems/activeitemcode");
       const list = extractList(res);
-      console.log("Item Codes:", list); // DEBUG
+      console.log("Item Codes:", list);
       setItemCodes(list);
     } catch (err) {
       console.error("Item Code Load Error:", err);
@@ -71,7 +83,7 @@ function InwardEntry() {
     try {
       const res = await api.get("/activeuoms/activeUOM");
       const list = extractList(res);
-      console.log("UOMs:", list); // DEBUG
+      console.log("UOMs:", list);
       setUoms(list);
     } catch (err) {
       console.error("UOM Load Error:", err);
@@ -85,6 +97,7 @@ function InwardEntry() {
     setSelectedItemName(name);
 
     const item = products.find((p) => p.ItemName === name);
+
     if (item) {
       setItemCode(item.ItemCode);
     } else {
@@ -97,6 +110,7 @@ function InwardEntry() {
     setItemCode(code);
 
     const item = products.find((p) => p.ItemCode === code);
+
     if (item) {
       setSelectedItemName(item.ItemName);
     } else {
@@ -162,11 +176,16 @@ function InwardEntry() {
             <label>Item Name</label>
             <select value={selectedItemName} onChange={handleItemChange}>
               <option value="">Select Item</option>
-              {products.map((item) => (
-                <option key={item.ItemCode} value={item.ItemName}>
-                  {item.ItemName}
-                </option>
-              ))}
+
+              {products.length > 0 ? (
+                products.map((item, index) => (
+                  <option key={index} value={item.ItemName}>
+                    {item.ItemName}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No Items Found</option>
+              )}
             </select>
           </div>
 
@@ -187,10 +206,7 @@ function InwardEntry() {
         <div className="ie-row">
           <div className="ie-group">
             <label>UOM</label>
-            <select
-              value={uom}
-              onChange={(e) => setUom(e.target.value)}
-            >
+            <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
               {uoms.map((u) => (
                 <option key={u.UOMName || u} value={u.UOMName || u}>
