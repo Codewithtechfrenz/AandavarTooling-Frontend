@@ -13,102 +13,113 @@ function InwardEntry() {
   const [itemCodes, setItemCodes] = useState([]);
   const [uoms, setUoms] = useState([]);
 
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItemName, setSelectedItemName] = useState("");
   const [itemCode, setItemCode] = useState("");
   const [uom, setUom] = useState("");
   const [qty, setQty] = useState("");
   const [rate, setRate] = useState("");
 
-  /* HELPER TO EXTRACT ARRAY FROM API RESPONSE */
+  /* HELPERS */
   const extractList = (res) => {
+    // If res.data is already an array, return it
     if (Array.isArray(res.data)) return res.data;
-    if (res.data?.status === 1 && Array.isArray(res.data.data)) return res.data.data;
+
+    // If res.data.data is an array, return it
     if (Array.isArray(res.data?.data)) return res.data.data;
+
+    // If nested array exists inside res.data.data
+    const nested = res.data?.data
+      ? Object.values(res.data.data).find((val) => Array.isArray(val))
+      : null;
+    if (nested) return nested;
+
     return [];
   };
 
-  /* LOAD DATA */
+  /* API CALLS */
   useEffect(() => {
     loadProducts();
     loadItemCodes();
     loadUoms();
   }, []);
 
-  /* FETCH ITEM NAMES */
   const loadProducts = async () => {
     try {
-      const res = await api.get("/items/activeitem");
-      setProducts(extractList(res));
-    } catch (error) {
-      console.error("Product API Error:", error);
+      const res = await api.get("/activeitems/activeitem");
+      const list = extractList(res);
+      console.log("Products:", list); // DEBUG
+      setProducts(list);
+    } catch (err) {
+      console.error("Product Load Error:", err);
       setProducts([]);
     }
   };
 
-  /* FETCH ITEM CODES */
   const loadItemCodes = async () => {
     try {
-      const res = await api.get("/items/activeitemcode");
-      setItemCodes(extractList(res));
-    } catch (error) {
-      console.error("Item Code API Error:", error);
+      const res = await api.get("/activeitems/activeitemcode");
+      const list = extractList(res);
+      console.log("Item Codes:", list); // DEBUG
+      setItemCodes(list);
+    } catch (err) {
+      console.error("Item Code Load Error:", err);
       setItemCodes([]);
     }
   };
 
-  /* FETCH UOMS */
   const loadUoms = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
-      setUoms(extractList(res));
-    } catch (error) {
-      console.error("UOM API Error:", error);
+      const list = extractList(res);
+      console.log("UOMs:", list); // DEBUG
+      setUoms(list);
+    } catch (err) {
+      console.error("UOM Load Error:", err);
       setUoms([]);
     }
   };
 
-  /* ITEM NAME CHANGE */
+  /* HANDLE CHANGES */
   const handleItemChange = (e) => {
-    const id = e.target.value;
-    if (!id) {
-      setSelectedItem(null);
-      setItemCode("");
-      return;
-    }
+    const name = e.target.value;
+    setSelectedItemName(name);
 
-    const item = products.find((p) => String(p.ItemID) === String(id));
+    const item = products.find((p) => p.ItemName === name);
     if (item) {
-      setSelectedItem(item);
       setItemCode(item.ItemCode);
+    } else {
+      setItemCode("");
     }
   };
 
-  /* ITEM CODE CHANGE */
   const handleCodeChange = (e) => {
     const code = e.target.value;
     setItemCode(code);
 
-    if (!code) {
-      setSelectedItem(null);
-      return;
-    }
-
     const item = products.find((p) => p.ItemCode === code);
     if (item) {
-      setSelectedItem(item);
+      setSelectedItemName(item.ItemName);
+    } else {
+      setSelectedItemName("");
     }
   };
 
-  /* SUBMIT */
   const handleSubmit = async () => {
-    if (!selectedItem || !uom || !qty || isNaN(qty) || !rate || isNaN(rate)) {
+    if (
+      !selectedItemName ||
+      !itemCode ||
+      !uom ||
+      !qty ||
+      isNaN(qty) ||
+      !rate ||
+      isNaN(rate)
+    ) {
       alert("Please fill all fields correctly");
       return;
     }
 
     const payload = {
-      ItemID: selectedItem.ItemID,
-      ItemName: selectedItem.ItemName.trim(),
+      ItemName: selectedItemName.trim(),
       ItemCode: itemCode.trim(),
       UOMName: uom.trim(),
       Quantity: Number(qty),
@@ -121,15 +132,14 @@ function InwardEntry() {
       alert(res.data.message || "Saved successfully");
       resetForm();
       navigate("/current-stock", { state: { refresh: true } });
-    } catch (error) {
-      console.error("Submit Error:", error);
-      alert("Error saving inward");
+    } catch (err) {
+      console.error("Submit Error:", err);
+      alert("Error saving inward entry");
     }
   };
 
-  /* RESET FORM */
   const resetForm = () => {
-    setSelectedItem(null);
+    setSelectedItemName("");
     setItemCode("");
     setUom("");
     setQty("");
@@ -146,15 +156,14 @@ function InwardEntry() {
       </div>
 
       <div className="ie-form">
-
-        {/* ROW 1 */}
+        {/* ITEM NAME & CODE */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Item Name</label>
-            <select value={selectedItem?.ItemID || ""} onChange={handleItemChange}>
+            <select value={selectedItemName} onChange={handleItemChange}>
               <option value="">Select Item</option>
               {products.map((item) => (
-                <option key={item.ItemID} value={item.ItemID}>
+                <option key={item.ItemCode} value={item.ItemName}>
                   {item.ItemName}
                 </option>
               ))}
@@ -165,20 +174,23 @@ function InwardEntry() {
             <label>Item Code</label>
             <select value={itemCode} onChange={handleCodeChange}>
               <option value="">Select Code</option>
-              {itemCodes.map((item) => (
-                <option key={item.ItemCode} value={item.ItemCode}>
-                  {item.ItemCode}
+              {itemCodes.map((codeItem) => (
+                <option key={codeItem} value={codeItem}>
+                  {codeItem}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* ROW 2 */}
+        {/* UOM & QUANTITY */}
         <div className="ie-row">
           <div className="ie-group">
             <label>UOM</label>
-            <select value={uom} onChange={(e) => setUom(e.target.value)}>
+            <select
+              value={uom}
+              onChange={(e) => setUom(e.target.value)}
+            >
               <option value="">Select UOM</option>
               {uoms.map((u) => (
                 <option key={u.UOMName || u} value={u.UOMName || u}>
@@ -198,7 +210,7 @@ function InwardEntry() {
           </div>
         </div>
 
-        {/* ROW 3 */}
+        {/* RATE */}
         <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
