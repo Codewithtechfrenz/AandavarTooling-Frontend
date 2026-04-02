@@ -45,7 +45,7 @@ function InwardEntry() {
 
   const loadProducts = async () => {
     try {
-      const res = await api.get("/activeitems/activeitem");
+      const res = await api.get("/items/activeitem");
       const list = extractList(res);
       console.log("Products:", list); // DEBUG
       setProducts(list);
@@ -57,7 +57,7 @@ function InwardEntry() {
 
   const loadItemCodes = async () => {
     try {
-      const res = await api.get("/items/activeitemcode");
+      const res = await api.get("/activeitems/activeitemcode");
       const list = extractList(res);
       console.log("Item Codes:", list); // DEBUG
       setItemCodes(list);
