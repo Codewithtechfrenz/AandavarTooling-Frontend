@@ -486,10 +486,6 @@ function InvoiceTemplate(props) {
             <p>{amountInWords}</p>
           </div>
 
-          <div className="footer-right">
-            <p>Thank you for doing business with us.</p>
-            <p>For: SHREE AANDAVAR TOOLING</p>
-          </div>
 
           <div className="authorized">
             <p>___________________________</p>
@@ -499,6 +495,12 @@ function InvoiceTemplate(props) {
         </div>
 
         <div className="footer-right">
+
+             <div className="terms">
+            <p>Thank you for doing business with us.</p>
+            <p>For: SHREE AANDAVAR TOOLING</p>
+          </div>
+
           <p>____________________</p>
             <b>Authorized Signatory</b>
             <p>M. PRABAHARAN</p>
