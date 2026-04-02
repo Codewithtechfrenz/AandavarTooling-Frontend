@@ -440,7 +440,7 @@ function InvoiceTemplate(props) {
           <h4>Bank Details</h4>
           <p>Bank: BANK OF BARODA</p>
           <p>A/C No: 75220200001446</p>
-          <p>IFSC: BARBOVJMAAN</p>
+          <p>IFSC: BARB0VJMAAN</p>
           <p>Name: SHREE AANDAVAR TOOLING</p>
         </div>
 
@@ -486,7 +486,7 @@ function InvoiceTemplate(props) {
             <p>{amountInWords}</p>
           </div>
 
-          <div className="terms">
+          <div className="footer-right">
             <p>Thank you for doing business with us.</p>
             <p>For: SHREE AANDAVAR TOOLING</p>
           </div>
