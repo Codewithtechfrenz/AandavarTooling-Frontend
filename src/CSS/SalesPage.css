@@ -171,23 +171,13 @@ cursor:pointer;
   padding: 8px;
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: #4f46e5;
+  color: white;
 }
 
-.icon-btn svg {
-  color: white; /* 🔥 IMPORTANT FIX */
+.icon-btn:hover {
+  background-color: #4338ca;
 }
-
-.view-btn {
-  background-color: #b92121;
-}
-
-.view-btn:hover {
-  background-color: #ff2c2c;
-}
-
 
 .download-top-btn {
   background-color: #16a34a;
