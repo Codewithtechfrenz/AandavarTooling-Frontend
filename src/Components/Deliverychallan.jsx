@@ -82,6 +82,15 @@ function DeliveryChallan() {
     }
   };
 
+  // Helper — loads an image and returns { img, loaded }
+  const loadImage = (src) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload  = () => resolve({ img, loaded: true });
+      img.onerror = () => resolve({ img: null, loaded: false });
+      img.src = src;
+    });
+
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -97,89 +106,91 @@ function DeliveryChallan() {
       const pageWidth  = doc.internal.pageSize.getWidth();   // 210
       const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
-      // ── Border constants ──────────────────────────────────────
+      // ── Border constants ──────────────────────────────────
       const bx           = 7;
       const by           = 7;
-      const bw           = pageWidth  - 14;
-      const bh           = pageHeight - 14;
-      const borderBottom = by + bh;          // = 290
+      const bw           = pageWidth  - 14;   // 196
+      const bh           = pageHeight - 14;   // 283
+      const borderBottom = by + bh;           // 290
 
-      // ═══════════════════════════════════════════════════════════
-      // STEP 1 — LOAD LOGO
-      // ═══════════════════════════════════════════════════════════
-      const logo = new Image();
-      logo.src = "/Assets/SAT Logo.jpeg";
-      let logoLoaded = false;
+      // ═══════════════════════════════════════════════════════
+      // STEP 1 — LOAD LOGO  (AndavarLogo2.png from public/)
+      // ═══════════════════════════════════════════════════════
+      const { img: logo, loaded: logoLoaded } =
+        await loadImage("/AndavarLogo2.png");
 
-      await new Promise((resolve) => {
-        logo.onload  = () => { logoLoaded = true; resolve(); };
-        logo.onerror = resolve;
-      });
-
-      // ═══════════════════════════════════════════════════════════
-      // STEP 2 — WATERMARK  (first layer — sits behind everything)
-      //   Centred on the full page area, not header area
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
+      // STEP 2 — WATERMARK  (drawn first — behind everything)
+      //   Centred on the full A4 page (not just the content area)
+      // ═══════════════════════════════════════════════════════
       if (logoLoaded) {
-        const wmSize = 120;
-        const wmX = (pageWidth  - wmSize) / 2;   // 45  — horizontally centred
-        const wmY = (pageHeight - wmSize) / 2;   // 88.5 — vertically centred
-        doc.setGState(new doc.GState({ opacity: 0.09 }));
-        doc.addImage(logo, "JPEG", wmX, wmY, wmSize, wmSize);
+        // Logo is landscape (≈ 1480×820 px ratio ≈ 1.8 : 1)
+        // Use 130 wide × 72 tall so it stays proportional
+        const wmW = 130;
+        const wmH = 72;
+        const wmX = (pageWidth  - wmW) / 2;   // 40  — h-centre
+        const wmY = (pageHeight - wmH) / 2;   // 112.5 — v-centre
+        doc.setGState(new doc.GState({ opacity: 0.08 }));
+        doc.addImage(logo, "PNG", wmX, wmY, wmW, wmH);
         doc.setGState(new doc.GState({ opacity: 1 }));
       }
 
-      // ═══════════════════════════════════════════════════════════
-      // STEP 3 — PAGE BORDER  (drawn after watermark)
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
+      // STEP 3 — PAGE BORDER
+      // ═══════════════════════════════════════════════════════
       doc.setLineWidth(0.7);
       doc.rect(bx, by, bw, bh);
 
-      // ═══════════════════════════════════════════════════════════
-      // STEP 4 — HEADER BLOCK
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
+      // STEP 4 — HEADER  (height = 48, matches letterhead)
+      // ═══════════════════════════════════════════════════════
       doc.setLineWidth(0.4);
-      doc.rect(bx, by, bw, 48);          // header box
+      doc.rect(bx, by, bw, 48);           // header box
 
-      // "DELIVERY CHALLAN" boxed label — top right
+      // ── "DELIVERY CHALLAN" boxed label — top right ──
       doc.rect(143, by, 57, 13);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // Cell number
+      // ── Cell number ──
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // SAT logo — header left
+      // ── AndavarLogo2 — top LEFT of header ──
       if (logoLoaded) {
-        doc.addImage(logo, "JPEG", 10, 10, 28, 28);
+        // Logo is wide, so render it taller in the header
+        // Height = 30, Width = 54 (maintains ~1.8:1 ratio)
+        doc.addImage(logo, "PNG", 10, 11, 54, 30);
       }
 
-      // Company name
-      doc.setFontSize(22);
+      // ── Company name (shifted right to clear wide logo) ──
+      doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text("Shree Aandavar Tooling", 43, 23);
+      doc.text("Shree Aandavar Tooling", 68, 23);
 
-      // Tagline
+      // ── Tagline ──
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text("CNC Machine Service and Tooling & Job Work", 43, 30);
+      doc.text("CNC Machine Service and Tooling & Job Work", 68, 30);
 
-      // Address
+      // ── Address ──
       doc.setFontSize(9);
-      doc.text("Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.", 43, 36);
+      doc.text(
+        "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
+        68, 36
+      );
 
-      // Email + Date
-      doc.text("mailto : prabusangari690@gmail.com", 43, 42);
+      // ── Email + Date ──
+      doc.text("mailto : prabusangari690@gmail.com", 68, 42);
       doc.setFont("helvetica", "bold");
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 42);
 
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
       // STEP 5 — SUB-HEADER: Challan No + Customer
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
       const subY = 60;
       doc.setLineWidth(0.3);
       doc.line(bx, subY - 3,  bx + bw, subY - 3);
@@ -189,16 +200,19 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "bold");
       doc.text("Challan No :", 12, subY + 5);
       doc.setFont("helvetica", "normal");
-      doc.text("DC-" + String(productsList.length).padStart(3, "0"), 42, subY + 5);
+      doc.text(
+        "DC-" + String(productsList.length).padStart(3, "0"),
+        42, subY + 5
+      );
 
       doc.setFont("helvetica", "bold");
       doc.text("To :", 100, subY + 5);
       doc.setFont("helvetica", "normal");
       doc.text(customerName, 112, subY + 5);
 
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
       // STEP 6 — PRODUCT TABLE
-      // ═══════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════
       const tableColumn = ["S.No", "Product Name", "Quantity", "Date"];
       const tableRows = productsList.map((item, index) => [
         index + 1,
@@ -229,21 +243,21 @@ function DeliveryChallan() {
         tableLineWidth: 0.3,
       });
 
-      // ═══════════════════════════════════════════════════════════
-      // STEP 7 — FOOTER  (all content guaranteed inside border)
+      // ═══════════════════════════════════════════════════════
+      // STEP 7 — FOOTER  (all content inside border)
       //
       //  borderBottom = 290
-      //  sigLabelY    = 284  ← lowest text, 6px above border ✓
-      //  sigLineY     = 278
-      //  footerTextY  = 270
-      //  footerDiv    = 262  ← top divider of footer zone
-      // ═══════════════════════════════════════════════════════════
+      //  footerDiv    = 262  ← top divider
+      //  footerTextY  = 270  ← "Received..." text
+      //  sigLineY     = 278  ← signature lines
+      //  sigLabelY    = 284  ← label text  (6 px above border ✓)
+      // ═══════════════════════════════════════════════════════
       const footerDiv   = borderBottom - 28;   // 262
       const footerTextY = footerDiv    +  8;   // 270
       const sigLineY    = footerDiv    + 16;   // 278
       const sigLabelY   = sigLineY     +  6;   // 284
 
-      // Divider line above footer zone
+      // Divider above footer
       doc.setLineWidth(0.4);
       doc.line(bx, footerDiv, bx + bw, footerDiv);
 
@@ -251,14 +265,18 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
 
-      // Footer text
+      // Footer text row
       doc.text("Received the goods in good condition", 12, footerTextY);
-      doc.text("For Shree Aandavar Tooling", bx + bw - 5, footerTextY, { align: "right" });
+      doc.text(
+        "For Shree Aandavar Tooling",
+        bx + bw - 5, footerTextY,
+        { align: "right" }
+      );
 
       // Signature lines
       doc.setLineWidth(0.3);
-      doc.line(12,             sigLineY, 75,            sigLineY); // left
-      doc.line(bx + bw - 68,  sigLineY, bx + bw - 5,   sigLineY); // right
+      doc.line(12,            sigLineY, 75,           sigLineY);  // left
+      doc.line(bx + bw - 68, sigLineY, bx + bw - 5,  sigLineY);  // right
 
       // Signature labels
       doc.setFontSize(9);
@@ -274,9 +292,9 @@ function DeliveryChallan() {
     }
   };
 
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // WEB PAGE — original design & structure completely unchanged
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
       <Sidebar />
@@ -300,9 +318,15 @@ function DeliveryChallan() {
               {customerOptions.map((customer, index) => (
                 <option
                   key={index}
-                  value={typeof customer === "string" ? customer : customer.customer_name}
+                  value={
+                    typeof customer === "string"
+                      ? customer
+                      : customer.customer_name
+                  }
                 >
-                  {typeof customer === "string" ? customer : customer.customer_name}
+                  {typeof customer === "string"
+                    ? customer
+                    : customer.customer_name}
                 </option>
               ))}
             </select>
@@ -320,9 +344,15 @@ function DeliveryChallan() {
               {productOptions.map((product, index) => (
                 <option
                   key={index}
-                  value={typeof product === "string" ? product : product.product_name}
+                  value={
+                    typeof product === "string"
+                      ? product
+                      : product.product_name
+                  }
                 >
-                  {typeof product === "string" ? product : product.product_name}
+                  {typeof product === "string"
+                    ? product
+                    : product.product_name}
                 </option>
               ))}
             </select>
