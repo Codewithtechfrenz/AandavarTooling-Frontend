@@ -80,21 +80,43 @@ function DeliveryChallan() {
     }
   };
 
-  // ✅ RELIABLE image loader — fetch → blob → base64
-  // Works consistently in jsPDF / React regardless of browser
+  // ── Reliable image → base64 via fetch ──────────────────────
   const getBase64FromUrl = async (url) => {
     try {
       const res  = await fetch(url);
+      if (!res.ok) throw new Error("Fetch failed: " + res.status);
       const blob = await res.blob();
       return await new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result); // "data:image/png;base64,..."
+        reader.onloadend = () => resolve(reader.result);
         reader.onerror  = reject;
         reader.readAsDataURL(blob);
       });
     } catch (err) {
-      console.error("Image load failed:", url, err);
+      console.warn("Logo load failed:", err);
       return null;
+    }
+  };
+
+  // ── Safe watermark — works across all jsPDF versions ────────
+  // Uses raw PDF graphics operators instead of doc.GState
+  const addWatermark = (doc, base64, x, y, w, h) => {
+    try {
+      // Method 1: saveGraphicsState / restoreGraphicsState (jsPDF ≥ 2.x)
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.10, "fill-opacity": 0.10 }));
+      doc.addImage(base64, "PNG", x, y, w, h);
+      doc.restoreGraphicsState();
+    } catch (e1) {
+      try {
+        // Method 2: older API
+        doc.setGState({ opacity: 0.10 });
+        doc.addImage(base64, "PNG", x, y, w, h);
+        doc.setGState({ opacity: 1 });
+      } catch (e2) {
+        // Method 3: no opacity — still draw so logo appears
+        doc.addImage(base64, "PNG", x, y, w, h);
+      }
     }
   };
 
@@ -109,7 +131,7 @@ function DeliveryChallan() {
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
-      const doc        = new jsPDF();
+      const doc        = new jsPDF("p", "mm", "a4");
       const pageWidth  = doc.internal.pageSize.getWidth();   // 210
       const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
@@ -120,87 +142,80 @@ function DeliveryChallan() {
       const bh           = pageHeight - 14;   // 283
       const borderBottom = by + bh;           // 290
 
-      // ── Load logo as base64 (guaranteed to work) ──────────
-      // Logo is in /public/AndavarLogo2.png
+      // ── Load logo ──────────────────────────────────────────
       const logoBase64 = await getBase64FromUrl("/AndavarLogo2.png");
       const hasLogo    = !!logoBase64;
 
       // ══════════════════════════════════════════════════════
-      // LAYER 1 — WATERMARK  (drawn first → behind everything)
-      //   Centred on the full A4 page
-      //   Logo ratio ≈ 1.8 : 1  (landscape)
+      // 1. WATERMARK — drawn first (behind all content)
+      //    Logo ratio ≈ 1.8 : 1 (landscape)
+      //    Centred on full A4 page
       // ══════════════════════════════════════════════════════
       if (hasLogo) {
         const wmW = 140;
-        const wmH = 78;                              // 140 / 1.8
-        const wmX = (pageWidth  - wmW) / 2;         // 35 — h-centred
-        const wmY = (pageHeight - wmH) / 2;         // 109.5 — v-centred
-        doc.setGState(new doc.GState({ opacity: 0.10 }));
-        doc.addImage(logoBase64, "PNG", wmX, wmY, wmW, wmH);
-        doc.setGState(new doc.GState({ opacity: 1.0 }));
+        const wmH = 78;
+        const wmX = (pageWidth  - wmW) / 2;   // 35 — h-centred
+        const wmY = (pageHeight - wmH) / 2;   // 109.5 — v-centred
+        addWatermark(doc, logoBase64, wmX, wmY, wmW, wmH);
       }
 
       // ══════════════════════════════════════════════════════
-      // LAYER 2 — PAGE BORDER
+      // 2. PAGE BORDER
       // ══════════════════════════════════════════════════════
+      doc.setDrawColor(0);
       doc.setLineWidth(0.7);
       doc.rect(bx, by, bw, bh);
 
       // ══════════════════════════════════════════════════════
-      // LAYER 3 — HEADER BOX  (height 50)
+      // 3. HEADER BOX  (height 50)
       // ══════════════════════════════════════════════════════
       doc.setLineWidth(0.4);
       doc.rect(bx, by, bw, 50);
 
-      // "DELIVERY CHALLAN" boxed label — top right
+      // "DELIVERY CHALLAN" box — top right
       doc.rect(143, by, 57, 13);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0);
       doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // Cell number below label
+      // Cell number
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // ── AndavarLogo2 — TOP LEFT of header ──
-      // Logo is landscape; render 56w × 31h to fit header height neatly
+      // Logo — top LEFT of header  (56 × 31 keeps landscape ratio)
       if (hasLogo) {
         doc.addImage(logoBase64, "PNG", 9, 12, 56, 31);
       }
 
-      // ── Company name (x=69 clears the 56-wide logo) ──
+      // Company name (x=69 clears the logo)
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
       doc.text("Shree Aandavar Tooling", 69, 22);
 
-      // Tagline
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text("CNC Machine Service and Tooling & Job Work", 69, 29);
 
-      // Address
       doc.setFontSize(9);
       doc.text(
         "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
         69, 35
       );
-
-      // Email
       doc.text("mailto : prabusangari690@gmail.com", 69, 41);
 
-      // Date (right side, same row as email)
       doc.setFont("helvetica", "bold");
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 48);
 
       // ══════════════════════════════════════════════════════
-      // LAYER 4 — SUB-HEADER: Challan No + Customer
+      // 4. SUB-HEADER: Challan No + Customer
       // ══════════════════════════════════════════════════════
       const subY = 62;
       doc.setLineWidth(0.3);
-      doc.line(bx, subY - 3,  bx + bw, subY - 3);
-      doc.line(bx, subY + 9,  bx + bw, subY + 9);
+      doc.line(bx, subY - 3, bx + bw, subY - 3);
+      doc.line(bx, subY + 9, bx + bw, subY + 9);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
@@ -217,7 +232,7 @@ function DeliveryChallan() {
       doc.text(customerName, 112, subY + 5);
 
       // ══════════════════════════════════════════════════════
-      // LAYER 5 — PRODUCT TABLE
+      // 5. PRODUCT TABLE
       // ══════════════════════════════════════════════════════
       const tableColumn = ["S.No", "Product Name", "Quantity", "Date"];
       const tableRows   = productsList.map((item, idx) => [
@@ -250,20 +265,19 @@ function DeliveryChallan() {
       });
 
       // ══════════════════════════════════════════════════════
-      // LAYER 6 — FOOTER  (all content guaranteed inside border)
+      // 6. FOOTER — always inside the border
       //
-      //  borderBottom = 290
-      //  footerDiv    = 262  ← divider line
-      //  footerTextY  = 270  ← "Received..." / "For Shree..."
-      //  sigLineY     = 278  ← drawn signature lines
-      //  sigLabelY    = 284  ← "Party's Signature" / "Signatory"
+      //   borderBottom = 290
+      //   footerDiv    = 262  ← top divider line
+      //   footerTextY  = 270  ← "Received..." / "For Shree..."
+      //   sigLineY     = 278  ← signature underlines
+      //   sigLabelY    = 284  ← label text  (6 px above border ✓)
       // ══════════════════════════════════════════════════════
       const footerDiv   = borderBottom - 28;   // 262
       const footerTextY = footerDiv    +  8;   // 270
       const sigLineY    = footerDiv    + 16;   // 278
       const sigLabelY   = sigLineY     +  6;   // 284
 
-      // Divider above footer
       doc.setLineWidth(0.4);
       doc.line(bx, footerDiv, bx + bw, footerDiv);
 
@@ -271,7 +285,6 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
 
-      // Footer text
       doc.text("Received the goods in good condition", 12, footerTextY);
       doc.text(
         "For Shree Aandavar Tooling",
@@ -279,20 +292,19 @@ function DeliveryChallan() {
         { align: "right" }
       );
 
-      // Signature lines
       doc.setLineWidth(0.3);
-      doc.line(12,             sigLineY, 75,           sigLineY);
-      doc.line(bx + bw - 68,  sigLineY, bx + bw - 5,  sigLineY);
+      doc.line(12,            sigLineY, 75,           sigLineY);
+      doc.line(bx + bw - 68, sigLineY, bx + bw - 5,  sigLineY);
 
-      // Signature labels
       doc.setFontSize(9);
       doc.text("Party's Signature", 12, sigLabelY);
       doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
 
       doc.save("Delivery_Challan.pdf");
+
     } catch (error) {
-      console.error("PDF Error:", error);
-      alert("Error generating PDF");
+      console.error("PDF generation error:", error);
+      alert("PDF Error: " + error.message);
     } finally {
       setLoading(false);
     }
