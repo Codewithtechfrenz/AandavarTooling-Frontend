@@ -12,7 +12,6 @@ function DeliveryChallan() {
   const [quantity, setQuantity] = useState("");
   const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
 
@@ -25,9 +24,7 @@ function DeliveryChallan() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      if (res.data && res.data.data) {
-        setProductOptions(res.data.data);
-      }
+      if (res.data && res.data.data) setProductOptions(res.data.data);
     } catch (error) {
       console.error("Product API Error:", error);
     }
@@ -36,9 +33,7 @@ function DeliveryChallan() {
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/custdrop/getdropCustomers");
-      if (res.data && res.data.data) {
-        setCustomerOptions(res.data.data);
-      }
+      if (res.data && res.data.data) setCustomerOptions(res.data.data);
     } catch (error) {
       console.error("Customer API Error:", error);
     }
@@ -58,7 +53,6 @@ function DeliveryChallan() {
       alert("Please fill all fields");
       return;
     }
-
     const newProduct = {
       id: productsList.length + 1,
       customerName,
@@ -66,7 +60,6 @@ function DeliveryChallan() {
       quantity,
       created: new Date().toLocaleDateString(),
     };
-
     setProductsList([...productsList, newProduct]);
     setProductName("");
     setQuantity("");
@@ -82,22 +75,79 @@ function DeliveryChallan() {
           created_date: new Date().toISOString().split("T")[0],
         });
       }
-      console.log("Delivery Challan Saved");
     } catch (error) {
       console.error("Save Error:", error);
     }
   };
 
-  // Helper: load an image and return a promise resolving to {img, loaded}
-  const loadImage = (src) =>
+  // ─────────────────────────────────────────────────────────────
+  // loadImageAsJpeg
+  // Loads ANY image (PNG / JPEG / WEBP) from a URL and re-encodes
+  // it as JPEG via an HTML canvas. This avoids jsPDF's "wrong PNG
+  // signature" error caused by files that have the wrong extension
+  // or non-standard PNG metadata.
+  // Returns: { dataUrl: "data:image/jpeg;base64,...", ok: true }
+  //       or { dataUrl: null, ok: false }  on failure.
+  // ─────────────────────────────────────────────────────────────
+  const loadImageAsJpeg = (url) =>
     new Promise((resolve) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => resolve({ img, loaded: true });
-      img.onerror = () => resolve({ img: null, loaded: false });
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width  = img.naturalWidth  || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext("2d");
+
+          // White background so transparency doesn't go black in JPEG
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          resolve({ dataUrl, ok: true });
+        } catch (e) {
+          console.warn("Canvas encode failed:", e);
+          resolve({ dataUrl: null, ok: false });
+        }
+      };
+
+      img.onerror = (e) => {
+        console.warn("Image load failed:", url, e);
+        resolve({ dataUrl: null, ok: false });
+      };
+
+      img.src = url;
     });
 
-  // ✅ FINAL PDF FUNCTION — matches letterhead design
+  // ─────────────────────────────────────────────────────────────
+  // safeWatermark — tries opacity via saveGraphicsState, falls back
+  // gracefully so the PDF never crashes on older jsPDF builds.
+  // ─────────────────────────────────────────────────────────────
+  const safeWatermark = (doc, dataUrl, x, y, w, h) => {
+    try {
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.10, "fill-opacity": 0.10 }));
+      doc.addImage(dataUrl, "JPEG", x, y, w, h);
+      doc.restoreGraphicsState();
+    } catch (e) {
+      try {
+        doc.saveGraphicsState();
+        doc.setGState({ opacity: 0.10 });
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
+        doc.restoreGraphicsState();
+      } catch (e2) {
+        // Last resort: draw without opacity (still visible as logo)
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
+      }
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // generatePDF
+  // ─────────────────────────────────────────────────────────────
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -106,201 +156,181 @@ function DeliveryChallan() {
 
     try {
       setLoading(true);
-
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-      const pageWidth = doc.internal.pageSize.getWidth();   // 210
-      const pageHeight = doc.internal.pageSize.getHeight(); // 297
+      const doc        = new jsPDF("p", "mm", "a4");
+      const pageWidth  = doc.internal.pageSize.getWidth();   // 210
+      const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
-      // ─── LOAD LOGO ────────────────────────────────────────────────
-      const { img: logo, loaded: logoLoaded } = await loadImage(
-        "/Assets/SAT Logo.jpeg"
-      );
+      const bx           = 7;
+      const by           = 7;
+      const bw           = pageWidth  - 14;   // 196
+      const bh           = pageHeight - 14;   // 283
+      const borderBottom = by + bh;           // 290
 
-      // ─── WATERMARK (centered, very faint) ─────────────────────────
-      if (logoLoaded) {
-        doc.saveGraphicsState();
-        doc.setGState(new doc.GState({ opacity: 0.07 }));
-        // Center of page: (210/2 - 40, 297/2 - 40) for 80×80 image
-        doc.addImage(logo, "JPEG", 65, 98, 80, 80);
-        doc.restoreGraphicsState();
+      // ── Load logo (canvas re-encode → always clean JPEG) ────
+      const { dataUrl: logoJpeg, ok: hasLogo } =
+        await loadImageAsJpeg("/AndavarLogo2.png");
+
+      // ══════════════════════════════════════════════════════
+      // 1. WATERMARK  (first layer — behind everything)
+      //    Logo is landscape ≈ 1.8 : 1
+      //    Centred on full A4 page
+      // ══════════════════════════════════════════════════════
+      if (hasLogo) {
+        const wmW = 140;
+        const wmH = 78;
+        const wmX = (pageWidth  - wmW) / 2;   // 35
+        const wmY = (pageHeight - wmH) / 2;   // 109.5
+        safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH);
       }
 
-      // ─── OUTER BORDER ─────────────────────────────────────────────
+      // ══════════════════════════════════════════════════════
+      // 2. PAGE BORDER
+      // ══════════════════════════════════════════════════════
       doc.setDrawColor(0);
-      doc.setLineWidth(0.8);
-      doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+      doc.setLineWidth(0.7);
+      doc.rect(bx, by, bw, bh);
 
-      // ─── HEADER BOX (top-right: DELIVERY CHALLAN + Cell) ──────────
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      // Box for "DELIVERY CHALLAN"
-      doc.rect(130, 10, 72, 10);
-      doc.setFontSize(11);
+      // ══════════════════════════════════════════════════════
+      // 3. HEADER BOX
+      // ══════════════════════════════════════════════════════
+      doc.setLineWidth(0.4);
+      doc.rect(bx, by, bw, 50);
+
+      // "DELIVERY CHALLAN" label box — top right
+      doc.rect(143, by, 57, 13);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text("DELIVERY CHALLAN", 166, 17, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+      doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // Cell number top-right (outside box)
+      // Cell number
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.text("Cell : 9944130610", 166, 26, { align: "center" });
+      doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // ─── LOGO (top-left) ──────────────────────────────────────────
-      if (logoLoaded) {
-        doc.addImage(logo, "JPEG", 10, 10, 22, 22);
+      // Logo — top LEFT of header  (56 × 31 — landscape ratio)
+      if (hasLogo) {
+        doc.addImage(logoJpeg, "JPEG", 9, 12, 56, 31);
       }
 
-      // ─── COMPANY NAME ─────────────────────────────────────────────
-      doc.setFontSize(22);
+      // Company details (x=69 clears the 56-wide logo)
+      doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
-      // Italic-style: jsPDF supports "bolditalic"
-      doc.setFont("times", "bolditalic");
-      doc.text("Shree Aandavar Tooling", pageWidth / 2, 22, {
-        align: "center",
-      });
+      doc.setTextColor(0, 0, 0);
+      doc.text("Shree Aandavar Tooling", 69, 22);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(
-        "CNC Machine Service and Tooling & Job Work",
-        pageWidth / 2,
-        29,
-        { align: "center" }
-      );
+      doc.text("CNC Machine Service and Tooling & Job Work", 69, 29);
 
       doc.setFontSize(9);
       doc.text(
-        "Shop No. 1/68, Ambalakarampatti, Ulakaneri, MADURAI - 625 107.",
-        pageWidth / 2,
-        34,
-        { align: "center" }
+        "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
+        69, 35
       );
+      doc.text("mailto : prabusangari690@gmail.com", 69, 41);
 
-      doc.text(
-        "mailto : prabusangari690@gmail.com",
-        38,
-        40
-      );
+      doc.setFont("helvetica", "bold");
+      doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 48);
 
-      doc.text(
-        `Date : ${new Date().toLocaleDateString("en-IN")}`,
-        148,
-        40
-      );
-
-      // ─── HORIZONTAL DIVIDER ───────────────────────────────────────
-      doc.setLineWidth(0.8);
-      doc.line(8, 43, pageWidth - 8, 43);
+      // ══════════════════════════════════════════════════════
+      // 4. SUB-HEADER: Challan No + Customer
+      // ══════════════════════════════════════════════════════
+      const subY = 62;
       doc.setLineWidth(0.3);
-      doc.line(8, 45, pageWidth - 8, 45);
+      doc.line(bx, subY - 3, bx + bw, subY - 3);
+      doc.line(bx, subY + 9, bx + bw, subY + 9);
 
-      // ─── CHALLAN NO & CUSTOMER ────────────────────────────────────
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text("Challan No :", 12, 53);
+      doc.text("Challan No :", 12, subY + 5);
       doc.setFont("helvetica", "normal");
-      doc.text("DC-" + String(productsList.length).padStart(3, "0"), 40, 53);
-
+      doc.text(
+        "DC-" + String(productsList.length).padStart(3, "0"),
+        44, subY + 5
+      );
       doc.setFont("helvetica", "bold");
-      doc.text("To :", 12, 60);
+      doc.text("To :", 100, subY + 5);
       doc.setFont("helvetica", "normal");
-      doc.text(customerName, 22, 60);
+      doc.text(customerName, 112, subY + 5);
 
-      // ─── TABLE ────────────────────────────────────────────────────
-      const tableColumns = [
-        { header: "S.No", dataKey: "id" },
-        { header: "Product Name", dataKey: "productName" },
-        { header: "Quantity", dataKey: "quantity" },
-        { header: "Date", dataKey: "created" },
-      ];
-
-      const tableRows = productsList.map((item) => ({
-        id: item.id,
-        productName: item.productName,
-        quantity: item.quantity,
-        created: item.created,
-      }));
-
+      // ══════════════════════════════════════════════════════
+      // 5. PRODUCT TABLE
+      // ══════════════════════════════════════════════════════
       autoTable(doc, {
-        startY: 65,
-        columns: tableColumns,
-        body: tableRows,
+        startY: subY + 12,
+        head: [["S.No", "Product Name", "Quantity", "Date"]],
+        body: productsList.map((item, idx) => [
+          idx + 1,
+          item.productName,
+          item.quantity,
+          item.created,
+        ]),
         theme: "grid",
         headStyles: {
-          fillColor: [30, 30, 30],
+          fillColor: [0, 100, 200],
           textColor: 255,
           fontStyle: "bold",
           fontSize: 10,
           halign: "center",
         },
-        bodyStyles: {
-          fontSize: 9,
-          halign: "center",
-        },
-        columnStyles: {
-          id: { cellWidth: 20 },
-          productName: { cellWidth: 90, halign: "left" },
-          quantity: { cellWidth: 35 },
-          created: { cellWidth: 40 },
-        },
-        margin: { left: 8, right: 8 },
+        bodyStyles: { fontSize: 9, halign: "center" },
+        columnStyles: { 1: { halign: "left" } },
+        margin: { left: 9, right: 9 },
+        tableLineColor: [180, 180, 180],
+        tableLineWidth: 0.3,
       });
 
-      const tableEndY = doc.lastAutoTable.finalY || 120;
-
-      // ─── SIGNATURE SECTION (always near bottom) ───────────────────
-      // Ensure signatures are always at the bottom regardless of table size
-      const signatureY = Math.max(tableEndY + 20, pageHeight - 55);
+      // ══════════════════════════════════════════════════════
+      // 6. FOOTER — pinned inside border
+      //   borderBottom = 290
+      //   footerDiv    = 262
+      //   footerTextY  = 270
+      //   sigLineY     = 278
+      //   sigLabelY    = 284  (6 px above border ✓)
+      // ══════════════════════════════════════════════════════
+      const footerDiv   = borderBottom - 28;
+      const footerTextY = footerDiv    +  8;
+      const sigLineY    = footerDiv    + 16;
+      const sigLabelY   = sigLineY     +  6;
 
       doc.setLineWidth(0.4);
-      doc.line(8, signatureY, pageWidth - 8, signatureY);
+      doc.line(bx, footerDiv, bx + bw, footerDiv);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.text("Received the goods in good condition", 12, footerTextY);
+      doc.text(
+        "For Shree Aandavar Tooling",
+        bx + bw - 5, footerTextY,
+        { align: "right" }
+      );
 
-      // Left side
-      doc.text("Received the goods in good condition", 12, signatureY + 8);
-
-      // Right side
-      doc.text("For Shree Aandavar Tooling", pageWidth - 12, signatureY + 8, {
-        align: "right",
-      });
-
-      // Signature lines
-      const sigLineY = signatureY + 28;
       doc.setLineWidth(0.3);
-      doc.line(12, sigLineY, 70, sigLineY);         // left signature line
-      doc.line(pageWidth - 70, sigLineY, pageWidth - 12, sigLineY); // right signature line
+      doc.line(12,            sigLineY, 75,           sigLineY);
+      doc.line(bx + bw - 68, sigLineY, bx + bw - 5,  sigLineY);
 
       doc.setFontSize(9);
-      doc.text("Party's Signature", 12, sigLineY + 5);
-      doc.text("Signatory", pageWidth - 12, sigLineY + 5, { align: "right" });
-
-      // ─── BOTTOM LOGO (centered at very bottom) ────────────────────
-      if (logoLoaded) {
-        const logoW = 28;
-        const logoH = 28;
-        const logoX = (pageWidth - logoW) / 2;
-        const logoY = pageHeight - 40;
-        doc.addImage(logo, "JPEG", logoX, logoY, logoW, logoH);
-      }
-
-      // ─── BOTTOM BORDER LINE ───────────────────────────────────────
-      doc.setLineWidth(0.5);
-      doc.line(8, pageHeight - 10, pageWidth - 8, pageHeight - 10);
+      doc.text("Party's Signature", 12, sigLabelY);
+      doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
 
       doc.save("Delivery_Challan.pdf");
+
     } catch (error) {
-      console.error("PDF Error:", error);
-      alert("Error generating PDF");
+      console.error("PDF generation error:", error);
+      alert("PDF Error: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── WEB PAGE (unchanged) ────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+  // WEB PAGE — original design & structure completely unchanged
+  // ═══════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
       <Sidebar />
