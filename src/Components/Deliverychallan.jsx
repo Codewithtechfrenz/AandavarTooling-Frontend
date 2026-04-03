@@ -25,9 +25,7 @@ function DeliveryChallan() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      if (res.data && res.data.data) {
-        setProductOptions(res.data.data);
-      }
+      if (res.data && res.data.data) setProductOptions(res.data.data);
     } catch (error) {
       console.error("Product API Error:", error);
     }
@@ -36,9 +34,7 @@ function DeliveryChallan() {
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/custdrop/getdropCustomers");
-      if (res.data && res.data.data) {
-        setCustomerOptions(res.data.data);
-      }
+      if (res.data && res.data.data) setCustomerOptions(res.data.data);
     } catch (error) {
       console.error("Customer API Error:", error);
     }
@@ -58,7 +54,6 @@ function DeliveryChallan() {
       alert("Please fill all fields");
       return;
     }
-
     const newProduct = {
       id: productsList.length + 1,
       customerName,
@@ -66,7 +61,6 @@ function DeliveryChallan() {
       quantity,
       created: new Date().toLocaleDateString(),
     };
-
     setProductsList([...productsList, newProduct]);
     setProductName("");
     setQuantity("");
@@ -88,7 +82,6 @@ function DeliveryChallan() {
     }
   };
 
-  // ✅ UPDATED PDF FUNCTION — matches letterhead design
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -97,115 +90,115 @@ function DeliveryChallan() {
 
     try {
       setLoading(true);
-
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
       const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();   // 210
-      const pageHeight = doc.internal.pageSize.getHeight(); // 297
+      const pageWidth  = doc.internal.pageSize.getWidth();   // 210
+      const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
-      // ===== LOAD LOGO =====
-      let logoLoaded = false;
+      // ── Border constants ──────────────────────────────────────
+      const bx           = 7;
+      const by           = 7;
+      const bw           = pageWidth  - 14;
+      const bh           = pageHeight - 14;
+      const borderBottom = by + bh;          // = 290
+
+      // ═══════════════════════════════════════════════════════════
+      // STEP 1 — LOAD LOGO
+      // ═══════════════════════════════════════════════════════════
       const logo = new Image();
       logo.src = "/Assets/SAT Logo.jpeg";
+      let logoLoaded = false;
 
       await new Promise((resolve) => {
-        logo.onload = () => {
-          logoLoaded = true;
-          resolve();
-        };
+        logo.onload  = () => { logoLoaded = true; resolve(); };
         logo.onerror = resolve;
       });
 
-      // ===== WATERMARK — SAT logo centred on page =====
+      // ═══════════════════════════════════════════════════════════
+      // STEP 2 — WATERMARK  (first layer — sits behind everything)
+      //   Centred on the full page area, not header area
+      // ═══════════════════════════════════════════════════════════
       if (logoLoaded) {
-        doc.setGState(new doc.GState({ opacity: 0.06 }));
-        const wmSize = 110;
-        doc.addImage(
-          logo,
-          "JPEG",
-          (pageWidth - wmSize) / 2,
-          (pageHeight - wmSize) / 2,
-          wmSize,
-          wmSize
-        );
+        const wmSize = 120;
+        const wmX = (pageWidth  - wmSize) / 2;   // 45  — horizontally centred
+        const wmY = (pageHeight - wmSize) / 2;   // 88.5 — vertically centred
+        doc.setGState(new doc.GState({ opacity: 0.09 }));
+        doc.addImage(logo, "JPEG", wmX, wmY, wmSize, wmSize);
         doc.setGState(new doc.GState({ opacity: 1 }));
       }
 
-      // ===== OUTER PAGE BORDER =====
-      doc.setLineWidth(0.6);
-      doc.rect(7, 7, pageWidth - 14, pageHeight - 14);
+      // ═══════════════════════════════════════════════════════════
+      // STEP 3 — PAGE BORDER  (drawn after watermark)
+      // ═══════════════════════════════════════════════════════════
+      doc.setLineWidth(0.7);
+      doc.rect(bx, by, bw, bh);
 
-      // ===== HEADER SECTION (matches letterhead image) =====
-      // Outer header box
+      // ═══════════════════════════════════════════════════════════
+      // STEP 4 — HEADER BLOCK
+      // ═══════════════════════════════════════════════════════════
       doc.setLineWidth(0.4);
-      doc.rect(7, 7, pageWidth - 14, 48);
+      doc.rect(bx, by, bw, 48);          // header box
 
-      // ── Top-right: "DELIVERY CHALLAN" box ──
-      doc.setLineWidth(0.4);
-      doc.rect(143, 7, 60, 13);
+      // "DELIVERY CHALLAN" boxed label — top right
+      doc.rect(143, by, 57, 13);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
-      doc.text("DELIVERY CHALLAN", 173, 15.5, { align: "center" });
+      doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // ── Top-right: Cell number (next to box) ──
+      // Cell number
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.text("Cell : 9944130610", 173, 25, { align: "center" });
+      doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // ── Left: SAT Logo in header ──
+      // SAT logo — header left
       if (logoLoaded) {
         doc.addImage(logo, "JPEG", 10, 10, 28, 28);
       }
 
-      // ── Company Name — large, styled ──
+      // Company name
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
       doc.text("Shree Aandavar Tooling", 43, 23);
 
-      // ── Tagline ──
+      // Tagline
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text("CNC Machine Service and Tooling & Job Work", 43, 30);
 
-      // ── Address ──
+      // Address
       doc.setFontSize(9);
-      doc.text(
-        "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
-        43,
-        36
-      );
+      doc.text("Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.", 43, 36);
 
-      // ── Email & Date ──
+      // Email + Date
       doc.text("mailto : prabusangari690@gmail.com", 43, 42);
       doc.setFont("helvetica", "bold");
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 42);
 
-      // ===== SUB-HEADER: Challan No + Customer =====
+      // ═══════════════════════════════════════════════════════════
+      // STEP 5 — SUB-HEADER: Challan No + Customer
+      // ═══════════════════════════════════════════════════════════
       const subY = 60;
       doc.setLineWidth(0.3);
-      doc.line(7, subY - 3, pageWidth - 7, subY - 3); // top line
-      doc.line(7, subY + 9, pageWidth - 7, subY + 9); // bottom line
+      doc.line(bx, subY - 3,  bx + bw, subY - 3);
+      doc.line(bx, subY + 9,  bx + bw, subY + 9);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text("Challan No :", 12, subY + 5);
       doc.setFont("helvetica", "normal");
-      doc.text(
-        "DC-" + String(productsList.length).padStart(3, "0"),
-        42,
-        subY + 5
-      );
+      doc.text("DC-" + String(productsList.length).padStart(3, "0"), 42, subY + 5);
 
       doc.setFont("helvetica", "bold");
       doc.text("To :", 100, subY + 5);
       doc.setFont("helvetica", "normal");
       doc.text(customerName, 112, subY + 5);
 
-      // ===== PRODUCT TABLE =====
+      // ═══════════════════════════════════════════════════════════
+      // STEP 6 — PRODUCT TABLE
+      // ═══════════════════════════════════════════════════════════
       const tableColumn = ["S.No", "Product Name", "Quantity", "Date"];
       const tableRows = productsList.map((item, index) => [
         index + 1,
@@ -230,48 +223,47 @@ function DeliveryChallan() {
           fontSize: 9,
           halign: "center",
         },
-        columnStyles: {
-          1: { halign: "left" }, // Product name left-aligned
-        },
+        columnStyles: { 1: { halign: "left" } },
         margin: { left: 9, right: 9 },
         tableLineColor: [180, 180, 180],
         tableLineWidth: 0.3,
       });
 
-      // ===== FOOTER — always at bottom of page =====
-      const footerY = pageHeight - 38;
+      // ═══════════════════════════════════════════════════════════
+      // STEP 7 — FOOTER  (all content guaranteed inside border)
+      //
+      //  borderBottom = 290
+      //  sigLabelY    = 284  ← lowest text, 6px above border ✓
+      //  sigLineY     = 278
+      //  footerTextY  = 270
+      //  footerDiv    = 262  ← top divider of footer zone
+      // ═══════════════════════════════════════════════════════════
+      const footerDiv   = borderBottom - 28;   // 262
+      const footerTextY = footerDiv    +  8;   // 270
+      const sigLineY    = footerDiv    + 16;   // 278
+      const sigLabelY   = sigLineY     +  6;   // 284
 
-      // Footer top divider
+      // Divider line above footer zone
       doc.setLineWidth(0.4);
-      doc.line(7, footerY, pageWidth - 7, footerY);
-
-      // Footer bottom divider (page border bottom)
-      doc.line(7, pageHeight - 7, pageWidth - 7, pageHeight - 7);
+      doc.line(bx, footerDiv, bx + bw, footerDiv);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
 
-      // Left side
-      doc.text("Received the goods in good condition", 12, footerY + 8);
-
-      // Right side
-      doc.text("For Shree Aandavar Tooling", pageWidth - 12, footerY + 8, {
-        align: "right",
-      });
+      // Footer text
+      doc.text("Received the goods in good condition", 12, footerTextY);
+      doc.text("For Shree Aandavar Tooling", bx + bw - 5, footerTextY, { align: "right" });
 
       // Signature lines
-      const sigY = footerY + 26;
       doc.setLineWidth(0.3);
+      doc.line(12,             sigLineY, 75,            sigLineY); // left
+      doc.line(bx + bw - 68,  sigLineY, bx + bw - 5,   sigLineY); // right
 
-      // Left signature line
-      doc.line(12, sigY, 75, sigY);
+      // Signature labels
       doc.setFontSize(9);
-      doc.text("Party's Signature", 12, sigY + 5);
-
-      // Right signature line
-      doc.line(pageWidth - 75, sigY, pageWidth - 12, sigY);
-      doc.text("Signatory", pageWidth - 12, sigY + 5, { align: "right" });
+      doc.text("Party's Signature", 12, sigLabelY);
+      doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
 
       doc.save("Delivery_Challan.pdf");
     } catch (error) {
@@ -282,7 +274,9 @@ function DeliveryChallan() {
     }
   };
 
-  // ===== JSX — original web page design unchanged =====
+  // ═══════════════════════════════════════════════════════════════
+  // WEB PAGE — original design & structure completely unchanged
+  // ═══════════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
       <Sidebar />
@@ -306,15 +300,9 @@ function DeliveryChallan() {
               {customerOptions.map((customer, index) => (
                 <option
                   key={index}
-                  value={
-                    typeof customer === "string"
-                      ? customer
-                      : customer.customer_name
-                  }
+                  value={typeof customer === "string" ? customer : customer.customer_name}
                 >
-                  {typeof customer === "string"
-                    ? customer
-                    : customer.customer_name}
+                  {typeof customer === "string" ? customer : customer.customer_name}
                 </option>
               ))}
             </select>
@@ -332,15 +320,9 @@ function DeliveryChallan() {
               {productOptions.map((product, index) => (
                 <option
                   key={index}
-                  value={
-                    typeof product === "string"
-                      ? product
-                      : product.product_name
-                  }
+                  value={typeof product === "string" ? product : product.product_name}
                 >
-                  {typeof product === "string"
-                    ? product
-                    : product.product_name}
+                  {typeof product === "string" ? product : product.product_name}
                 </option>
               ))}
             </select>
