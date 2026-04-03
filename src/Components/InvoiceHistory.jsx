@@ -30,10 +30,8 @@ function InvoiceHistory() {
 
       if (res.data.status === 1) {
         setInvoices(res.data.data);
-        toast.success("Invoices loaded successfully");
       } else {
         setInvoices([]);
-        toast.warning("No invoices found");
       }
     } catch (err) {
       console.error("Invoice Fetch Error:", err);
@@ -48,26 +46,58 @@ function InvoiceHistory() {
     navigate(`/dashboard/invoice/${invoiceNo}`);
   };
 
-  /* ================= DOWNLOAD INVOICE ================= */
+  /* ================= DOWNLOAD INVOICE (FIXED) ================= */
   const downloadInvoice = async (invoiceNo) => {
     try {
-      const response = await api.get(`/sales/invoice/download/${invoiceNo}`, {
-        responseType: "blob", // important
+      const response = await api.get(
+        `/sales/invoice/download/${invoiceNo}`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      // Check if response is valid
+      if (!response.data || response.data.size === 0) {
+        throw new Error("Empty file");
+      }
+
+      // Get filename from header (if backend sends it)
+      const contentDisposition = response.headers["content-disposition"];
+      let fileName = `Invoice_${invoiceNo}.pdf`;
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/);
+        if (match?.[1]) fileName = match[1];
+      }
+
+      const blob = new Blob([response.data], {
+        type: "application/pdf",
       });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
       link.href = url;
+      link.setAttribute("download", fileName);
 
-      link.setAttribute("download", `Invoice_${invoiceNo}.pdf`);
       document.body.appendChild(link);
       link.click();
+
+      // cleanup
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       toast.success("Invoice downloaded successfully");
     } catch (error) {
       console.error("Download error:", error);
-      toast.error("Failed to download invoice");
+
+      if (error.response) {
+        toast.error("Server error while downloading");
+      } else if (error.request) {
+        toast.error("No response from server");
+      } else {
+        toast.error("Download failed");
+      }
     }
   };
 
