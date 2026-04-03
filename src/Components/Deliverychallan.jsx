@@ -4,7 +4,7 @@ import Topbar from "../Components/Topbar";
 import "../CSS/Deliverychallan.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import api from "../api"; // Axios instance with baseURL
+import api from "../api";
 
 function DeliveryChallan() {
   const [customerName, setCustomerName] = useState("");
@@ -21,7 +21,6 @@ function DeliveryChallan() {
     fetchDeliveryChallans();
   }, []);
 
-  // ========== FETCH PRODUCTS ==========
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
@@ -33,7 +32,6 @@ function DeliveryChallan() {
     }
   };
 
-  // ========== FETCH CUSTOMERS ==========
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/custdrop/getdropCustomers");
@@ -45,7 +43,6 @@ function DeliveryChallan() {
     }
   };
 
-  // ========== FETCH DELIVERY CHALLANS ==========
   const fetchDeliveryChallans = async () => {
     try {
       const res = await api.get("/delivery/getDeliveryChallans");
@@ -55,7 +52,6 @@ function DeliveryChallan() {
     }
   };
 
-  // ========== ADD PRODUCT TO TABLE ==========
   const addProduct = () => {
     if (!customerName || !productName || !quantity) {
       alert("Please fill all fields");
@@ -75,7 +71,6 @@ function DeliveryChallan() {
     setQuantity("");
   };
 
-  // ========== SAVE DELIVERY CHALLAN TO DB ==========
   const saveDeliveryChallan = async () => {
     try {
       for (const item of productsList) {
@@ -92,209 +87,105 @@ function DeliveryChallan() {
     }
   };
 
-  // ========== GENERATE PDF ==========
+  // ✅ UPDATED PDF DESIGN
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
       return;
     }
 
-    // Save in DB
     await saveDeliveryChallan();
     fetchDeliveryChallans();
 
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
 
-    // ─── WATERMARK (SAT logo as faint text behind content) ───────────────────
-    // Since we can't embed the actual image file at runtime without a hosted URL,
-    // we draw a styled text watermark matching the SAT logo identity.
-    // If you want the real image, replace the block below with:
-    //   doc.addImage(base64SATLogo, "PNG", x, y, w, h);
-    // after converting the logo to base64 and importing it.
-    doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.07 }));
-    doc.setFontSize(110);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(180, 0, 0); // red matching SAT logo
-    doc.text("SAT", pageWidth / 2, pageHeight / 2 + 20, {
-      align: "center",
-      angle: 0,
+    // ===== WATERMARK =====
+    const logo = new Image();
+    logo.src = "/Assets/SAT Logo.png";
+
+    await new Promise((resolve) => {
+      logo.onload = resolve;
     });
-    doc.restoreGraphicsState();
 
-    // ─── OUTER BORDER ─────────────────────────────────────────────────────────
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.8);
-    doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+    doc.setGState(new doc.GState({ opacity: 0.08 }));
+    doc.addImage(logo, "PNG", 40, 90, 120, 120);
+    doc.setGState(new doc.GState({ opacity: 1 }));
 
-    // ─── HEADER ───────────────────────────────────────────────────────────────
-    // Top label row: "DELIVERY CHALLAN" center-box + Cell right
-    doc.setFontSize(9);
+    // ===== HEADER =====
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("SHREE AANDAVAR TOOLING", 14, 15);
+
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-
-    // "DELIVERY CHALLAN" box in top center
-    const dcBoxX = pageWidth / 2 - 28;
-    doc.setLineWidth(0.5);
-    doc.rect(dcBoxX, 10, 56, 8);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text("DELIVERY CHALLAN", pageWidth / 2, 15.5, { align: "center" });
-
-    // Cell number top-right
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text("Cell : 99441 30610", pageWidth - 12, 15.5, { align: "right" });
-
-    // Logo placeholder left (small gear/label)
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(80, 0, 0);
-    doc.text("AANDAVAR", 13, 17);
-    doc.text("TOOLING", 13, 21);
-    doc.setTextColor(0, 0, 0);
-
-    // Company name - large
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(10, 10, 10);
-    doc.text("Shree Aandavar Tooling", pageWidth / 2, 30, { align: "center" });
-
-    // Tagline
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(50, 50, 50);
     doc.text(
       "CNC Machine Service and Tooling & Job Work",
-      pageWidth / 2,
-      37,
-      { align: "center" }
+      14,
+      22
     );
-
-    // Address
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(30, 30, 30);
     doc.text(
-      "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
-      pageWidth / 2,
-      43,
-      { align: "center" }
+      "Shop No. 1/68, Ambalakarampatti, Ulakaneri, Madurai - 625107",
+      14,
+      27
     );
+    doc.text("Email: prabusangari690@gmail.com", 14, 32);
 
-    // Email
-    doc.setTextColor(0, 0, 200);
-    doc.text(
-      "mailto : prabusangari690@gmail.com",
-      pageWidth / 2,
-      49,
-      { align: "center" }
-    );
-    doc.setTextColor(0, 0, 0);
-
-    // Horizontal divider line under header
-    doc.setLineWidth(0.6);
-    doc.setDrawColor(0, 0, 0);
-    doc.line(8, 53, pageWidth - 8, 53);
-
-    // ─── CHALLAN META ROW ─────────────────────────────────────────────────────
-    // Challan No. | Date
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-
-    const challanNo = `DC-${Date.now().toString().slice(-6)}`;
-    const dateStr = new Date().toLocaleDateString("en-IN");
-
-    doc.text(`Challan No. : ${challanNo}`, 12, 60);
-    doc.text(`Date : ${dateStr}`, pageWidth - 12, 60, { align: "right" });
-
-    // Thin divider
-    doc.setLineWidth(0.3);
-    doc.line(8, 63, pageWidth - 8, 63);
-
-    // ─── CUSTOMER ROW ─────────────────────────────────────────────────────────
-    doc.setFontSize(9);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Customer Name :", 12, 70);
+    doc.text("DELIVERY CHALLAN", 140, 15);
+
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(customerName || "-", 50, 70);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 140, 25);
+    doc.text("Challan No: DC-001", 140, 30);
 
-    doc.setLineWidth(0.3);
-    doc.line(8, 74, pageWidth - 8, 74);
+    doc.line(10, 35, 200, 35);
 
-    // ─── PRODUCT TABLE ────────────────────────────────────────────────────────
-    const tableColumn = ["S.No", "Customer", "Product Name", "Quantity", "Date"];
+    // ===== CUSTOMER =====
+    doc.setFont("helvetica", "bold");
+    doc.text("Customer:", 14, 45);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(customerName, 14, 52);
+
+    // ===== TABLE =====
+    const tableColumn = ["ID", "Product", "Quantity", "Date"];
     const tableRows = productsList.map((item) => [
       item.id,
-      item.customerName,
       item.productName,
       item.quantity,
       item.created,
     ]);
 
     autoTable(doc, {
-      startY: 77,
+      startY: 60,
       head: [tableColumn],
       body: tableRows,
       theme: "grid",
-      styles: {
-        fontSize: 9,
-        cellPadding: 4,
-        textColor: [20, 20, 20],
-        lineColor: [0, 0, 0],
-        lineWidth: 0.3,
-      },
       headStyles: {
-        fillColor: [230, 230, 230],
-        textColor: [0, 0, 0],
-        fontStyle: "bold",
-        halign: "center",
+        fillColor: [0, 123, 255],
+        textColor: 255,
       },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 15 },
-        1: { cellWidth: 45 },
-        2: { cellWidth: 60 },
-        3: { halign: "center", cellWidth: 25 },
-        4: { halign: "center", cellWidth: 35 },
-      },
-      margin: { left: 8, right: 8 },
     });
 
-    // ─── FOOTER ───────────────────────────────────────────────────────────────
-    const footerY = pageHeight - 30;
+    const finalY = doc.lastAutoTable.finalY;
 
-    // Footer top line
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(0, 0, 0);
-    doc.line(8, footerY - 4, pageWidth - 8, footerY - 4);
+    // ===== FOOTER =====
+    doc.line(10, finalY + 10, 200, finalY + 10);
 
-    // Left: Received line
-    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(30, 30, 30);
-    doc.text("Received the goods in good condition", 12, footerY + 4);
+    doc.text(
+      "Received the goods in good condition",
+      14,
+      finalY + 20
+    );
 
-    // Right: For Shree Aandavar Tooling
-    doc.text("For Shree Aandavar Tooling", pageWidth - 12, footerY + 4, {
-      align: "right",
-    });
+    doc.text("Party's Signature", 14, finalY + 35);
 
-    // Signature labels
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(80, 80, 80);
+    doc.text("For Shree Aandavar Tooling", 130, finalY + 20);
+    doc.text("Signatory", 150, finalY + 35);
 
-    // Signature lines
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(100, 100, 100);
-    doc.line(12, footerY + 20, 65, footerY + 20);
-    doc.line(pageWidth - 65, footerY + 20, pageWidth - 12, footerY + 20);
-
-    doc.text("Party's Signature", 12, footerY + 25);
-    doc.text("Signatory", pageWidth - 12, footerY + 25, { align: "right" });
-
+    // ===== SAVE =====
     doc.save("Delivery_Challan.pdf");
   };
 
@@ -308,7 +199,6 @@ function DeliveryChallan() {
         <p>Add multiple products for a single customer</p>
       </div>
 
-      {/* Customer Section */}
       <div className="sales-form">
         <div className="sales-row">
           <div className="sales-group">
@@ -337,7 +227,6 @@ function DeliveryChallan() {
           </div>
         </div>
 
-        {/* Product Section */}
         <div className="sales-row">
           <div className="sales-group">
             <label>Product Name</label>
@@ -369,7 +258,6 @@ function DeliveryChallan() {
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Enter Quantity"
             />
           </div>
         </div>
@@ -383,7 +271,6 @@ function DeliveryChallan() {
         </button>
       </div>
 
-      {/* Table */}
       <div className="sales-table-card">
         <table className="sales-table">
           <thead>
@@ -419,6 +306,13 @@ function DeliveryChallan() {
 }
 
 export default DeliveryChallan;
+
+
+
+
+
+
+
 
 
 
