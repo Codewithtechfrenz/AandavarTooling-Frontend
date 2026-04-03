@@ -188,10 +188,25 @@ cursor:pointer;
   background-color: #ff2c2c;
 }
 
-.download-btn {
+
+.download-top-btn {
   background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.download-btn:hover {
+.download-top-btn:hover {
   background-color: #15803d;
+}
+
+.invoice-container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
 }

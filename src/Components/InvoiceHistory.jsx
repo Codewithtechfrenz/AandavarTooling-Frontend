@@ -1,66 +1,61 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
-import { useNavigate } from "react-router-dom";
 import "../CSS/SalesPage.css";
 
-// Toastify
+import html2pdf from "html2pdf.js";
+
+// Toast
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Icons
-import { FaEye, FaDownload } from "react-icons/fa";
+// Icon
+import { FaDownload } from "react-icons/fa";
 
-function InvoiceHistory() {
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(false);
+function InvoiceView() {
+  const { invoiceNo } = useParams();
+  const [invoice, setInvoice] = useState(null);
 
-  const navigate = useNavigate();
+  const invoiceRef = useRef();
 
-  /* ================= LOAD INVOICES ================= */
+  /* ================= FETCH INVOICE ================= */
   useEffect(() => {
-    fetchInvoices();
+    fetchInvoice();
   }, []);
 
-  const fetchInvoices = async () => {
-    setLoading(true);
+  const fetchInvoice = async () => {
     try {
-      const res = await api.get("/sales/invoices");
+      const res = await api.get(`/sales/invoice/${invoiceNo}`);
 
       if (res.data.status === 1) {
-        setInvoices(res.data.data);
-      } else {
-        setInvoices([]);
+        setInvoice(res.data.data);
       }
     } catch (err) {
-      console.error("Invoice Fetch Error:", err);
-      toast.error("Failed to fetch invoices");
-    } finally {
-      setLoading(false);
+      console.error(err);
+      toast.error("Failed to load invoice");
     }
   };
 
-  /* ================= VIEW INVOICE ================= */
-  const viewInvoice = (invoiceNo) => {
-    navigate(`/dashboard/invoice/${invoiceNo}`);
+  /* ================= DOWNLOAD PDF ================= */
+  const downloadPDF = () => {
+    const element = invoiceRef.current;
+
+    const opt = {
+      margin: 0.5,
+      filename: `Invoice_${invoiceNo}.pdf`,
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf().set(opt).from(element).save();
+
+    toast.success("Invoice downloaded");
   };
 
-  /* ================= SIMPLE DOWNLOAD ================= */
-  const downloadInvoice = (invoiceNo) => {
-    try {
-      // Direct download URL (NO API CALL)
-      const downloadUrl = `${api.defaults.baseURL}/sales/invoice/download/${invoiceNo}`;
-
-      // Open in new tab → browser handles download
-      window.open(downloadUrl, "_blank");
-
-      toast.success("Downloading invoice...");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Download failed");
-    }
-  };
+  if (!invoice) return <div>Loading...</div>;
 
   return (
     <div className="sales-page">
@@ -69,83 +64,61 @@ function InvoiceHistory() {
 
       <ToastContainer position="top-right" autoClose={2000} />
 
-      <div className="sales-header">
-        <h1>Invoice History</h1>
+      {/* HEADER */}
+      <div className="sales-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Invoice #{invoice.Invoice_No}</h1>
+
+        {/* DOWNLOAD BUTTON */}
+        <button className="download-top-btn" onClick={downloadPDF}>
+          <FaDownload /> Download
+        </button>
       </div>
 
+      {/* INVOICE CONTENT */}
       <div className="sales-form">
-        <div className="sales-table-container">
-          <h2>Invoice List</h2>
+        <div className="invoice-container" ref={invoiceRef}>
+          
+          <h2>Invoice Details</h2>
+
+          <p><strong>Date:</strong> {invoice.Invoice_Date}</p>
+          <p><strong>Customer:</strong> {invoice.Customer_Name}</p>
+          <p><strong>Phone:</strong> {invoice.Customer_Phone}</p>
+
+          <hr />
 
           <table className="sales-table">
             <thead>
               <tr>
-                <th>Invoice No</th>
-                <th>Date</th>
-                <th>Customer Name</th>
-                <th>Phone</th>
-                <th>Total Amount</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
               </tr>
             </thead>
 
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="7">Loading invoices...</td>
+              {invoice.Items?.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.Item_Name}</td>
+                  <td>{item.Quantity}</td>
+                  <td>{item.Price}</td>
+                  <td>{item.Total}</td>
                 </tr>
-              ) : invoices.length === 0 ? (
-                <tr>
-                  <td colSpan="7">No invoices found</td>
-                </tr>
-              ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.Invoice_ID}>
-                    <td>{inv.Invoice_No}</td>
-                    <td>{inv.Invoice_Date}</td>
-                    <td>{inv.Customer_Name}</td>
-                    <td>{inv.Customer_Phone}</td>
-                    <td>{inv.Total_Amount}</td>
-                    <td>{inv.Status}</td>
-
-                    <td className="action-buttons">
-                      {/* VIEW ICON */}
-                      <button
-                        className="icon-btn view-btn"
-                        onClick={() => viewInvoice(inv.Invoice_No)}
-                      >
-                        <FaEye size={16} />
-                      </button>
-
-                      {/* DOWNLOAD ICON */}
-                      <button
-                        className="icon-btn download-btn"
-                        onClick={() => downloadInvoice(inv.Invoice_No)}
-                      >
-                        <FaDownload size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
 
-          {/* Refresh Button */}
-          <div style={{ marginTop: "20px" }}>
-            <button className="sales-add-btn" onClick={fetchInvoices}>
-              Refresh
-            </button>
-          </div>
+          <h3 style={{ textAlign: "right", marginTop: "20px" }}>
+            Total: ₹{invoice.Total_Amount}
+          </h3>
+
         </div>
       </div>
     </div>
   );
 }
 
-export default InvoiceHistory;
-
+export default InvoiceView;
 
 
 
