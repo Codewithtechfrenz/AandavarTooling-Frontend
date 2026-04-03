@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import api from "../api";
 
 // ✅ IMPORT LOGO FROM LOCAL PATH
-import logo from "./AndavarLogo2.png";
+import logo from "../Assets/AandavarLogo2.png";
 
 function DeliveryChallan() {
   const [customerName, setCustomerName] = useState("");
