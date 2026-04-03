@@ -11,7 +11,7 @@ function DeliveryChallan() {
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [productsList, setProductsList] = useState([]);
-  const [loading, setLoading] = useState(false); // ✅ NEW
+  const [loading, setLoading] = useState(false);
 
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
@@ -88,7 +88,7 @@ function DeliveryChallan() {
     }
   };
 
-  // ✅ FIXED PDF FUNCTION
+  // ✅ FINAL PDF FUNCTION
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -96,29 +96,30 @@ function DeliveryChallan() {
     }
 
     try {
-      setLoading(true); // ✅ START LOADING
+      setLoading(true);
 
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
       const doc = new jsPDF();
 
-      // ===== SAFE WATERMARK LOAD =====
+      // ===== LOAD LOGO =====
       let logoLoaded = false;
       const logo = new Image();
-      logo.src = "/assets/SAT Logo.png";
+      logo.src = "/Assets/SAT Logo.jpeg"; // ✅ your uploaded image
 
       await new Promise((resolve) => {
         logo.onload = () => {
           logoLoaded = true;
           resolve();
         };
-        logo.onerror = resolve; // ✅ avoid blocking
+        logo.onerror = resolve;
       });
 
+      // ===== WATERMARK =====
       if (logoLoaded) {
         doc.setGState(new doc.GState({ opacity: 0.08 }));
-        doc.addImage(logo, "PNG", 40, 90, 120, 120);
+        doc.addImage(logo, "JPEG", 40, 80, 120, 120);
         doc.setGState(new doc.GState({ opacity: 1 }));
       }
 
@@ -186,13 +187,18 @@ function DeliveryChallan() {
       doc.text("For Shree Aandavar Tooling", 130, finalY + 20);
       doc.text("Signatory", 150, finalY + 35);
 
+      // ===== FOOTER LOGO (BOTTOM CENTER) =====
+      if (logoLoaded) {
+        doc.addImage(logo, "JPEG", 85, finalY + 45, 40, 40);
+      }
+
       doc.save("Delivery_Challan.pdf");
 
     } catch (error) {
       console.error("PDF Error:", error);
       alert("Error generating PDF");
     } finally {
-      setLoading(false); // ✅ END LOADING
+      setLoading(false);
     }
   };
 
@@ -248,12 +254,7 @@ function DeliveryChallan() {
           Add Product
         </button>
 
-        {/* ✅ FIXED BUTTON */}
-        <button
-          className="sales-pdf-btn"
-          onClick={generatePDF}
-          disabled={loading}
-        >
+        <button className="sales-pdf-btn" onClick={generatePDF} disabled={loading}>
           {loading ? "Generating PDF..." : "Generate PDF"}
         </button>
       </div>
