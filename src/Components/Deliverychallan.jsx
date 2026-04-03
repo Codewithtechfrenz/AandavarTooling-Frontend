@@ -336,10 +336,16 @@ function DeliveryChallan() {
       <Sidebar />
       <Topbar />
 
-      <div className="sales-header">
-        <h1>Delivery Challan</h1>
-        <p>Add multiple products for a single customer</p>
-      </div>
+     <div className="sales-header">
+  <div className="header-left">
+    <img src="/AndavarLogo2.png" alt="logo" className="header-logo" />
+  </div>
+
+  <div className="header-content">
+    <h1>Delivery Challan</h1>
+    <p>Add multiple products for a single customer</p>
+  </div>
+</div>
 
       <div className="sales-form">
         <div className="sales-row">
