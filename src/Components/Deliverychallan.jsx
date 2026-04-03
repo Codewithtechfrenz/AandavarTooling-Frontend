@@ -219,8 +219,8 @@ function DeliveryChallan() {
         </button>
 
         <button className="sales-pdf-btn" onClick={generatePDF}>
-          Generate PDF
-        </button>
+  Generate PDF
+</button>
       </div>
 
       {/* Table */}

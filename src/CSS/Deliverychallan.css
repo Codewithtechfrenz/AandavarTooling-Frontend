@@ -157,3 +157,31 @@ padding:12px 25px;
 border-radius:6px;
 cursor:pointer;
 }
+
+/* ===== PDF BUTTON DESIGN ===== */
+.sales-pdf-btn {
+  margin-top: 15px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff512f, #dd2476);
+  box-shadow: 0 4px 10px rgba(221, 36, 118, 0.4);
+  transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.sales-pdf-btn:hover {
+  background: linear-gradient(135deg, #dd2476, #ff512f);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(221, 36, 118, 0.5);
+}
+
+/* Click Effect */
+.sales-pdf-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(221, 36, 118, 0.3);
+}
