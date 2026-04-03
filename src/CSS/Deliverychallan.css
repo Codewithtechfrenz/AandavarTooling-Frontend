@@ -159,7 +159,8 @@ cursor:pointer;
 }
 
 /* ===== PDF BUTTON DESIGN ===== */
-/* .sales-pdf-btn {
+/* ===== PDF BUTTON DESIGN (BLUE THEME) ===== */
+.sales-pdf-btn {
   margin-top: 15px;
   padding: 12px 22px;
   font-size: 14px;
@@ -168,20 +169,20 @@ cursor:pointer;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  background: linear-gradient(135deg, #ff512f, #dd2476);
-  box-shadow: 0 4px 10px rgba(221, 36, 118, 0.4);
+  background-color: #007bff; /* Solid Blue */
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
   transition: all 0.3s ease;
 }
 
 /* Hover Effect */
 .sales-pdf-btn:hover {
-  background: linear-gradient(135deg, #dd2476, #ff512f);
+  background-color: #0056b3; /* Darker Blue */
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(221, 36, 118, 0.5);
+  box-shadow: 0 6px 14px rgba(0, 123, 255, 0.4);
 }
 
 /* Click Effect */
 .sales-pdf-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 2px 6px rgba(221, 36, 118, 0.3);
-} */
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
