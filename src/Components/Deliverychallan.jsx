@@ -11,6 +11,7 @@ function DeliveryChallan() {
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [productsList, setProductsList] = useState([]);
+  const [loading, setLoading] = useState(false); // ✅ NEW
 
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
@@ -87,106 +88,112 @@ function DeliveryChallan() {
     }
   };
 
-  // ✅ UPDATED PDF DESIGN
+  // ✅ FIXED PDF FUNCTION
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
       return;
     }
 
-    await saveDeliveryChallan();
-    fetchDeliveryChallans();
+    try {
+      setLoading(true); // ✅ START LOADING
 
-    const doc = new jsPDF();
+      await saveDeliveryChallan();
+      fetchDeliveryChallans();
 
-    // ===== WATERMARK =====
-    const logo = new Image();
-    logo.src = "/Assets/SAT Logo.png";
+      const doc = new jsPDF();
 
-    await new Promise((resolve) => {
-      logo.onload = resolve;
-    });
+      // ===== SAFE WATERMARK LOAD =====
+      let logoLoaded = false;
+      const logo = new Image();
+      logo.src = "/assets/SAT Logo.png";
 
-    doc.setGState(new doc.GState({ opacity: 0.08 }));
-    doc.addImage(logo, "PNG", 40, 90, 120, 120);
-    doc.setGState(new doc.GState({ opacity: 1 }));
+      await new Promise((resolve) => {
+        logo.onload = () => {
+          logoLoaded = true;
+          resolve();
+        };
+        logo.onerror = resolve; // ✅ avoid blocking
+      });
 
-    // ===== HEADER =====
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("SHREE AANDAVAR TOOLING", 14, 15);
+      if (logoLoaded) {
+        doc.setGState(new doc.GState({ opacity: 0.08 }));
+        doc.addImage(logo, "PNG", 40, 90, 120, 120);
+        doc.setGState(new doc.GState({ opacity: 1 }));
+      }
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "CNC Machine Service and Tooling & Job Work",
-      14,
-      22
-    );
-    doc.text(
-      "Shop No. 1/68, Ambalakarampatti, Ulakaneri, Madurai - 625107",
-      14,
-      27
-    );
-    doc.text("Email: prabusangari690@gmail.com", 14, 32);
+      // ===== HEADER =====
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("SHREE AANDAVAR TOOLING", 14, 15);
 
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("DELIVERY CHALLAN", 140, 15);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("CNC Machine Service and Tooling & Job Work", 14, 22);
+      doc.text(
+        "Shop No. 1/68, Ambalakarampatti, Ulakaneri, Madurai - 625107",
+        14,
+        27
+      );
+      doc.text("Email: prabusangari690@gmail.com", 14, 32);
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 140, 25);
-    doc.text("Challan No: DC-001", 140, 30);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("DELIVERY CHALLAN", 140, 15);
 
-    doc.line(10, 35, 200, 35);
+      doc.setFontSize(10);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 140, 25);
+      doc.text("Challan No: DC-001", 140, 30);
 
-    // ===== CUSTOMER =====
-    doc.setFont("helvetica", "bold");
-    doc.text("Customer:", 14, 45);
+      doc.line(10, 35, 200, 35);
 
-    doc.setFont("helvetica", "normal");
-    doc.text(customerName, 14, 52);
+      // ===== CUSTOMER =====
+      doc.setFont("helvetica", "bold");
+      doc.text("Customer:", 14, 45);
 
-    // ===== TABLE =====
-    const tableColumn = ["ID", "Product", "Quantity", "Date"];
-    const tableRows = productsList.map((item) => [
-      item.id,
-      item.productName,
-      item.quantity,
-      item.created,
-    ]);
+      doc.setFont("helvetica", "normal");
+      doc.text(customerName, 14, 52);
 
-    autoTable(doc, {
-      startY: 60,
-      head: [tableColumn],
-      body: tableRows,
-      theme: "grid",
-      headStyles: {
-        fillColor: [0, 123, 255],
-        textColor: 255,
-      },
-    });
+      // ===== TABLE =====
+      const tableColumn = ["ID", "Product", "Quantity", "Date"];
+      const tableRows = productsList.map((item) => [
+        item.id,
+        item.productName,
+        item.quantity,
+        item.created,
+      ]);
 
-    const finalY = doc.lastAutoTable.finalY;
+      autoTable(doc, {
+        startY: 60,
+        head: [tableColumn],
+        body: tableRows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [0, 123, 255],
+          textColor: 255,
+        },
+      });
 
-    // ===== FOOTER =====
-    doc.line(10, finalY + 10, 200, finalY + 10);
+      const finalY = doc.lastAutoTable.finalY || 100;
 
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "Received the goods in good condition",
-      14,
-      finalY + 20
-    );
+      // ===== FOOTER =====
+      doc.line(10, finalY + 10, 200, finalY + 10);
 
-    doc.text("Party's Signature", 14, finalY + 35);
+      doc.setFont("helvetica", "normal");
+      doc.text("Received the goods in good condition", 14, finalY + 20);
+      doc.text("Party's Signature", 14, finalY + 35);
 
-    doc.text("For Shree Aandavar Tooling", 130, finalY + 20);
-    doc.text("Signatory", 150, finalY + 35);
+      doc.text("For Shree Aandavar Tooling", 130, finalY + 20);
+      doc.text("Signatory", 150, finalY + 35);
 
-    // ===== SAVE =====
-    doc.save("Delivery_Challan.pdf");
+      doc.save("Delivery_Challan.pdf");
+
+    } catch (error) {
+      console.error("PDF Error:", error);
+      alert("Error generating PDF");
+    } finally {
+      setLoading(false); // ✅ END LOADING
+    }
   };
 
   return (
@@ -210,17 +217,8 @@ function DeliveryChallan() {
             >
               <option value="">Select Customer</option>
               {customerOptions.map((customer, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof customer === "string"
-                      ? customer
-                      : customer.customer_name
-                  }
-                >
-                  {typeof customer === "string"
-                    ? customer
-                    : customer.customer_name}
+                <option key={index} value={typeof customer === "string" ? customer : customer.customer_name}>
+                  {typeof customer === "string" ? customer : customer.customer_name}
                 </option>
               ))}
             </select>
@@ -230,23 +228,11 @@ function DeliveryChallan() {
         <div className="sales-row">
           <div className="sales-group">
             <label>Product Name</label>
-            <select
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-            >
+            <select value={productName} onChange={(e) => setProductName(e.target.value)}>
               <option value="">Select Product</option>
               {productOptions.map((product, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof product === "string"
-                      ? product
-                      : product.product_name
-                  }
-                >
-                  {typeof product === "string"
-                    ? product
-                    : product.product_name}
+                <option key={index} value={typeof product === "string" ? product : product.product_name}>
+                  {typeof product === "string" ? product : product.product_name}
                 </option>
               ))}
             </select>
@@ -254,11 +240,7 @@ function DeliveryChallan() {
 
           <div className="sales-group">
             <label>Quantity</label>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
+            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
           </div>
         </div>
 
@@ -266,8 +248,13 @@ function DeliveryChallan() {
           Add Product
         </button>
 
-        <button className="sales-pdf-btn" onClick={generatePDF}>
-          Generate PDF
+        {/* ✅ FIXED BUTTON */}
+        <button
+          className="sales-pdf-btn"
+          onClick={generatePDF}
+          disabled={loading}
+        >
+          {loading ? "Generating PDF..." : "Generate PDF"}
         </button>
       </div>
 
