@@ -46,58 +46,19 @@ function InvoiceHistory() {
     navigate(`/dashboard/invoice/${invoiceNo}`);
   };
 
-  /* ================= DOWNLOAD INVOICE (FIXED) ================= */
-  const downloadInvoice = async (invoiceNo) => {
+  /* ================= SIMPLE DOWNLOAD ================= */
+  const downloadInvoice = (invoiceNo) => {
     try {
-      const response = await api.get(
-        `/sales/invoice/download/${invoiceNo}`,
-        {
-          responseType: "blob",
-        }
-      );
+      // Direct download URL (NO API CALL)
+      const downloadUrl = `${api.defaults.baseURL}/sales/invoice/download/${invoiceNo}`;
 
-      // Check if response is valid
-      if (!response.data || response.data.size === 0) {
-        throw new Error("Empty file");
-      }
+      // Open in new tab → browser handles download
+      window.open(downloadUrl, "_blank");
 
-      // Get filename from header (if backend sends it)
-      const contentDisposition = response.headers["content-disposition"];
-      let fileName = `Invoice_${invoiceNo}.pdf`;
-
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?(.+)"?/);
-        if (match?.[1]) fileName = match[1];
-      }
-
-      const blob = new Blob([response.data], {
-        type: "application/pdf",
-      });
-
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", fileName);
-
-      document.body.appendChild(link);
-      link.click();
-
-      // cleanup
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      toast.success("Invoice downloaded successfully");
+      toast.success("Downloading invoice...");
     } catch (error) {
       console.error("Download error:", error);
-
-      if (error.response) {
-        toast.error("Server error while downloading");
-      } else if (error.request) {
-        toast.error("No response from server");
-      } else {
-        toast.error("Download failed");
-      }
+      toast.error("Download failed");
     }
   };
 
@@ -148,13 +109,13 @@ function InvoiceHistory() {
                     <td>{inv.Total_Amount}</td>
                     <td>{inv.Status}</td>
 
-                    <td style={{ display: "flex", gap: "10px" }}>
+                    <td className="action-buttons">
                       {/* VIEW ICON */}
                       <button
                         className="icon-btn view-btn"
                         onClick={() => viewInvoice(inv.Invoice_No)}
                       >
-                        <FaEye />
+                        <FaEye size={16} />
                       </button>
 
                       {/* DOWNLOAD ICON */}
@@ -162,7 +123,7 @@ function InvoiceHistory() {
                         className="icon-btn download-btn"
                         onClick={() => downloadInvoice(inv.Invoice_No)}
                       >
-                        <FaDownload />
+                        <FaDownload size={16} />
                       </button>
                     </td>
                   </tr>
