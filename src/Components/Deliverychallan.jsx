@@ -80,46 +80,74 @@ function DeliveryChallan() {
     }
   };
 
-  // ── Reliable image → base64 via fetch ──────────────────────
-  const getBase64FromUrl = async (url) => {
-    try {
-      const res  = await fetch(url);
-      if (!res.ok) throw new Error("Fetch failed: " + res.status);
-      const blob = await res.blob();
-      return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror  = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (err) {
-      console.warn("Logo load failed:", err);
-      return null;
-    }
-  };
+  // ─────────────────────────────────────────────────────────────
+  // loadImageAsJpeg
+  // Loads ANY image (PNG / JPEG / WEBP) from a URL and re-encodes
+  // it as JPEG via an HTML canvas. This avoids jsPDF's "wrong PNG
+  // signature" error caused by files that have the wrong extension
+  // or non-standard PNG metadata.
+  // Returns: { dataUrl: "data:image/jpeg;base64,...", ok: true }
+  //       or { dataUrl: null, ok: false }  on failure.
+  // ─────────────────────────────────────────────────────────────
+  const loadImageAsJpeg = (url) =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
 
-  // ── Safe watermark — works across all jsPDF versions ────────
-  // Uses raw PDF graphics operators instead of doc.GState
-  const addWatermark = (doc, base64, x, y, w, h) => {
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width  = img.naturalWidth  || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext("2d");
+
+          // White background so transparency doesn't go black in JPEG
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          resolve({ dataUrl, ok: true });
+        } catch (e) {
+          console.warn("Canvas encode failed:", e);
+          resolve({ dataUrl: null, ok: false });
+        }
+      };
+
+      img.onerror = (e) => {
+        console.warn("Image load failed:", url, e);
+        resolve({ dataUrl: null, ok: false });
+      };
+
+      img.src = url;
+    });
+
+  // ─────────────────────────────────────────────────────────────
+  // safeWatermark — tries opacity via saveGraphicsState, falls back
+  // gracefully so the PDF never crashes on older jsPDF builds.
+  // ─────────────────────────────────────────────────────────────
+  const safeWatermark = (doc, dataUrl, x, y, w, h) => {
     try {
-      // Method 1: saveGraphicsState / restoreGraphicsState (jsPDF ≥ 2.x)
       doc.saveGraphicsState();
       doc.setGState(new doc.GState({ opacity: 0.10, "fill-opacity": 0.10 }));
-      doc.addImage(base64, "PNG", x, y, w, h);
+      doc.addImage(dataUrl, "JPEG", x, y, w, h);
       doc.restoreGraphicsState();
-    } catch (e1) {
+    } catch (e) {
       try {
-        // Method 2: older API
+        doc.saveGraphicsState();
         doc.setGState({ opacity: 0.10 });
-        doc.addImage(base64, "PNG", x, y, w, h);
-        doc.setGState({ opacity: 1 });
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
+        doc.restoreGraphicsState();
       } catch (e2) {
-        // Method 3: no opacity — still draw so logo appears
-        doc.addImage(base64, "PNG", x, y, w, h);
+        // Last resort: draw without opacity (still visible as logo)
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
       }
     }
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // generatePDF
+  // ─────────────────────────────────────────────────────────────
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -135,28 +163,27 @@ function DeliveryChallan() {
       const pageWidth  = doc.internal.pageSize.getWidth();   // 210
       const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
-      // Border constants
       const bx           = 7;
       const by           = 7;
       const bw           = pageWidth  - 14;   // 196
       const bh           = pageHeight - 14;   // 283
       const borderBottom = by + bh;           // 290
 
-      // ── Load logo ──────────────────────────────────────────
-      const logoBase64 = await getBase64FromUrl("/AndavarLogo2.png");
-      const hasLogo    = !!logoBase64;
+      // ── Load logo (canvas re-encode → always clean JPEG) ────
+      const { dataUrl: logoJpeg, ok: hasLogo } =
+        await loadImageAsJpeg("/AndavarLogo2.png");
 
       // ══════════════════════════════════════════════════════
-      // 1. WATERMARK — drawn first (behind all content)
-      //    Logo ratio ≈ 1.8 : 1 (landscape)
+      // 1. WATERMARK  (first layer — behind everything)
+      //    Logo is landscape ≈ 1.8 : 1
       //    Centred on full A4 page
       // ══════════════════════════════════════════════════════
       if (hasLogo) {
         const wmW = 140;
         const wmH = 78;
-        const wmX = (pageWidth  - wmW) / 2;   // 35 — h-centred
-        const wmY = (pageHeight - wmH) / 2;   // 109.5 — v-centred
-        addWatermark(doc, logoBase64, wmX, wmY, wmW, wmH);
+        const wmX = (pageWidth  - wmW) / 2;   // 35
+        const wmY = (pageHeight - wmH) / 2;   // 109.5
+        safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH);
       }
 
       // ══════════════════════════════════════════════════════
@@ -167,12 +194,12 @@ function DeliveryChallan() {
       doc.rect(bx, by, bw, bh);
 
       // ══════════════════════════════════════════════════════
-      // 3. HEADER BOX  (height 50)
+      // 3. HEADER BOX
       // ══════════════════════════════════════════════════════
       doc.setLineWidth(0.4);
       doc.rect(bx, by, bw, 50);
 
-      // "DELIVERY CHALLAN" box — top right
+      // "DELIVERY CHALLAN" label box — top right
       doc.rect(143, by, 57, 13);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
@@ -184,12 +211,12 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "normal");
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // Logo — top LEFT of header  (56 × 31 keeps landscape ratio)
+      // Logo — top LEFT of header  (56 × 31 — landscape ratio)
       if (hasLogo) {
-        doc.addImage(logoBase64, "PNG", 9, 12, 56, 31);
+        doc.addImage(logoJpeg, "JPEG", 9, 12, 56, 31);
       }
 
-      // Company name (x=69 clears the logo)
+      // Company details (x=69 clears the 56-wide logo)
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
@@ -225,7 +252,6 @@ function DeliveryChallan() {
         "DC-" + String(productsList.length).padStart(3, "0"),
         44, subY + 5
       );
-
       doc.setFont("helvetica", "bold");
       doc.text("To :", 100, subY + 5);
       doc.setFont("helvetica", "normal");
@@ -234,18 +260,15 @@ function DeliveryChallan() {
       // ══════════════════════════════════════════════════════
       // 5. PRODUCT TABLE
       // ══════════════════════════════════════════════════════
-      const tableColumn = ["S.No", "Product Name", "Quantity", "Date"];
-      const tableRows   = productsList.map((item, idx) => [
-        idx + 1,
-        item.productName,
-        item.quantity,
-        item.created,
-      ]);
-
       autoTable(doc, {
         startY: subY + 12,
-        head: [tableColumn],
-        body: tableRows,
+        head: [["S.No", "Product Name", "Quantity", "Date"]],
+        body: productsList.map((item, idx) => [
+          idx + 1,
+          item.productName,
+          item.quantity,
+          item.created,
+        ]),
         theme: "grid",
         headStyles: {
           fillColor: [0, 100, 200],
@@ -254,10 +277,7 @@ function DeliveryChallan() {
           fontSize: 10,
           halign: "center",
         },
-        bodyStyles: {
-          fontSize: 9,
-          halign: "center",
-        },
+        bodyStyles: { fontSize: 9, halign: "center" },
         columnStyles: { 1: { halign: "left" } },
         margin: { left: 9, right: 9 },
         tableLineColor: [180, 180, 180],
@@ -265,18 +285,17 @@ function DeliveryChallan() {
       });
 
       // ══════════════════════════════════════════════════════
-      // 6. FOOTER — always inside the border
-      //
+      // 6. FOOTER — pinned inside border
       //   borderBottom = 290
-      //   footerDiv    = 262  ← top divider line
-      //   footerTextY  = 270  ← "Received..." / "For Shree..."
-      //   sigLineY     = 278  ← signature underlines
-      //   sigLabelY    = 284  ← label text  (6 px above border ✓)
+      //   footerDiv    = 262
+      //   footerTextY  = 270
+      //   sigLineY     = 278
+      //   sigLabelY    = 284  (6 px above border ✓)
       // ══════════════════════════════════════════════════════
-      const footerDiv   = borderBottom - 28;   // 262
-      const footerTextY = footerDiv    +  8;   // 270
-      const sigLineY    = footerDiv    + 16;   // 278
-      const sigLabelY   = sigLineY     +  6;   // 284
+      const footerDiv   = borderBottom - 28;
+      const footerTextY = footerDiv    +  8;
+      const sigLineY    = footerDiv    + 16;
+      const sigLabelY   = sigLineY     +  6;
 
       doc.setLineWidth(0.4);
       doc.line(bx, footerDiv, bx + bw, footerDiv);
@@ -284,7 +303,6 @@ function DeliveryChallan() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
-
       doc.text("Received the goods in good condition", 12, footerTextY);
       doc.text(
         "For Shree Aandavar Tooling",
@@ -310,9 +328,9 @@ function DeliveryChallan() {
     }
   };
 
-  // ══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // WEB PAGE — original design & structure completely unchanged
-  // ══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
       <Sidebar />
