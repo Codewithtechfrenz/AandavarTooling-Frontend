@@ -17,7 +17,6 @@ import html2pdf from "html2pdf.js";
 function InvoiceHistory() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const invoiceRef = useRef();
@@ -32,35 +31,50 @@ function InvoiceHistory() {
     try {
       const res = await api.get("/sales/invoices");
 
-      if (res.data.status === 1) {
+      console.log("Invoice List API:", res);
+
+      if (res.data && res.data.status === 1) {
         setInvoices(res.data.data);
       } else {
         setInvoices([]);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Error:", err);
       toast.error("Failed to fetch invoices");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= VIEW INVOICE (INLINE) ================= */
+  /* ================= VIEW INVOICE ================= */
   const viewInvoice = async (invoiceNo) => {
+    console.log("Clicked Invoice:", invoiceNo);
+
+    if (!invoiceNo) {
+      toast.error("Invalid Invoice Number");
+      return;
+    }
+
     try {
       const res = await api.get(`/sales/invoice/${invoiceNo}`);
 
-      if (res.data.status === 1) {
+      console.log("View API Response:", res);
+
+      if (res.data && res.data.status === 1) {
         setSelectedInvoice(res.data.data);
+      } else {
+        toast.error("Invoice not found");
       }
     } catch (err) {
-      console.error(err);
+      console.error("View API Error:", err);
       toast.error("Failed to load invoice");
     }
   };
 
   /* ================= DOWNLOAD PDF ================= */
   const downloadPDF = () => {
+    if (!selectedInvoice) return;
+
     const element = invoiceRef.current;
 
     const opt = {
@@ -129,7 +143,10 @@ function InvoiceHistory() {
                         <td>
                           <button
                             className="icon-btn view-btn"
-                            onClick={() => viewInvoice(inv.Invoice_No)}
+                            onClick={() => {
+                              console.log("Row Data:", inv); // DEBUG
+                              viewInvoice(inv.Invoice_No); // 🔥 use this
+                            }}
                           >
                             <FaEye />
                           </button>
