@@ -159,7 +159,7 @@ cursor:pointer;
 }
 
 /* ===== PDF BUTTON DESIGN ===== */
-.sales-pdf-btn {
+/* .sales-pdf-btn {
   margin-top: 15px;
   padding: 12px 22px;
   font-size: 14px;
@@ -184,4 +184,4 @@ cursor:pointer;
 .sales-pdf-btn:active {
   transform: scale(0.97);
   box-shadow: 0 2px 6px rgba(221, 36, 118, 0.3);
-}
+} */
