@@ -5,6 +5,12 @@ import Topbar from "../Components/Topbar";
 import { useNavigate } from "react-router-dom";
 import "../CSS/SalesPage.css";
 
+// Toastify
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Icons
+import { FaEye, FaDownload } from "react-icons/fa";
 
 function InvoiceHistory() {
   const [invoices, setInvoices] = useState([]);
@@ -24,11 +30,14 @@ function InvoiceHistory() {
 
       if (res.data.status === 1) {
         setInvoices(res.data.data);
+        toast.success("Invoices loaded successfully");
       } else {
         setInvoices([]);
+        toast.warning("No invoices found");
       }
     } catch (err) {
       console.error("Invoice Fetch Error:", err);
+      toast.error("Failed to fetch invoices");
     } finally {
       setLoading(false);
     }
@@ -39,10 +48,35 @@ function InvoiceHistory() {
     navigate(`/dashboard/invoice/${invoiceNo}`);
   };
 
+  /* ================= DOWNLOAD INVOICE ================= */
+  const downloadInvoice = async (invoiceNo) => {
+    try {
+      const response = await api.get(`/sales/invoice/download/${invoiceNo}`, {
+        responseType: "blob", // important
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      link.setAttribute("download", `Invoice_${invoiceNo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download invoice");
+    }
+  };
+
   return (
     <div className="sales-page">
       <Sidebar />
       <Topbar />
+
+      <ToastContainer position="top-right" autoClose={2000} />
 
       <div className="sales-header">
         <h1>Invoice History</h1>
@@ -84,12 +118,21 @@ function InvoiceHistory() {
                     <td>{inv.Total_Amount}</td>
                     <td>{inv.Status}</td>
 
-                    <td>
+                    <td style={{ display: "flex", gap: "10px" }}>
+                      {/* VIEW ICON */}
                       <button
-                        className="edit-btn"
+                        className="icon-btn view-btn"
                         onClick={() => viewInvoice(inv.Invoice_No)}
                       >
-                        View
+                        <FaEye />
+                      </button>
+
+                      {/* DOWNLOAD ICON */}
+                      <button
+                        className="icon-btn download-btn"
+                        onClick={() => downloadInvoice(inv.Invoice_No)}
+                      >
+                        <FaDownload />
                       </button>
                     </td>
                   </tr>
