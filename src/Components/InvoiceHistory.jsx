@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from "react"; // ✅ added useRef
+import React, { useEffect, useState } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import { useNavigate } from "react-router-dom";
-import html2pdf from "html2pdf.js"; // ✅ added
 import "../CSS/SalesPage.css";
 
 function InvoiceHistory() {
@@ -11,8 +10,6 @@ function InvoiceHistory() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
-  const invoiceRef = useRef(); // ✅ added
 
   /* ================= LOAD INVOICES ================= */
   useEffect(() => {
@@ -43,17 +40,15 @@ function InvoiceHistory() {
 
   /* ================= DOWNLOAD INVOICE ================= */
   const downloadInvoice = (invoiceNo) => {
-    const element = document.getElementById(`invoice-${invoiceNo}`);
+    const url = `/dashboard/invoice/${invoiceNo}`;
 
-    const opt = {
-      margin: 0.5,
-      filename: `Invoice_${invoiceNo}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    // ✅ Open invoice page in new tab
+    const printWindow = window.open(url, "_blank");
+
+    // ✅ Wait for page load and trigger print
+    printWindow.onload = () => {
+      printWindow.print();
     };
-
-    html2pdf().set(opt).from(element).save();
   };
 
   return (
@@ -93,7 +88,7 @@ function InvoiceHistory() {
                 </tr>
               ) : (
                 invoices.map((inv) => (
-                  <tr key={inv.Invoice_ID} id={`invoice-${inv.Invoice_No}`}>
+                  <tr key={inv.Invoice_ID}>
                     <td>{inv.Invoice_No}</td>
                     <td>{inv.Invoice_Date}</td>
                     <td>{inv.Customer_Name}</td>
@@ -109,7 +104,7 @@ function InvoiceHistory() {
                         View
                       </button>
 
-                      {/* ✅ DOWNLOAD BUTTON */}
+                      {/* ✅ DOWNLOAD BUTTON (FIXED) */}
                       <button
                         className="sales-add-btn"
                         style={{ marginLeft: "10px" }}
