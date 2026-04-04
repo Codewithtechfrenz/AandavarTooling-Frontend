@@ -224,7 +224,7 @@ function DeliveryChallan() {
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text("CNC Machine Service and Tooling & Job Work", 69, 29);
+      // doc.text("", 69, 29);
 
       doc.setFontSize(9);
       doc.text(
