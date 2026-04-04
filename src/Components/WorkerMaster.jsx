@@ -30,8 +30,6 @@ function WorkerMaster() {
     try {
       const res = await api.get("/workers/getWorkers");
 
-      console.log("API DATA:", res.data.data); // ✅ DEBUG
-
       const data = Array.isArray(res.data.data) ? res.data.data : [];
 
       const formattedData = data.map((item) => ({
@@ -40,12 +38,12 @@ function WorkerMaster() {
         workerName: item.WorkerName,
         workerDepartment: item.WorkerDepartment,
         joiningDate: formatDate(item.WorkerJoiningDate),
-        salary: item.Salary ?? 0, // ✅ FIXED
+        salary: item.salary ?? 0, // ✅ read from response (small letter)
         created: formatDate(item.created_at || item.CreatedAt || item.createdAt),
         updated: formatDate(item.updated_at || item.UpdatedAt || item.updatedAt),
       }));
 
-      setWorkerList([...formattedData]); // ✅ FORCE REFRESH
+      setWorkerList([...formattedData]);
       localStorage.setItem("workerData", JSON.stringify(formattedData));
     } catch (err) {
       console.error("Fetch Workers API Error:", err);
@@ -79,7 +77,7 @@ function WorkerMaster() {
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
-          Salary: salary,
+          Salary: salary, // ✅ FIXED (capital)
         });
 
         if (res.data.status === 0)
@@ -92,7 +90,7 @@ function WorkerMaster() {
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
-          Salary: salary,
+          Salary: salary, // ✅ FIXED (capital)
         });
 
         if (res.data.status === 0)
@@ -124,7 +122,7 @@ function WorkerMaster() {
     setWorkerName(item.workerName);
     setWorkerDepartment(item.workerDepartment);
     setJoiningDate(item.joiningDate);
-    setSalary(item.salary ?? 0); // ✅ SAFE
+    setSalary(item.salary ?? 0);
     setEditIndex(index);
   };
 
