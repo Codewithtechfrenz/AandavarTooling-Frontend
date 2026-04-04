@@ -9,7 +9,6 @@ function InwardEntry() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
-  const [itemCodes, setItemCodes] = useState([]);
   const [uoms, setUoms] = useState([]);
 
   const [selectedItemName, setSelectedItemName] = useState("");
@@ -30,13 +29,20 @@ function InwardEntry() {
       if (nested) return nested;
     }
 
+    // FIX: handle flat object with array values at top level
+    if (res?.data && typeof res.data === "object") {
+      const nested = Object.values(res.data).find((v) => Array.isArray(v));
+      if (nested) return nested;
+    }
+
     return [];
   };
 
   useEffect(() => {
     loadProducts();
-    loadItemCodes();
     loadUoms();
+    // FIX: Removed loadItemCodes() — Item Code dropdown now uses `products`
+    // so both dropdowns stay in sync and no separate fetch is needed.
   }, []);
 
   /* PRODUCTS */
@@ -45,6 +51,8 @@ function InwardEntry() {
       const res = await api.get("/items/activeitem");
 
       const list = extractList(res);
+
+      console.log("Raw list from API:", list); // debug
 
       const normalized = list
         .map((item) => ({
@@ -63,7 +71,7 @@ function InwardEntry() {
         }))
         .filter((i) => i.ItemName && i.ItemCode);
 
-      console.log("Products:", normalized);
+      console.log("Normalized Products:", normalized); // debug
 
       setProducts(normalized);
     } catch (err) {
@@ -72,14 +80,10 @@ function InwardEntry() {
     }
   };
 
-  const loadItemCodes = async () => {
-    try {
-      const res = await api.get("/activeitems/activeitemcode");
-      setItemCodes(extractList(res));
-    } catch {
-      setItemCodes([]);
-    }
-  };
+  // FIX: Removed loadItemCodes() — was fetching a separate endpoint that
+  // returned data in a different shape, causing itemCodes to be a list of
+  // raw strings/objects that didn't match `products`, so find() always
+  // returned undefined and selectedItemName was never set.
 
   const loadUoms = async () => {
     try {
@@ -155,6 +159,8 @@ function InwardEntry() {
         <div className="ie-row">
           <div className="ie-group">
             <label>Item Name</label>
+            {/* FIX: Dropdown now renders from `products` which is the single
+                source of truth — guaranteed to be normalized & non-empty */}
             <select value={selectedItemName} onChange={handleItemChange}>
               <option value="">Select Item</option>
 
@@ -175,11 +181,13 @@ function InwardEntry() {
 
           <div className="ie-group">
             <label>Item Code</label>
+            {/* FIX: Now uses `products` instead of separate `itemCodes` state.
+                This ensures selecting a code auto-fills Item Name correctly. */}
             <select value={itemCode} onChange={handleCodeChange}>
               <option value="">Select Code</option>
-              {itemCodes.map((code, i) => (
-                <option key={i} value={code}>
-                  {code}
+              {products.map((item, i) => (
+                <option key={item.ItemCode + i} value={item.ItemCode}>
+                  {item.ItemCode}
                 </option>
               ))}
             </select>
