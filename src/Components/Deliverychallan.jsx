@@ -81,99 +81,73 @@ function DeliveryChallan() {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // loadImageAsJpeg
-  // Loads ANY image (PNG / JPEG / WEBP) from a URL and re-encodes
-  // it as JPEG via an HTML canvas. This avoids jsPDF's "wrong PNG
-  // signature" error caused by files that have the wrong extension
-  // or non-standard PNG metadata.
-  // Returns: { dataUrl: "data:image/jpeg;base64,...", ok: true }
-  //       or { dataUrl: null, ok: false }  on failure.
+  // loadImageAsJpeg — re-encodes any image to clean JPEG via canvas
   // ─────────────────────────────────────────────────────────────
   const loadImageAsJpeg = (url) =>
     new Promise((resolve) => {
       const img = new window.Image();
       img.crossOrigin = "anonymous";
-
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");
           canvas.width  = img.naturalWidth  || img.width;
           canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext("2d");
-
-          // White background so transparency doesn't go black in JPEG
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
-
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          resolve({ dataUrl, ok: true });
+          resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), ok: true });
         } catch (e) {
           console.warn("Canvas encode failed:", e);
           resolve({ dataUrl: null, ok: false });
         }
       };
-
       img.onerror = (e) => {
         console.warn("Image load failed:", url, e);
         resolve({ dataUrl: null, ok: false });
       };
-
       img.src = url;
     });
 
   // ─────────────────────────────────────────────────────────────
-  // safeWatermark — tries opacity via saveGraphicsState, falls back
-  // gracefully so the PDF never crashes on older jsPDF builds.
+  // safeWatermark — opacity watermark with graceful fallback
   // ─────────────────────────────────────────────────────────────
-  const safeWatermark = (doc, dataUrl, x, y, w, h, opacity = 0.08) => {
+  const safeWatermark = (doc, dataUrl, x, y, w, h, opacity) => {
     try {
       doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity, "fill-opacity": opacity }));
+      doc.setGState(new doc.GState({ opacity: opacity, "fill-opacity": opacity }));
       doc.addImage(dataUrl, "JPEG", x, y, w, h);
       doc.restoreGraphicsState();
     } catch (e) {
       try {
         doc.saveGraphicsState();
-        doc.setGState({ opacity });
+        doc.setGState({ opacity: opacity });
         doc.addImage(dataUrl, "JPEG", x, y, w, h);
         doc.restoreGraphicsState();
       } catch (e2) {
-        // silent — no watermark if jsPDF version doesn't support GState
+        // silent — skip watermark if GState unsupported
       }
     }
   };
 
   // ─────────────────────────────────────────────────────────────
-  // drawCornerMarks — gold precision crop-mark style corners
+  // drawCornerMarks — gold precision crop-mark corners
   // ─────────────────────────────────────────────────────────────
-  const drawCornerMarks = (doc, x, y, w, h, len, color) => {
-    doc.setDrawColor(...color);
+  const drawCornerMarks = (doc, x, y, w, h, len) => {
+    doc.setDrawColor(201, 168, 76);   // GOLD — explicit values, no spread
     doc.setLineWidth(0.7);
-    // top-left
     doc.line(x,     y,     x + len, y);
     doc.line(x,     y,     x,       y + len);
-    // top-right
     doc.line(x + w, y,     x+w-len, y);
     doc.line(x + w, y,     x + w,   y + len);
-    // bottom-left
     doc.line(x,     y + h, x + len, y + h);
     doc.line(x,     y + h, x,       y + h - len);
-    // bottom-right
     doc.line(x + w, y + h, x+w-len, y + h);
     doc.line(x + w, y + h, x + w,   y + h - len);
   };
 
   // ─────────────────────────────────────────────────────────────
-  // generatePDF  — Industrial Luxury design
-  //
-  // Palette:
-  //   NAVY   #0D1B2A  [13,  27,  42]
-  //   GOLD   #C9A84C  [201, 168, 76]
-  //   STEEL  #8A9BB0  [138, 155, 176]
-  //   OFFWHT #F7F4EF  [247, 244, 239]
-  //   MIDGRY #D4D8DE  [212, 216, 222]
-  //   DKNAVY #16304E  [22,  48,  78]
+  // generatePDF
   // ─────────────────────────────────────────────────────────────
   const generatePDF = async () => {
     if (productsList.length === 0) {
@@ -186,19 +160,9 @@ function DeliveryChallan() {
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
-      const doc        = new jsPDF("p", "mm", "a4");
-      const pageWidth  = doc.internal.pageSize.getWidth();   // 210
-      const pageHeight = doc.internal.pageSize.getHeight();  // 297
-
-      // ── Colour palette ───────────────────────────────────
-      const NAVY   = [13,  27,  42];
-      const GOLD   = [201, 168, 76];
-      const STEEL  = [138, 155, 176];
-      const OFFWHT = [247, 244, 239];
-      const MIDGRY = [212, 216, 222];
-      const DKNAVY = [22,  48,  78];
-      const WHITE  = [255, 255, 255];
-      const BLACK  = [0,   0,   0];
+      const doc       = new jsPDF("p", "mm", "a4");
+      const PW        = doc.internal.pageSize.getWidth();   // 210
+      const PH        = doc.internal.pageSize.getHeight();  // 297
 
       // ── Load SAT Logo ────────────────────────────────────
       const { dataUrl: logoJpeg, ok: hasLogo } =
@@ -207,134 +171,128 @@ function DeliveryChallan() {
       // ══════════════════════════════════════════════════════
       // 0. PAGE BACKGROUND — warm off-white
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(...OFFWHT);
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
+      doc.setFillColor(247, 244, 239);
+      doc.rect(0, 0, PW, PH, "F");
 
       // ══════════════════════════════════════════════════════
-      // 1. WATERMARK — SAT Logo, centred, very faint
+      // 1. WATERMARK — SAT Logo centred, very faint
       // ══════════════════════════════════════════════════════
       if (hasLogo) {
-        const wmW = 120;
-        const wmH = 120;
-        const wmX = (pageWidth  - wmW) / 2;
-        const wmY = (pageHeight - wmH) / 2;
-        safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH, 0.07);
+        safeWatermark(doc, logoJpeg, (PW - 120) / 2, (PH - 120) / 2, 120, 120, 0.07);
       }
 
       // ══════════════════════════════════════════════════════
-      // 2. HEADER BAND — full-width navy block (0 → 70 mm)
+      // 2. HEADER BAND — full-width navy (0 → 70 mm)
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(...NAVY);
-      doc.rect(0, 0, pageWidth, 70, "F");
+      doc.setFillColor(13, 27, 42);           // NAVY
+      doc.rect(0, 0, PW, 70, "F");
 
       // left gold vertical accent bar
-      doc.setFillColor(...GOLD);
+      doc.setFillColor(201, 168, 76);         // GOLD
       doc.rect(0, 0, 5, 70, "F");
 
-      // gold bottom stripe closing the header
-      doc.setFillColor(...GOLD);
-      doc.rect(0, 66, pageWidth, 4, "F");
+      // gold bottom stripe
+      doc.setFillColor(201, 168, 76);
+      doc.rect(0, 66, PW, 4, "F");
 
-      // ── Logo: white circle + gold ring + SAT image ───────
+      // ── Logo: white circle + gold ring ───────────────────
       if (hasLogo) {
-        doc.setFillColor(...WHITE);
+        doc.setFillColor(255, 255, 255);
         doc.circle(30, 35, 23, "F");
-        doc.setDrawColor(...GOLD);
+        doc.setDrawColor(201, 168, 76);
         doc.setLineWidth(0.9);
         doc.circle(30, 35, 23, "S");
         doc.addImage(logoJpeg, "JPEG", 9, 14, 42, 42);
       }
 
-      // ── "DELIVERY CHALLAN" badge — top right ─────────────
-      doc.setFillColor(...GOLD);
+      // ── DELIVERY CHALLAN badge — top right ───────────────
+      doc.setFillColor(201, 168, 76);
       doc.roundedRect(147, 7, 58, 20, 3, 3, "F");
       doc.setFontSize(10.5);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...NAVY);
+      doc.setTextColor(13, 27, 42);           // NAVY text on gold badge
       doc.text("DELIVERY CHALLAN", 176, 20, { align: "center" });
 
-      // ── Company name — centred in space right of logo ────
-      const cx = (55 + pageWidth) / 2;  // centre of remaining space
+      // ── Company name — centred right of logo ─────────────
+      const cx = (55 + PW) / 2;
 
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...WHITE);
+      doc.setTextColor(255, 255, 255);        // WHITE
       doc.text("SHREE AANDAVAR TOOLING", cx, 26, { align: "center" });
 
-      // gold hairline rule under company name
-      doc.setDrawColor(...GOLD);
+      // gold hairline under company name
+      doc.setDrawColor(201, 168, 76);
       doc.setLineWidth(0.5);
-      doc.line(60, 30, pageWidth - 10, 30);
+      doc.line(60, 30, PW - 10, 30);
 
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...STEEL);
-      // doc.text("CNC Machine Service  ·  Tooling  ·  Job Work", cx, 37, { align: "center" });
+      doc.setTextColor(138, 155, 176);        // STEEL
+      doc.text("CNC Machine Service  ·  Tooling  ·  Job Work", cx, 37, { align: "center" });
+
       doc.setFontSize(8);
-      doc.setTextColor(...MIDGRY);
+      doc.setTextColor(212, 216, 222);        // MIDGRY
       doc.text("5/520 D, Kabeer Nagar MasthanPatti, Madurai - 20.", cx, 44, { align: "center" });
       doc.text("prabusangari690@gmail.com   |   Cell : 9944130610",  cx, 51, { align: "center" });
 
       // ══════════════════════════════════════════════════════
       // 3. META STRIP — deeper navy (70 → 98 mm)
-      //    Four data pills: Challan No · To · Date · Items
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(...DKNAVY);
-      doc.rect(0, 70, pageWidth, 28, "F");
+      doc.setFillColor(22, 48, 78);           // DKNAVY
+      doc.rect(0, 70, PW, 28, "F");
 
       // vertical gold dividers
-      doc.setDrawColor(...GOLD);
+      doc.setDrawColor(201, 168, 76);
       doc.setLineWidth(0.3);
-      [52, 132, 172].forEach((xd) => {
-        doc.line(xd, 74, xd, 95);
-      });
+      doc.line(52,  74, 52,  95);
+      doc.line(132, 74, 132, 95);
+      doc.line(172, 74, 172, 95);
 
-      // helper: gold-value pill
-      const pillGold = (label, value, x, maxW) => {
-        doc.setFontSize(6.5);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...STEEL);
-        doc.text(label, x, 79, { maxWidth: maxW });
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...GOLD);
-        doc.text(value, x, 90, { maxWidth: maxW });
-      };
+      // ── Pill 1: Challan No (gold value) ──────────────────
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(138, 155, 176);
+      doc.text("CHALLAN NO.", 8, 79);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(201, 168, 76);
+      doc.text("DC-" + String(productsList.length).padStart(3, "0"), 8, 90);
 
-      // helper: white-value pill
-      const pillWhite = (label, value, x, maxW) => {
-        doc.setFontSize(6.5);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...STEEL);
-        doc.text(label, x, 79, { maxWidth: maxW });
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...WHITE);
-        doc.text(value, x, 90, { maxWidth: maxW });
-      };
+      // ── Pill 2: Dispatched To (white value) ──────────────
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(138, 155, 176);
+      doc.text("DISPATCHED TO", 58, 79);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text((customerName || "-").toUpperCase(), 58, 90, { maxWidth: 70 });
 
-      pillGold(
-        "CHALLAN NO.",
-        "DC-" + String(productsList.length).padStart(3, "0"),
-        8, 42
-      );
-      pillWhite(
-        "DISPATCHED TO",
-        (customerName || "—").toUpperCase(),
-        58, 72
-      );
-      pillWhite(
-        "DATE OF ISSUE",
+      // ── Pill 3: Date of Issue (white value) ──────────────
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(138, 155, 176);
+      doc.text("DATE OF ISSUE", 138, 79);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(
         new Date().toLocaleDateString("en-IN", {
           day: "2-digit", month: "short", year: "numeric",
         }),
-        138, 32
+        138, 90
       );
-      pillGold(
-        "TOTAL ITEMS",
-        String(productsList.length),
-        178, 28
-      );
+
+      // ── Pill 4: Total Items (gold value) ─────────────────
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(138, 155, 176);
+      doc.text("TOTAL ITEMS", 178, 79);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(201, 168, 76);
+      doc.text(String(productsList.length), 178, 90);
 
       // ══════════════════════════════════════════════════════
       // 4. SECTION LABEL + DECORATIVE RULES
@@ -342,15 +300,14 @@ function DeliveryChallan() {
       const secY = 106;
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...STEEL);
+      doc.setTextColor(138, 155, 176);
       doc.text("ITEMS DISPATCHED", 12, secY);
 
-      // bold gold rule
-      doc.setFillColor(...GOLD);
-      doc.rect(12, secY + 2, pageWidth - 24, 1.2, "F");
-      // thin grey underline
-      doc.setFillColor(...MIDGRY);
-      doc.rect(12, secY + 3.8, pageWidth - 24, 0.3, "F");
+      doc.setFillColor(201, 168, 76);
+      doc.rect(12, secY + 2, PW - 24, 1.2, "F");
+
+      doc.setFillColor(212, 216, 222);
+      doc.rect(12, secY + 3.8, PW - 24, 0.3, "F");
 
       // ══════════════════════════════════════════════════════
       // 5. PRODUCT TABLE
@@ -366,8 +323,8 @@ function DeliveryChallan() {
         ]),
         theme: "plain",
         headStyles: {
-          fillColor: NAVY,
-          textColor: WHITE,
+          fillColor: [13, 27, 42],
+          textColor: [255, 255, 255],
           fontStyle: "bold",
           fontSize: 8.5,
           halign: "center",
@@ -378,7 +335,7 @@ function DeliveryChallan() {
           halign: "center",
           textColor: [30, 30, 50],
           cellPadding: { top: 5, bottom: 5, left: 4, right: 4 },
-          lineColor: MIDGRY,
+          lineColor: [212, 216, 222],
           lineWidth: 0.25,
         },
         columnStyles: {
@@ -389,10 +346,9 @@ function DeliveryChallan() {
         },
         alternateRowStyles: { fillColor: [236, 239, 245] },
         margin: { left: 12, right: 12 },
-        // gold left accent bar on every body row
         didDrawCell: (data) => {
           if (data.section === "body" && data.column.index === 0) {
-            doc.setFillColor(...GOLD);
+            doc.setFillColor(201, 168, 76);
             doc.rect(data.cell.x, data.cell.y, 1.5, data.cell.height, "F");
           }
         },
@@ -404,98 +360,96 @@ function DeliveryChallan() {
       // 6. NOTE BOX
       // ══════════════════════════════════════════════════════
       doc.setFillColor(235, 238, 245);
-      doc.roundedRect(12, tableEnd, pageWidth - 24, 18, 2, 2, "F");
-      doc.setDrawColor(...STEEL);
+      doc.roundedRect(12, tableEnd, PW - 24, 18, 2, 2, "F");
+      doc.setDrawColor(138, 155, 176);
       doc.setLineWidth(0.2);
-      doc.roundedRect(12, tableEnd, pageWidth - 24, 18, 2, 2, "S");
+      doc.roundedRect(12, tableEnd, PW - 24, 18, 2, 2, "S");
 
-      // gold left accent on note box
-      doc.setFillColor(...GOLD);
+      doc.setFillColor(201, 168, 76);
       doc.roundedRect(12, tableEnd, 3, 18, 1, 1, "F");
 
       doc.setFontSize(7.5);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...NAVY);
+      doc.setTextColor(13, 27, 42);
       doc.text("NOTE", 20, tableEnd + 7);
+
       doc.setFont("helvetica", "normal");
-      doc.setTextColor([50, 55, 75]);
+      doc.setTextColor(50, 55, 75);
       doc.text(
         "This delivery challan is not a tax invoice. Goods once dispatched will not be taken back without prior written intimation.",
-        20, tableEnd + 13, { maxWidth: pageWidth - 38 }
+        20, tableEnd + 13,
+        { maxWidth: PW - 38 }
       );
 
       // ══════════════════════════════════════════════════════
-      // 7. FOOTER BAND — pinned to page bottom
+      // 7. FOOTER BAND — pinned to bottom
       // ══════════════════════════════════════════════════════
-      const fbY = pageHeight - 42;
+      const fbY = PH - 42;
 
-      // gold top divider line
-      doc.setFillColor(...GOLD);
-      doc.rect(0, fbY, pageWidth, 1.5, "F");
+      doc.setFillColor(201, 168, 76);
+      doc.rect(0, fbY, PW, 1.5, "F");
 
-      // navy footer background
-      doc.setFillColor(...NAVY);
-      doc.rect(0, fbY + 1.5, pageWidth, 40.5, "F");
+      doc.setFillColor(13, 27, 42);
+      doc.rect(0, fbY + 1.5, PW, 40.5, "F");
 
-      // ── two signature boxes ───────────────────────────────
+      // ── Signature boxes ───────────────────────────────────
       const sbW = 72;
       const sbH = 20;
       const sbY = fbY + 8;
 
-      // left — receiver's signature box
-      doc.setFillColor(...DKNAVY);
+      // left — receiver
+      doc.setFillColor(22, 48, 78);
       doc.roundedRect(12, sbY, sbW, sbH, 2, 2, "F");
-      doc.setDrawColor(...GOLD);
+      doc.setDrawColor(201, 168, 76);
       doc.setLineWidth(0.4);
       doc.roundedRect(12, sbY, sbW, sbH, 2, 2, "S");
-      doc.setDrawColor(...STEEL);
+      doc.setDrawColor(138, 155, 176);
       doc.setLineWidth(0.3);
       doc.line(18, sbY + 13, 78, sbY + 13);
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...STEEL);
+      doc.setTextColor(138, 155, 176);
       doc.text("RECEIVER'S SIGNATURE", 48, sbY + 18, { align: "center" });
 
-      // centre acknowledgement text
+      // centre text
       doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...STEEL);
-      doc.text("Received goods in good condition", pageWidth / 2, sbY + 9,  { align: "center" });
+      doc.setTextColor(138, 155, 176);
+      doc.text("Received goods in good condition", PW / 2, sbY + 9,  { align: "center" });
       doc.setFontSize(7);
-      doc.setTextColor([60, 80, 110]);
-      doc.text("(subject to inspection)",          pageWidth / 2, sbY + 15, { align: "center" });
+      doc.setTextColor(60, 80, 110);
+      doc.text("(subject to inspection)",          PW / 2, sbY + 15, { align: "center" });
 
-      // right — company signature box
-      doc.setFillColor(...DKNAVY);
-      doc.roundedRect(pageWidth - 12 - sbW, sbY, sbW, sbH, 2, 2, "F");
-      doc.setDrawColor(...GOLD);
+      // right — company
+      doc.setFillColor(22, 48, 78);
+      doc.roundedRect(PW - 12 - sbW, sbY, sbW, sbH, 2, 2, "F");
+      doc.setDrawColor(201, 168, 76);
       doc.setLineWidth(0.4);
-      doc.roundedRect(pageWidth - 12 - sbW, sbY, sbW, sbH, 2, 2, "S");
-      doc.setDrawColor(...STEEL);
+      doc.roundedRect(PW - 12 - sbW, sbY, sbW, sbH, 2, 2, "S");
+      doc.setDrawColor(138, 155, 176);
       doc.setLineWidth(0.3);
-      doc.line(pageWidth - 12 - sbW + 6, sbY + 13, pageWidth - 18, sbY + 13);
+      doc.line(PW - 12 - sbW + 6, sbY + 13, PW - 18, sbY + 13);
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...STEEL);
+      doc.setTextColor(138, 155, 176);
       doc.text(
         "FOR SHREE AANDAVAR TOOLING",
-        pageWidth - 12 - sbW / 2, sbY + 18,
+        PW - 12 - sbW / 2, sbY + 18,
         { align: "center" }
       );
 
-      // footer tagline
+      // tagline
       doc.setFontSize(6.5);
-      doc.setTextColor([60, 80, 110]);
+      doc.setTextColor(60, 80, 110);
       doc.text(
         "Shree Aandavar Tooling  ·  Madurai  ·  9944130610  ·  prabusangari690@gmail.com",
-        pageWidth / 2, pageHeight - 3.5,
+        PW / 2, PH - 3.5,
         { align: "center" }
       );
 
       // ══════════════════════════════════════════════════════
       // 8. GOLD CORNER REGISTRATION MARKS
       // ══════════════════════════════════════════════════════
-      drawCornerMarks(doc, 4, 4, pageWidth - 8, pageHeight - 8, 9, GOLD);
+      drawCornerMarks(doc, 4, 4, PW - 8, PH - 8, 9);
 
       doc.save("Delivery_Challan.pdf");
 
