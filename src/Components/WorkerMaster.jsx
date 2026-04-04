@@ -9,7 +9,7 @@ function WorkerMaster() {
   const [workerName, setWorkerName] = useState("");
   const [workerDepartment, setWorkerDepartment] = useState("");
   const [joiningDate, setJoiningDate] = useState("");
-  const [salary, setSalary] = useState(""); // ✅ ADDED
+  const [salary, setSalary] = useState("");
 
   const [workerList, setWorkerList] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -30,6 +30,8 @@ function WorkerMaster() {
     try {
       const res = await api.get("/workers/getWorkers");
 
+      console.log("API DATA:", res.data.data); // ✅ DEBUG
+
       const data = Array.isArray(res.data.data) ? res.data.data : [];
 
       const formattedData = data.map((item) => ({
@@ -38,12 +40,12 @@ function WorkerMaster() {
         workerName: item.WorkerName,
         workerDepartment: item.WorkerDepartment,
         joiningDate: formatDate(item.WorkerJoiningDate),
-        salary: item.Salary, // ✅ ADDED
+        salary: item.Salary ?? 0, // ✅ FIXED
         created: formatDate(item.created_at || item.CreatedAt || item.createdAt),
         updated: formatDate(item.updated_at || item.UpdatedAt || item.updatedAt),
       }));
 
-      setWorkerList(formattedData);
+      setWorkerList([...formattedData]); // ✅ FORCE REFRESH
       localStorage.setItem("workerData", JSON.stringify(formattedData));
     } catch (err) {
       console.error("Fetch Workers API Error:", err);
@@ -71,14 +73,13 @@ function WorkerMaster() {
 
     try {
       if (editIndex !== null) {
-        // UPDATE
         const res = await api.post("/workers/updateWorker", {
           SI: workerList[editIndex].id,
           WorkerCode: workerCode,
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
-          Salary: salary, // ✅ ADDED
+          Salary: salary,
         });
 
         if (res.data.status === 0)
@@ -86,13 +87,12 @@ function WorkerMaster() {
 
         alert("Worker updated successfully");
       } else {
-        // CREATE
         const res = await api.post("/workers/createWorker", {
           WorkerCode: workerCode,
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
-          Salary: salary, // ✅ ADDED
+          Salary: salary,
         });
 
         if (res.data.status === 0)
@@ -108,7 +108,7 @@ function WorkerMaster() {
       setWorkerName("");
       setWorkerDepartment("");
       setJoiningDate("");
-      setSalary(""); // ✅ ADDED
+      setSalary("");
     } catch (error) {
       console.error("Worker Submit Error:", error);
       alert(error.message || "Failed to save worker");
@@ -124,7 +124,7 @@ function WorkerMaster() {
     setWorkerName(item.workerName);
     setWorkerDepartment(item.workerDepartment);
     setJoiningDate(item.joiningDate);
-    setSalary(item.salary); // ✅ ADDED
+    setSalary(item.salary ?? 0); // ✅ SAFE
     setEditIndex(index);
   };
 
@@ -203,7 +203,6 @@ function WorkerMaster() {
           </div>
         </div>
 
-        {/* ✅ SALARY FIELD ADDED (UI unchanged, just extra field) */}
         <div className="form-row">
           <div className="form-group">
             <label>Salary</label>
@@ -239,7 +238,7 @@ function WorkerMaster() {
               <th>Worker Name</th>
               <th>Worker Department</th>
               <th>Joining Date</th>
-              <th>Salary</th> {/* ✅ ADDED */}
+              <th>Salary</th>
               <th>Action</th>
               <th>Created</th>
               <th>Updated</th>
@@ -259,7 +258,7 @@ function WorkerMaster() {
                   <td>{item.workerName}</td>
                   <td>{item.workerDepartment}</td>
                   <td>{item.joiningDate}</td>
-                  <td>{item.salary}</td> {/* ✅ ADDED */}
+                  <td>{item.salary ?? 0}</td>
                   <td>
                     <button onClick={() => handleEdit(index)}>
                       <i className="fa fa-edit"></i>
