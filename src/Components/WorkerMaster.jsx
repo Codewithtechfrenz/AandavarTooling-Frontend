@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // ✅ use base API
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/WorkerMaster.css";
@@ -9,6 +9,7 @@ function WorkerMaster() {
   const [workerName, setWorkerName] = useState("");
   const [workerDepartment, setWorkerDepartment] = useState("");
   const [joiningDate, setJoiningDate] = useState("");
+  const [salary, setSalary] = useState(""); // ✅ ADDED
 
   const [workerList, setWorkerList] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -29,7 +30,6 @@ function WorkerMaster() {
     try {
       const res = await api.get("/workers/getWorkers");
 
-      // ✅ FIX: Ensure array
       const data = Array.isArray(res.data.data) ? res.data.data : [];
 
       const formattedData = data.map((item) => ({
@@ -38,6 +38,7 @@ function WorkerMaster() {
         workerName: item.WorkerName,
         workerDepartment: item.WorkerDepartment,
         joiningDate: formatDate(item.WorkerJoiningDate),
+        salary: item.Salary || 0, // ✅ ADDED
         created: formatDate(item.created_at || item.CreatedAt || item.createdAt),
         updated: formatDate(item.updated_at || item.UpdatedAt || item.updatedAt),
       }));
@@ -77,6 +78,7 @@ function WorkerMaster() {
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
+          Salary: salary, // ✅ ADDED
         });
 
         if (res.data.status === 0)
@@ -90,6 +92,7 @@ function WorkerMaster() {
           WorkerName: workerName,
           WorkerDepartment: workerDepartment,
           WorkerJoiningDate: joiningDate,
+          Salary: salary, // ✅ ADDED
         });
 
         if (res.data.status === 0)
@@ -98,7 +101,6 @@ function WorkerMaster() {
         alert("Worker created successfully");
       }
 
-      // ✅ FIX: wait for fresh data (important for live server)
       await fetchWorkers();
 
       setEditIndex(null);
@@ -106,6 +108,7 @@ function WorkerMaster() {
       setWorkerName("");
       setWorkerDepartment("");
       setJoiningDate("");
+      setSalary(""); // ✅ ADDED
     } catch (error) {
       console.error("Worker Submit Error:", error);
       alert(error.message || "Failed to save worker");
@@ -121,6 +124,7 @@ function WorkerMaster() {
     setWorkerName(item.workerName);
     setWorkerDepartment(item.workerDepartment);
     setJoiningDate(item.joiningDate);
+    setSalary(item.salary); // ✅ ADDED
     setEditIndex(index);
   };
 
@@ -138,8 +142,6 @@ function WorkerMaster() {
         throw new Error(res.data.message || "Delete Failed");
 
       alert("Worker deleted successfully");
-
-      // ✅ FIX: refresh after delete
       await fetchWorkers();
     } catch (error) {
       console.error("Delete Worker Error:", error);
@@ -201,6 +203,18 @@ function WorkerMaster() {
           </div>
         </div>
 
+        {/* ✅ SALARY FIELD ADDED (UI unchanged, just extra field) */}
+        <div className="form-row">
+          <div className="form-group">
+            <label>Salary</label>
+            <input
+              type="number"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value)}
+            />
+          </div>
+        </div>
+
         <button className="add-btn" onClick={handleSubmit}>
           {editIndex !== null ? "Update" : "Submit"}
         </button>
@@ -225,6 +239,7 @@ function WorkerMaster() {
               <th>Worker Name</th>
               <th>Worker Department</th>
               <th>Joining Date</th>
+              <th>Salary</th> {/* ✅ ADDED */}
               <th>Action</th>
               <th>Created</th>
               <th>Updated</th>
@@ -234,7 +249,7 @@ function WorkerMaster() {
           <tbody>
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan="8">No Worker Found</td>
+                <td colSpan="9">No Worker Found</td>
               </tr>
             ) : (
               filteredData.map((item, index) => (
@@ -244,6 +259,7 @@ function WorkerMaster() {
                   <td>{item.workerName}</td>
                   <td>{item.workerDepartment}</td>
                   <td>{item.joiningDate}</td>
+                  <td>{item.salary}</td> {/* ✅ ADDED */}
                   <td>
                     <button onClick={() => handleEdit(index)}>
                       <i className="fa fa-edit"></i>
