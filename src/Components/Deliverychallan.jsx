@@ -208,7 +208,7 @@ function DeliveryChallan() {
 
       // Cell number
       doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("helvetica", "normal"); 
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
       // Logo — top LEFT of header  (56 × 31 — landscape ratio)
@@ -220,7 +220,7 @@ function DeliveryChallan() {
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text("Shree Aandavar Tooling", 69, 22);
+      doc.text("SHREE AANDAVAR TOOLING", 69, 22);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -228,7 +228,7 @@ function DeliveryChallan() {
 
       doc.setFontSize(9);
       doc.text(
-        "Shop No. 1/68, Ambalakaranpatti, Ulakaneri, MADURAI - 625 107.",
+        "5/520 D, Kabeer Nagar MasthanPatti Madurai - 20.",
         69, 35
       );
       doc.text("mailto : prabusangari690@gmail.com", 69, 41);
