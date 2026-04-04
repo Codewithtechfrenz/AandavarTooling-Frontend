@@ -454,7 +454,6 @@
 // export default DeliveryChallan;
 
 
-
 import React, { useState, useEffect } from "react";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
@@ -507,48 +506,54 @@ function DeliveryChallan() {
     }
   };
 
-  const addProduct = () => {
+  /* ================= SAVE + ADD PRODUCT ================= */
+  const addProduct = async () => {
     if (!challanNo || !customerName || !productName || !quantity) {
       alert("Please fill all fields");
       return;
     }
 
-    const newProduct = {
-      id: productsList.length + 1,
-      challanNo,
-      customerName,
-      productName,
-      quantity,
-      created: new Date().toLocaleDateString(),
-    };
-
-    setProductsList([...productsList, newProduct]);
-    setProductName("");
-    setQuantity("");
-    // ❌ DO NOT clear challanNo (important)
-  };
-
-  const saveDeliveryChallan = async () => {
     try {
-      for (const item of productsList) {
+      setLoading(true);
 
-        console.log("SENDING:", item); // DEBUG
+      // ✅ SAVE DIRECTLY TO DB
+      const res = await api.post("/delivery/createDeliveryChallan", {
+        delivery_challan_no: challanNo,
+        customer_name: customerName,
+        product_name: productName,
+        quantity: quantity,
+        created_date: new Date().toISOString().split("T")[0],
+      });
 
-        const res = await api.post("/delivery/createDeliveryChallan", {
-          DeliveryChallanNo: item.challanNo, // ✅ FIXED
-          customer_name: item.customerName,
-          product_name: item.productName,
-          quantity: item.quantity,
-          created_date: new Date().toISOString().split("T")[0],
-        });
-
-        console.log("RESPONSE:", res.data); // DEBUG
+      if (res.data.status === 0) {
+        throw new Error(res.data.message);
       }
+
+      // ✅ UPDATE GRID AFTER SAVE
+      const newProduct = {
+        id: productsList.length + 1,
+        challanNo,
+        customerName,
+        productName,
+        quantity,
+        created: new Date().toLocaleDateString(),
+      };
+
+      setProductsList([...productsList, newProduct]);
+
+      // clear only product fields
+      setProductName("");
+      setQuantity("");
+
     } catch (error) {
       console.error("Save Error:", error);
+      alert(error.message || "Failed to save");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ================= PDF ================= */
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -557,8 +562,6 @@ function DeliveryChallan() {
 
     try {
       setLoading(true);
-      await saveDeliveryChallan();
-      fetchDeliveryChallans();
 
       const doc = new jsPDF("p", "mm", "a4");
 
@@ -576,6 +579,7 @@ function DeliveryChallan() {
       });
 
       doc.save("Delivery_Challan.pdf");
+
     } catch (error) {
       console.error("PDF generation error:", error);
       alert("PDF Error: " + error.message);
