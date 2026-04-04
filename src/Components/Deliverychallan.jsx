@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "../api";
 
-// ✅ ADD THIS (SAT Logo)
+// ✅ ADDED LOGO IMPORT
 import satLogo from "../Assets/SAT Logo.png";
 
 function DeliveryChallan() {
@@ -83,7 +83,6 @@ function DeliveryChallan() {
     }
   };
 
-  // IMAGE → JPEG FIX
   const loadImageAsJpeg = (url) =>
     new Promise((resolve) => {
       const img = new window.Image();
@@ -103,35 +102,25 @@ function DeliveryChallan() {
           const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
           resolve({ dataUrl, ok: true });
         } catch (e) {
-          console.warn("Canvas encode failed:", e);
           resolve({ dataUrl: null, ok: false });
         }
       };
 
-      img.onerror = (e) => {
-        console.warn("Image load failed:", url, e);
+      img.onerror = () => {
         resolve({ dataUrl: null, ok: false });
       };
 
-      // ✅ USE SAT LOGO
       img.src = url;
     });
 
   const safeWatermark = (doc, dataUrl, x, y, w, h) => {
     try {
       doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity: 0.10, "fill-opacity": 0.10 }));
+      doc.setGState(new doc.GState({ opacity: 0.10 }));
       doc.addImage(dataUrl, "JPEG", x, y, w, h);
       doc.restoreGraphicsState();
-    } catch (e) {
-      try {
-        doc.saveGraphicsState();
-        doc.setGState({ opacity: 0.10 });
-        doc.addImage(dataUrl, "JPEG", x, y, w, h);
-        doc.restoreGraphicsState();
-      } catch {
-        doc.addImage(dataUrl, "JPEG", x, y, w, h);
-      }
+    } catch {
+      doc.addImage(dataUrl, "JPEG", x, y, w, h);
     }
   };
 
@@ -156,7 +145,7 @@ function DeliveryChallan() {
       const bh = pageHeight - 14;
       const borderBottom = by + bh;
 
-      // ✅ LOAD SAT LOGO HERE
+      // ✅ UPDATED TO USE SAT LOGO
       const { dataUrl: logoJpeg, ok: hasLogo } =
         await loadImageAsJpeg(satLogo);
 
@@ -187,18 +176,16 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "normal");
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // TOP LEFT LOGO
+      // ✅ TOP LEFT LOGO
       if (hasLogo) {
         doc.addImage(logoJpeg, "JPEG", 9, 12, 56, 31);
       }
 
-      // COMPANY DETAILS
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
       doc.text("Shree Aandavar Tooling", 69, 22);
 
       doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
       doc.text("CNC Machine Service and Tooling & Job Work", 69, 29);
 
       doc.setFontSize(9);
@@ -211,9 +198,7 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "bold");
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 48);
 
-      // SUB HEADER
       const subY = 62;
-      doc.setLineWidth(0.3);
       doc.line(bx, subY - 3, bx + bw, subY - 3);
       doc.line(bx, subY + 9, bx + bw, subY + 9);
 
@@ -233,7 +218,6 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "normal");
       doc.text(customerName, 112, subY + 5);
 
-      // TABLE
       autoTable(doc, {
         startY: subY + 12,
         head: [["S.No", "Product Name", "Quantity", "Date"]],
@@ -244,44 +228,15 @@ function DeliveryChallan() {
           item.created,
         ]),
         theme: "grid",
-        headStyles: {
-          fillColor: [0, 100, 200],
-          textColor: 255,
-          fontStyle: "bold",
-          fontSize: 10,
-          halign: "center",
-        },
-        bodyStyles: { fontSize: 9, halign: "center" },
-        columnStyles: { 1: { halign: "left" } },
-        margin: { left: 9, right: 9 },
-        tableLineColor: [180, 180, 180],
-        tableLineWidth: 0.3,
       });
 
-      // FOOTER
       const footerDiv = borderBottom - 28;
-      const footerTextY = footerDiv + 8;
-      const sigLineY = footerDiv + 16;
-      const sigLabelY = sigLineY + 6;
-
-      doc.setLineWidth(0.4);
       doc.line(bx, footerDiv, bx + bw, footerDiv);
 
-      doc.setFontSize(10);
-      doc.text("Received the goods in good condition", 12, footerTextY);
-      doc.text(
-        "For Shree Aandavar Tooling",
-        bx + bw - 5,
-        footerTextY,
-        { align: "right" }
-      );
-
-      doc.line(12, sigLineY, 75, sigLineY);
-      doc.line(bx + bw - 68, sigLineY, bx + bw - 5, sigLineY);
-
-      doc.setFontSize(9);
-      doc.text("Party's Signature", 12, sigLabelY);
-      doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
+      doc.text("Received the goods in good condition", 12, footerDiv + 8);
+      doc.text("For Shree Aandavar Tooling", bx + bw - 5, footerDiv + 8, {
+        align: "right",
+      });
 
       doc.save("Delivery_Challan.pdf");
 
