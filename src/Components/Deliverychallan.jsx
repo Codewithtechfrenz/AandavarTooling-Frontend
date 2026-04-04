@@ -169,20 +169,20 @@ function DeliveryChallan() {
       const bh           = pageHeight - 14;   // 283
       const borderBottom = by + bh;           // 290
 
-      // ── Load SAT Logo (canvas re-encode → always clean JPEG) ────
+      // ── Load logo (canvas re-encode → always clean JPEG) ────
       const { dataUrl: logoJpeg, ok: hasLogo } =
-        await loadImageAsJpeg("/Assets/SAT Logo.png");
+        await loadImageAsJpeg("/AndavarLogo2.png");
 
       // ══════════════════════════════════════════════════════
       // 1. WATERMARK  (first layer — behind everything)
-      //    SAT Logo is roughly square 1:1
+      //    Logo is landscape ≈ 1.8 : 1
       //    Centred on full A4 page
       // ══════════════════════════════════════════════════════
       if (hasLogo) {
-        const wmW = 110;
-        const wmH = 110;
-        const wmX = (pageWidth  - wmW) / 2;   // centre horizontally
-        const wmY = (pageHeight - wmH) / 2;   // centre vertically
+        const wmW = 140;
+        const wmH = 78;
+        const wmX = (pageWidth  - wmW) / 2;   // 35
+        const wmY = (pageHeight - wmH) / 2;   // 109.5
         safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH);
       }
 
@@ -194,111 +194,74 @@ function DeliveryChallan() {
       doc.rect(bx, by, bw, bh);
 
       // ══════════════════════════════════════════════════════
-      // 3. HEADER BOX  (height: 55)
-      // Layout:
-      //   [Logo 28×28 | top-left]  [Company name centred]  [DELIVERY CHALLAN box | top-right]
+      // 3. HEADER BOX
       // ══════════════════════════════════════════════════════
-      const headerH = 55;
       doc.setLineWidth(0.4);
-      doc.rect(bx, by, bw, headerH);
+      doc.rect(bx, by, bw, 50);
 
-      // ── "DELIVERY CHALLAN" label box — top right ────────
-      const dcBoxW = 55;
-      const dcBoxH = 13;
-      doc.rect(bx + bw - dcBoxW, by, dcBoxW, dcBoxH);
-      doc.setFontSize(9.5);
+      // "DELIVERY CHALLAN" label box — top right
+      doc.rect(143, by, 57, 13);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text(
-        "DELIVERY CHALLAN",
-        bx + bw - dcBoxW / 2,
-        by + 8.5,
-        { align: "center" }
-      );
+      doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // ── Cell number (below DC box) ───────────────────────
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "Cell : 9944130610",
-        bx + bw - dcBoxW / 2,
-        by + 18,
-        { align: "center" }
-      );
+      // Cell number
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal"); 
+      doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // ── Logo — top LEFT of header ────────────────────────
-      // SAT Logo is square; render at 28×28 mm with a small margin
-      const logoSize = 28;
-      const logoX    = bx + 4;
-      const logoY    = by + (headerH - logoSize) / 2;  // vertically centred in header
+      // Logo — top LEFT of header  (56 × 31 — landscape ratio)
       if (hasLogo) {
-        doc.addImage(logoJpeg, "JPEG", logoX, logoY, logoSize, logoSize);
+        doc.addImage(logoJpeg, "JPEG", 9, 12, 56, 31);
       }
 
-      // ── Company name — centred horizontally on the page ──
-      const centerX = pageWidth / 2;
-
-      doc.setFontSize(18);
+      // Company details (x=69 clears the 56-wide logo)
+      doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text("SHREE AANDAVAR TOOLING", centerX, by + 18, { align: "center" });
+      doc.text("SHREE AANDAVAR TOOLING", 69, 22);
 
-      doc.setFontSize(9.5);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(
+      // doc.text("", 69, 29);
 
-        centerX, by + 26, { align: "center" }
-      );
-
-      doc.setFontSize(8.5);
-      doc.text(
-        "5/520 D, Kabeer Nagar MasthanPatti Madurai - 20.",
-        centerX, by + 33, { align: "center" }
-      );
-      doc.text(
-        "mailto : prabusangari690@gmail.com",
-        centerX, by + 39, { align: "center" }
-      );
-
-      // ── Date — bottom-right inside header ───────────────
-      doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.text(
-        `Date : ${new Date().toLocaleDateString()}`,
-        bx + bw - 5,
-        by + headerH - 5,
-        { align: "right" }
+        "5/520 D, Kabeer Nagar MasthanPatti Madurai - 20.",
+        69, 35
       );
+      doc.text("mailto : prabusangari690@gmail.com", 69, 41);
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 48);
 
       // ══════════════════════════════════════════════════════
       // 4. SUB-HEADER: Challan No + Customer
       // ══════════════════════════════════════════════════════
-      const subY = by + headerH + 9;   // first text baseline
-      const subBoxTop    = subY - 6;
-      const subBoxBottom = subY + 7;
-
+      const subY = 62;
       doc.setLineWidth(0.3);
-      doc.line(bx, subBoxTop,    bx + bw, subBoxTop);
-      doc.line(bx, subBoxBottom, bx + bw, subBoxBottom);
+      doc.line(bx, subY - 3, bx + bw, subY - 3);
+      doc.line(bx, subY + 9, bx + bw, subY + 9);
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text("Challan No :", bx + 5, subY + 2);
+      doc.text("Challan No :", 12, subY + 5);
       doc.setFont("helvetica", "normal");
       doc.text(
         "DC-" + String(productsList.length).padStart(3, "0"),
-        bx + 37, subY + 2
+        44, subY + 5
       );
       doc.setFont("helvetica", "bold");
-      doc.text("To :", bx + bw / 2, subY + 2);
+      doc.text("To :", 100, subY + 5);
       doc.setFont("helvetica", "normal");
-      doc.text(customerName, bx + bw / 2 + 12, subY + 2);
+      doc.text(customerName, 112, subY + 5);
 
       // ══════════════════════════════════════════════════════
       // 5. PRODUCT TABLE
       // ══════════════════════════════════════════════════════
       autoTable(doc, {
-        startY: subBoxBottom + 3,
+        startY: subY + 12,
         head: [["S.No", "Product Name", "Quantity", "Date"]],
         body: productsList.map((item, idx) => [
           idx + 1,
@@ -316,13 +279,18 @@ function DeliveryChallan() {
         },
         bodyStyles: { fontSize: 9, halign: "center" },
         columnStyles: { 1: { halign: "left" } },
-        margin: { left: bx + 2, right: bx + 2 },
+        margin: { left: 9, right: 9 },
         tableLineColor: [180, 180, 180],
         tableLineWidth: 0.3,
       });
 
       // ══════════════════════════════════════════════════════
       // 6. FOOTER — pinned inside border
+      //   borderBottom = 290
+      //   footerDiv    = 262
+      //   footerTextY  = 270
+      //   sigLineY     = 278
+      //   sigLabelY    = 284  (6 px above border ✓)
       // ══════════════════════════════════════════════════════
       const footerDiv   = borderBottom - 28;
       const footerTextY = footerDiv    +  8;
@@ -335,7 +303,7 @@ function DeliveryChallan() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
-      doc.text("Received the goods in good condition", bx + 5, footerTextY);
+      doc.text("Received the goods in good condition", 12, footerTextY);
       doc.text(
         "For Shree Aandavar Tooling",
         bx + bw - 5, footerTextY,
@@ -343,11 +311,11 @@ function DeliveryChallan() {
       );
 
       doc.setLineWidth(0.3);
-      doc.line(bx + 5,         sigLineY, bx + 68,      sigLineY);
-      doc.line(bx + bw - 68,   sigLineY, bx + bw - 5,  sigLineY);
+      doc.line(12,            sigLineY, 75,           sigLineY);
+      doc.line(bx + bw - 68, sigLineY, bx + bw - 5,  sigLineY);
 
       doc.setFontSize(9);
-      doc.text("Party's Signature", bx + 5, sigLabelY);
+      doc.text("Party's Signature", 12, sigLabelY);
       doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
 
       doc.save("Delivery_Challan.pdf");
