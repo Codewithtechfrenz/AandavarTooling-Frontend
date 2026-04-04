@@ -467,7 +467,7 @@ function DeliveryChallan() {
   const [customerName, setCustomerName] = useState("");
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [challanNo, setChallanNo] = useState(""); // ✅ ADDED
+  const [challanNo, setChallanNo] = useState("");
 
   const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -515,7 +515,7 @@ function DeliveryChallan() {
 
     const newProduct = {
       id: productsList.length + 1,
-      challanNo, // ✅ ADDED
+      challanNo,
       customerName,
       productName,
       quantity,
@@ -525,19 +525,24 @@ function DeliveryChallan() {
     setProductsList([...productsList, newProduct]);
     setProductName("");
     setQuantity("");
-    setChallanNo(""); // ✅ ADDED
+    // ❌ DO NOT clear challanNo (important)
   };
 
   const saveDeliveryChallan = async () => {
     try {
       for (const item of productsList) {
-        await api.post("/delivery/createDeliveryChallan", {
-          delivery_challan_no: item.challanNo, // ✅ ADDED
+
+        console.log("SENDING:", item); // DEBUG
+
+        const res = await api.post("/delivery/createDeliveryChallan", {
+          DeliveryChallanNo: item.challanNo, // ✅ FIXED
           customer_name: item.customerName,
           product_name: item.productName,
           quantity: item.quantity,
           created_date: new Date().toISOString().split("T")[0],
         });
+
+        console.log("RESPONSE:", res.data); // DEBUG
       }
     } catch (error) {
       console.error("Save Error:", error);
@@ -557,7 +562,18 @@ function DeliveryChallan() {
 
       const doc = new jsPDF("p", "mm", "a4");
 
-      doc.text(`Challan No : ${productsList[0]?.challanNo || ""}`, 10, 10); // ✅ OPTIONAL SHOW IN PDF
+      doc.text(`Challan No : ${productsList[0]?.challanNo || ""}`, 10, 10);
+
+      autoTable(doc, {
+        startY: 20,
+        head: [["S.No", "Product Name", "Quantity", "Date"]],
+        body: productsList.map((item, idx) => [
+          idx + 1,
+          item.productName,
+          item.quantity,
+          item.created,
+        ]),
+      });
 
       doc.save("Delivery_Challan.pdf");
     } catch (error) {
@@ -580,7 +596,6 @@ function DeliveryChallan() {
 
       <div className="sales-form">
 
-        {/* ✅ CHALLAN NO FIELD */}
         <div className="sales-row">
           <div className="sales-group">
             <label>Challan No</label>
@@ -671,7 +686,7 @@ function DeliveryChallan() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Challan No</th> {/* ✅ ADDED */}
+              <th>Challan No</th>
               <th>Customer</th>
               <th>Product Name</th>
               <th>Quantity</th>
@@ -687,7 +702,7 @@ function DeliveryChallan() {
               productsList.map((item) => (
                 <tr key={item.id}>
                   <td>{item.id}</td>
-                  <td>{item.challanNo}</td> {/* ✅ ADDED */}
+                  <td>{item.challanNo}</td>
                   <td>{item.customerName}</td>
                   <td>{item.productName}</td>
                   <td>{item.quantity}</td>
