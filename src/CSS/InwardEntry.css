@@ -5,7 +5,7 @@
   background: gray;
   min-height: 100vh;
   font-family: "Segoe UI", sans-serif;
-  position: relative;
+  position: relative; /* 🔥 IMPORTANT */
   z-index: 1;
 }
 
@@ -43,9 +43,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   margin-bottom: 25px;
 
-  position: relative;
-  z-index: 5;
-  overflow: visible; /* CRITICAL: allows dropdown to render outside the card */
+  position: relative;   /* 🔥 IMPORTANT */
+  z-index: 5;           /* 🔥 FIX OVERLAY */
+  overflow: visible;    /* 🔥 CRITICAL FIX */
 }
 
 
@@ -56,18 +56,14 @@
   gap: 20px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 6;        /* FIX: row above form background */
-  overflow: visible; /* FIX: allow dropdown to overflow row boundary */
 }
 
 .ie-group {
   flex: 1;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 7;        /* FIX: group above row */
-  overflow: visible; /* FIX: allow dropdown list to overflow group */
+  position: relative; /* 🔥 IMPORTANT */
+  z-index: 6;
 }
 
 .ie-group label {
@@ -86,40 +82,30 @@
   border-radius: 6px;
   border: 1px solid #dcdcdc;
   font-size: 14px;
-  width: 100%;
-  box-sizing: border-box;
 
   background: #ffffff !important;
-  color: #000000 !important;
+  color: #000 !important;
 
   transition: all 0.2s ease;
 
-  position: relative;
-  z-index: 10; /* FIX: select control above all siblings */
+  position: relative;   /* 🔥 IMPORTANT */
+  z-index: 10;          /* 🔥 FIX DROPDOWN STACK */
 }
 
-/* FIX: Restore native browser dropdown arrow and behaviour */
+/* 🔥 FIX: Browser dropdown rendering */
 .ie-group select {
   appearance: auto;
   -webkit-appearance: menulist;
   -moz-appearance: menulist;
-  cursor: pointer;
 }
 
-/* FIX: Disabled state while loading */
-.ie-group select:disabled,
-.ie-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* FIX: Dropdown options must be visible with black text on white */
+/* 🔥 CRITICAL: OPTION VISIBILITY */
 .ie-group select option {
-  color: #000000 !important;
+  color: #000 !important;
   background-color: #ffffff !important;
-  font-size: 14px;
 }
 
+/* (Optional) hover effect */
 .ie-group select option:hover {
   background-color: #f2f3f7;
   color: #000;
@@ -147,7 +133,7 @@
   transition: all 0.2s ease;
 }
 
-.ie-btn:hover:not(:disabled) {
+.ie-btn:hover {
   background: #4338ca;
 }
 
