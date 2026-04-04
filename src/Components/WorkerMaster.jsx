@@ -38,7 +38,7 @@ function WorkerMaster() {
         workerName: item.WorkerName,
         workerDepartment: item.WorkerDepartment,
         joiningDate: formatDate(item.WorkerJoiningDate),
-        salary: item.Salary || 0, // ✅ ADDED
+        salary: item.Salary, // ✅ ADDED
         created: formatDate(item.created_at || item.CreatedAt || item.createdAt),
         updated: formatDate(item.updated_at || item.UpdatedAt || item.updatedAt),
       }));
