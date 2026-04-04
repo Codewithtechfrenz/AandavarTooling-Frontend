@@ -6,6 +6,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "../api";
 
+// ✅ ADD THIS (SAT Logo)
+import satLogo from "../Assets/SAT Logo.png";
+
 function DeliveryChallan() {
   const [customerName, setCustomerName] = useState("");
   const [productName, setProductName] = useState("");
@@ -80,15 +83,7 @@ function DeliveryChallan() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // loadImageAsJpeg
-  // Loads ANY image (PNG / JPEG / WEBP) from a URL and re-encodes
-  // it as JPEG via an HTML canvas. This avoids jsPDF's "wrong PNG
-  // signature" error caused by files that have the wrong extension
-  // or non-standard PNG metadata.
-  // Returns: { dataUrl: "data:image/jpeg;base64,...", ok: true }
-  //       or { dataUrl: null, ok: false }  on failure.
-  // ─────────────────────────────────────────────────────────────
+  // IMAGE → JPEG FIX
   const loadImageAsJpeg = (url) =>
     new Promise((resolve) => {
       const img = new window.Image();
@@ -97,11 +92,10 @@ function DeliveryChallan() {
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");
-          canvas.width  = img.naturalWidth  || img.width;
+          canvas.width = img.naturalWidth || img.width;
           canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext("2d");
 
-          // White background so transparency doesn't go black in JPEG
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
@@ -119,13 +113,10 @@ function DeliveryChallan() {
         resolve({ dataUrl: null, ok: false });
       };
 
+      // ✅ USE SAT LOGO
       img.src = url;
     });
 
-  // ─────────────────────────────────────────────────────────────
-  // safeWatermark — tries opacity via saveGraphicsState, falls back
-  // gracefully so the PDF never crashes on older jsPDF builds.
-  // ─────────────────────────────────────────────────────────────
   const safeWatermark = (doc, dataUrl, x, y, w, h) => {
     try {
       doc.saveGraphicsState();
@@ -138,16 +129,12 @@ function DeliveryChallan() {
         doc.setGState({ opacity: 0.10 });
         doc.addImage(dataUrl, "JPEG", x, y, w, h);
         doc.restoreGraphicsState();
-      } catch (e2) {
-        // Last resort: draw without opacity (still visible as logo)
+      } catch {
         doc.addImage(dataUrl, "JPEG", x, y, w, h);
       }
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // generatePDF
-  // ─────────────────────────────────────────────────────────────
   const generatePDF = async () => {
     if (productsList.length === 0) {
       alert("Add products first");
@@ -159,67 +146,55 @@ function DeliveryChallan() {
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
-      const doc        = new jsPDF("p", "mm", "a4");
-      const pageWidth  = doc.internal.pageSize.getWidth();   // 210
-      const pageHeight = doc.internal.pageSize.getHeight();  // 297
+      const doc = new jsPDF("p", "mm", "a4");
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-      const bx           = 7;
-      const by           = 7;
-      const bw           = pageWidth  - 14;   // 196
-      const bh           = pageHeight - 14;   // 283
-      const borderBottom = by + bh;           // 290
+      const bx = 7;
+      const by = 7;
+      const bw = pageWidth - 14;
+      const bh = pageHeight - 14;
+      const borderBottom = by + bh;
 
-      // ── Load logo (canvas re-encode → always clean JPEG) ────
+      // ✅ LOAD SAT LOGO HERE
       const { dataUrl: logoJpeg, ok: hasLogo } =
-        await loadImageAsJpeg("/AndavarLogo2.png");
+        await loadImageAsJpeg(satLogo);
 
-      // ══════════════════════════════════════════════════════
-      // 1. WATERMARK  (first layer — behind everything)
-      //    Logo is landscape ≈ 1.8 : 1
-      //    Centred on full A4 page
-      // ══════════════════════════════════════════════════════
+      // WATERMARK
       if (hasLogo) {
         const wmW = 140;
         const wmH = 78;
-        const wmX = (pageWidth  - wmW) / 2;   // 35
-        const wmY = (pageHeight - wmH) / 2;   // 109.5
+        const wmX = (pageWidth - wmW) / 2;
+        const wmY = (pageHeight - wmH) / 2;
         safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH);
       }
 
-      // ══════════════════════════════════════════════════════
-      // 2. PAGE BORDER
-      // ══════════════════════════════════════════════════════
+      // BORDER
       doc.setDrawColor(0);
       doc.setLineWidth(0.7);
       doc.rect(bx, by, bw, bh);
 
-      // ══════════════════════════════════════════════════════
-      // 3. HEADER BOX
-      // ══════════════════════════════════════════════════════
+      // HEADER
       doc.setLineWidth(0.4);
       doc.rect(bx, by, bw, 50);
 
-      // "DELIVERY CHALLAN" label box — top right
       doc.rect(143, by, 57, 13);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
       doc.text("DELIVERY CHALLAN", 171.5, 15.5, { align: "center" });
 
-      // Cell number
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text("Cell : 9944130610", 171.5, 24, { align: "center" });
 
-      // Logo — top LEFT of header  (56 × 31 — landscape ratio)
+      // TOP LEFT LOGO
       if (hasLogo) {
         doc.addImage(logoJpeg, "JPEG", 9, 12, 56, 31);
       }
 
-      // Company details (x=69 clears the 56-wide logo)
+      // COMPANY DETAILS
       doc.setFontSize(19);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
       doc.text("Shree Aandavar Tooling", 69, 22);
 
       doc.setFontSize(10);
@@ -236,9 +211,7 @@ function DeliveryChallan() {
       doc.setFont("helvetica", "bold");
       doc.text(`Date : ${new Date().toLocaleDateString()}`, 143, 48);
 
-      // ══════════════════════════════════════════════════════
-      // 4. SUB-HEADER: Challan No + Customer
-      // ══════════════════════════════════════════════════════
+      // SUB HEADER
       const subY = 62;
       doc.setLineWidth(0.3);
       doc.line(bx, subY - 3, bx + bw, subY - 3);
@@ -247,19 +220,20 @@ function DeliveryChallan() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text("Challan No :", 12, subY + 5);
+
       doc.setFont("helvetica", "normal");
       doc.text(
         "DC-" + String(productsList.length).padStart(3, "0"),
         44, subY + 5
       );
+
       doc.setFont("helvetica", "bold");
       doc.text("To :", 100, subY + 5);
+
       doc.setFont("helvetica", "normal");
       doc.text(customerName, 112, subY + 5);
 
-      // ══════════════════════════════════════════════════════
-      // 5. PRODUCT TABLE
-      // ══════════════════════════════════════════════════════
+      // TABLE
       autoTable(doc, {
         startY: subY + 12,
         head: [["S.No", "Product Name", "Quantity", "Date"]],
@@ -284,35 +258,26 @@ function DeliveryChallan() {
         tableLineWidth: 0.3,
       });
 
-      // ══════════════════════════════════════════════════════
-      // 6. FOOTER — pinned inside border
-      //   borderBottom = 290
-      //   footerDiv    = 262
-      //   footerTextY  = 270
-      //   sigLineY     = 278
-      //   sigLabelY    = 284  (6 px above border ✓)
-      // ══════════════════════════════════════════════════════
-      const footerDiv   = borderBottom - 28;
-      const footerTextY = footerDiv    +  8;
-      const sigLineY    = footerDiv    + 16;
-      const sigLabelY   = sigLineY     +  6;
+      // FOOTER
+      const footerDiv = borderBottom - 28;
+      const footerTextY = footerDiv + 8;
+      const sigLineY = footerDiv + 16;
+      const sigLabelY = sigLineY + 6;
 
       doc.setLineWidth(0.4);
       doc.line(bx, footerDiv, bx + bw, footerDiv);
 
       doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
       doc.text("Received the goods in good condition", 12, footerTextY);
       doc.text(
         "For Shree Aandavar Tooling",
-        bx + bw - 5, footerTextY,
+        bx + bw - 5,
+        footerTextY,
         { align: "right" }
       );
 
-      doc.setLineWidth(0.3);
-      doc.line(12,            sigLineY, 75,           sigLineY);
-      doc.line(bx + bw - 68, sigLineY, bx + bw - 5,  sigLineY);
+      doc.line(12, sigLineY, 75, sigLineY);
+      doc.line(bx + bw - 68, sigLineY, bx + bw - 5, sigLineY);
 
       doc.setFontSize(9);
       doc.text("Party's Signature", 12, sigLabelY);
@@ -328,9 +293,6 @@ function DeliveryChallan() {
     }
   };
 
-  // ═══════════════════════════════════════════════════════════
-  // WEB PAGE — original design & structure completely unchanged
-  // ═══════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
       <Sidebar />
@@ -352,17 +314,8 @@ function DeliveryChallan() {
             >
               <option value="">Select Customer</option>
               {customerOptions.map((customer, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof customer === "string"
-                      ? customer
-                      : customer.customer_name
-                  }
-                >
-                  {typeof customer === "string"
-                    ? customer
-                    : customer.customer_name}
+                <option key={index} value={customer.customer_name}>
+                  {customer.customer_name}
                 </option>
               ))}
             </select>
@@ -378,17 +331,8 @@ function DeliveryChallan() {
             >
               <option value="">Select Product</option>
               {productOptions.map((product, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof product === "string"
-                      ? product
-                      : product.product_name
-                  }
-                >
-                  {typeof product === "string"
-                    ? product
-                    : product.product_name}
+                <option key={index} value={product.product_name}>
+                  {product.product_name}
                 </option>
               ))}
             </select>
