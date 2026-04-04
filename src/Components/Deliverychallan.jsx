@@ -81,69 +81,68 @@ function DeliveryChallan() {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // loadImageAsJpeg — re-encodes any image to clean JPEG via canvas
+  // loadImageAsJpeg
+  // Loads ANY image (PNG / JPEG / WEBP) from a URL and re-encodes
+  // it as JPEG via an HTML canvas. This avoids jsPDF's "wrong PNG
+  // signature" error caused by files that have the wrong extension
+  // or non-standard PNG metadata.
+  // Returns: { dataUrl: "data:image/jpeg;base64,...", ok: true }
+  //       or { dataUrl: null, ok: false }  on failure.
   // ─────────────────────────────────────────────────────────────
   const loadImageAsJpeg = (url) =>
     new Promise((resolve) => {
       const img = new window.Image();
       img.crossOrigin = "anonymous";
+
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");
           canvas.width  = img.naturalWidth  || img.width;
           canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext("2d");
+
+          // White background so transparency doesn't go black in JPEG
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
-          resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), ok: true });
+
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          resolve({ dataUrl, ok: true });
         } catch (e) {
           console.warn("Canvas encode failed:", e);
           resolve({ dataUrl: null, ok: false });
         }
       };
+
       img.onerror = (e) => {
         console.warn("Image load failed:", url, e);
         resolve({ dataUrl: null, ok: false });
       };
+
       img.src = url;
     });
 
   // ─────────────────────────────────────────────────────────────
-  // safeWatermark — opacity watermark with graceful fallback
+  // safeWatermark — tries opacity via saveGraphicsState, falls back
+  // gracefully so the PDF never crashes on older jsPDF builds.
   // ─────────────────────────────────────────────────────────────
-  const safeWatermark = (doc, dataUrl, x, y, w, h, opacity) => {
+  const safeWatermark = (doc, dataUrl, x, y, w, h) => {
     try {
       doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity: opacity, "fill-opacity": opacity }));
+      doc.setGState(new doc.GState({ opacity: 0.10, "fill-opacity": 0.10 }));
       doc.addImage(dataUrl, "JPEG", x, y, w, h);
       doc.restoreGraphicsState();
     } catch (e) {
       try {
         doc.saveGraphicsState();
-        doc.setGState({ opacity: opacity });
+        doc.setGState({ opacity: 0.10 });
         doc.addImage(dataUrl, "JPEG", x, y, w, h);
         doc.restoreGraphicsState();
       } catch (e2) {
-        // silent — skip watermark if GState unsupported
+        // Last resort: draw without opacity (still visible as logo)
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
       }
     }
-  };
-
-  // ─────────────────────────────────────────────────────────────
-  // drawCornerMarks — gold precision crop-mark corners
-  // ─────────────────────────────────────────────────────────────
-  const drawCornerMarks = (doc, x, y, w, h, len) => {
-    doc.setDrawColor(201, 168, 76);   // GOLD — explicit values, no spread
-    doc.setLineWidth(0.7);
-    doc.line(x,     y,     x + len, y);
-    doc.line(x,     y,     x,       y + len);
-    doc.line(x + w, y,     x+w-len, y);
-    doc.line(x + w, y,     x + w,   y + len);
-    doc.line(x,     y + h, x + len, y + h);
-    doc.line(x,     y + h, x,       y + h - len);
-    doc.line(x + w, y + h, x+w-len, y + h);
-    doc.line(x + w, y + h, x + w,   y + h - len);
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -160,296 +159,196 @@ function DeliveryChallan() {
       await saveDeliveryChallan();
       fetchDeliveryChallans();
 
-      const doc       = new jsPDF("p", "mm", "a4");
-      const PW        = doc.internal.pageSize.getWidth();   // 210
-      const PH        = doc.internal.pageSize.getHeight();  // 297
+      const doc        = new jsPDF("p", "mm", "a4");
+      const pageWidth  = doc.internal.pageSize.getWidth();   // 210
+      const pageHeight = doc.internal.pageSize.getHeight();  // 297
 
-      // ── Load SAT Logo ────────────────────────────────────
+      const bx           = 7;
+      const by           = 7;
+      const bw           = pageWidth  - 14;   // 196
+      const bh           = pageHeight - 14;   // 283
+      const borderBottom = by + bh;           // 290
+
+      // ── Load SAT Logo (canvas re-encode → always clean JPEG) ────
       const { dataUrl: logoJpeg, ok: hasLogo } =
         await loadImageAsJpeg("/Assets/SAT Logo.png");
 
       // ══════════════════════════════════════════════════════
-      // 0. PAGE BACKGROUND — warm off-white
-      // ══════════════════════════════════════════════════════
-      doc.setFillColor(247, 244, 239);
-      doc.rect(0, 0, PW, PH, "F");
-
-      // ══════════════════════════════════════════════════════
-      // 1. WATERMARK — SAT Logo centred, very faint
+      // 1. WATERMARK  (first layer — behind everything)
+      //    SAT Logo is roughly square 1:1
+      //    Centred on full A4 page
       // ══════════════════════════════════════════════════════
       if (hasLogo) {
-        safeWatermark(doc, logoJpeg, (PW - 120) / 2, (PH - 120) / 2, 120, 120, 0.07);
+        const wmW = 110;
+        const wmH = 110;
+        const wmX = (pageWidth  - wmW) / 2;   // centre horizontally
+        const wmY = (pageHeight - wmH) / 2;   // centre vertically
+        safeWatermark(doc, logoJpeg, wmX, wmY, wmW, wmH);
       }
 
       // ══════════════════════════════════════════════════════
-      // 2. HEADER BAND — full-width navy (0 → 70 mm)
+      // 2. PAGE BORDER
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(13, 27, 42);           // NAVY
-      doc.rect(0, 0, PW, 70, "F");
-
-      // left gold vertical accent bar
-      doc.setFillColor(201, 168, 76);         // GOLD
-      doc.rect(0, 0, 5, 70, "F");
-
-      // gold bottom stripe
-      doc.setFillColor(201, 168, 76);
-      doc.rect(0, 66, PW, 4, "F");
-
-      // ── Logo: white circle + gold ring ───────────────────
-      if (hasLogo) {
-        doc.setFillColor(255, 255, 255);
-        doc.circle(30, 35, 23, "F");
-        doc.setDrawColor(201, 168, 76);
-        doc.setLineWidth(0.9);
-        doc.circle(30, 35, 23, "S");
-        doc.addImage(logoJpeg, "JPEG", 9, 14, 42, 42);
-      }
-
-      // ── DELIVERY CHALLAN badge — top right ───────────────
-      doc.setFillColor(201, 168, 76);
-      doc.roundedRect(147, 7, 58, 20, 3, 3, "F");
-      doc.setFontSize(10.5);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(13, 27, 42);           // NAVY text on gold badge
-      doc.text("DELIVERY CHALLAN", 176, 20, { align: "center" });
-
-      // ── Company name — centred right of logo ─────────────
-      const cx = (55 + PW) / 2;
-
-      doc.setFontSize(19);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);        // WHITE
-      doc.text("SHREE AANDAVAR TOOLING", cx, 26, { align: "center" });
-
-      // gold hairline under company name
-      doc.setDrawColor(201, 168, 76);
-      doc.setLineWidth(0.5);
-      doc.line(60, 30, PW - 10, 30);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);        // STEEL
-      doc.text("CNC Machine Service  ·  Tooling  ·  Job Work", cx, 37, { align: "center" });
-
-      doc.setFontSize(8);
-      doc.setTextColor(212, 216, 222);        // MIDGRY
-      doc.text("5/520 D, Kabeer Nagar MasthanPatti, Madurai - 20.", cx, 44, { align: "center" });
-      doc.text("prabusangari690@gmail.com   |   Cell : 9944130610",  cx, 51, { align: "center" });
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.7);
+      doc.rect(bx, by, bw, bh);
 
       // ══════════════════════════════════════════════════════
-      // 3. META STRIP — deeper navy (70 → 98 mm)
+      // 3. HEADER BOX  (height: 55)
+      // Layout:
+      //   [Logo 28×28 | top-left]  [Company name centred]  [DELIVERY CHALLAN box | top-right]
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(22, 48, 78);           // DKNAVY
-      doc.rect(0, 70, PW, 28, "F");
+      const headerH = 55;
+      doc.setLineWidth(0.4);
+      doc.rect(bx, by, bw, headerH);
 
-      // vertical gold dividers
-      doc.setDrawColor(201, 168, 76);
-      doc.setLineWidth(0.3);
-      doc.line(52,  74, 52,  95);
-      doc.line(132, 74, 132, 95);
-      doc.line(172, 74, 172, 95);
-
-      // ── Pill 1: Challan No (gold value) ──────────────────
-      doc.setFontSize(6.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
-      doc.text("CHALLAN NO.", 8, 79);
-      doc.setFontSize(12);
+      // ── "DELIVERY CHALLAN" label box — top right ────────
+      const dcBoxW = 55;
+      const dcBoxH = 13;
+      doc.rect(bx + bw - dcBoxW, by, dcBoxW, dcBoxH);
+      doc.setFontSize(9.5);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(201, 168, 76);
-      doc.text("DC-" + String(productsList.length).padStart(3, "0"), 8, 90);
-
-      // ── Pill 2: Dispatched To (white value) ──────────────
-      doc.setFontSize(6.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
-      doc.text("DISPATCHED TO", 58, 79);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text((customerName || "-").toUpperCase(), 58, 90, { maxWidth: 70 });
-
-      // ── Pill 3: Date of Issue (white value) ──────────────
-      doc.setFontSize(6.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
-      doc.text("DATE OF ISSUE", 138, 79);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(0, 0, 0);
       doc.text(
-        new Date().toLocaleDateString("en-IN", {
-          day: "2-digit", month: "short", year: "numeric",
-        }),
-        138, 90
+        "DELIVERY CHALLAN",
+        bx + bw - dcBoxW / 2,
+        by + 8.5,
+        { align: "center" }
       );
 
-      // ── Pill 4: Total Items (gold value) ─────────────────
-      doc.setFontSize(6.5);
+      // ── Cell number (below DC box) ───────────────────────
+      doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
-      doc.text("TOTAL ITEMS", 178, 79);
-      doc.setFontSize(12);
+      doc.text(
+        "Cell : 9944130610",
+        bx + bw - dcBoxW / 2,
+        by + 18,
+        { align: "center" }
+      );
+
+      // ── Logo — top LEFT of header ────────────────────────
+      // SAT Logo is square; render at 28×28 mm with a small margin
+      const logoSize = 28;
+      const logoX    = bx + 4;
+      const logoY    = by + (headerH - logoSize) / 2;  // vertically centred in header
+      if (hasLogo) {
+        doc.addImage(logoJpeg, "JPEG", logoX, logoY, logoSize, logoSize);
+      }
+
+      // ── Company name — centred horizontally on the page ──
+      const centerX = pageWidth / 2;
+
+      doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(201, 168, 76);
-      doc.text(String(productsList.length), 178, 90);
+      doc.setTextColor(0, 0, 0);
+      doc.text("SHREE AANDAVAR TOOLING", centerX, by + 18, { align: "center" });
+
+      doc.setFontSize(9.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+
+        centerX, by + 26, { align: "center" }
+      );
+
+      doc.setFontSize(8.5);
+      doc.text(
+        "5/520 D, Kabeer Nagar MasthanPatti Madurai - 20.",
+        centerX, by + 33, { align: "center" }
+      );
+      doc.text(
+        "mailto : prabusangari690@gmail.com",
+        centerX, by + 39, { align: "center" }
+      );
+
+      // ── Date — bottom-right inside header ───────────────
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(
+        `Date : ${new Date().toLocaleDateString()}`,
+        bx + bw - 5,
+        by + headerH - 5,
+        { align: "right" }
+      );
 
       // ══════════════════════════════════════════════════════
-      // 4. SECTION LABEL + DECORATIVE RULES
+      // 4. SUB-HEADER: Challan No + Customer
       // ══════════════════════════════════════════════════════
-      const secY = 106;
-      doc.setFontSize(7);
+      const subY = by + headerH + 9;   // first text baseline
+      const subBoxTop    = subY - 6;
+      const subBoxBottom = subY + 7;
+
+      doc.setLineWidth(0.3);
+      doc.line(bx, subBoxTop,    bx + bw, subBoxTop);
+      doc.line(bx, subBoxBottom, bx + bw, subBoxBottom);
+
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(138, 155, 176);
-      doc.text("ITEMS DISPATCHED", 12, secY);
-
-      doc.setFillColor(201, 168, 76);
-      doc.rect(12, secY + 2, PW - 24, 1.2, "F");
-
-      doc.setFillColor(212, 216, 222);
-      doc.rect(12, secY + 3.8, PW - 24, 0.3, "F");
+      doc.text("Challan No :", bx + 5, subY + 2);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "DC-" + String(productsList.length).padStart(3, "0"),
+        bx + 37, subY + 2
+      );
+      doc.setFont("helvetica", "bold");
+      doc.text("To :", bx + bw / 2, subY + 2);
+      doc.setFont("helvetica", "normal");
+      doc.text(customerName, bx + bw / 2 + 12, subY + 2);
 
       // ══════════════════════════════════════════════════════
       // 5. PRODUCT TABLE
       // ══════════════════════════════════════════════════════
       autoTable(doc, {
-        startY: secY + 8,
-        head: [["S.NO", "PRODUCT NAME / DESCRIPTION", "QTY", "DATE"]],
+        startY: subBoxBottom + 3,
+        head: [["S.No", "Product Name", "Quantity", "Date"]],
         body: productsList.map((item, idx) => [
-          String(idx + 1).padStart(2, "0"),
+          idx + 1,
           item.productName,
           item.quantity,
           item.created,
         ]),
-        theme: "plain",
+        theme: "grid",
         headStyles: {
-          fillColor: [13, 27, 42],
-          textColor: [255, 255, 255],
+          fillColor: [0, 100, 200],
+          textColor: 255,
           fontStyle: "bold",
-          fontSize: 8.5,
+          fontSize: 10,
           halign: "center",
-          cellPadding: { top: 5, bottom: 5, left: 4, right: 4 },
         },
-        bodyStyles: {
-          fontSize: 9,
-          halign: "center",
-          textColor: [30, 30, 50],
-          cellPadding: { top: 5, bottom: 5, left: 4, right: 4 },
-          lineColor: [212, 216, 222],
-          lineWidth: 0.25,
-        },
-        columnStyles: {
-          0: { cellWidth: 18 },
-          1: { halign: "left", cellWidth: 112 },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 34 },
-        },
-        alternateRowStyles: { fillColor: [236, 239, 245] },
-        margin: { left: 12, right: 12 },
-        didDrawCell: (data) => {
-          if (data.section === "body" && data.column.index === 0) {
-            doc.setFillColor(201, 168, 76);
-            doc.rect(data.cell.x, data.cell.y, 1.5, data.cell.height, "F");
-          }
-        },
+        bodyStyles: { fontSize: 9, halign: "center" },
+        columnStyles: { 1: { halign: "left" } },
+        margin: { left: bx + 2, right: bx + 2 },
+        tableLineColor: [180, 180, 180],
+        tableLineWidth: 0.3,
       });
 
-      const tableEnd = doc.lastAutoTable.finalY + 7;
-
       // ══════════════════════════════════════════════════════
-      // 6. NOTE BOX
+      // 6. FOOTER — pinned inside border
       // ══════════════════════════════════════════════════════
-      doc.setFillColor(235, 238, 245);
-      doc.roundedRect(12, tableEnd, PW - 24, 18, 2, 2, "F");
-      doc.setDrawColor(138, 155, 176);
-      doc.setLineWidth(0.2);
-      doc.roundedRect(12, tableEnd, PW - 24, 18, 2, 2, "S");
+      const footerDiv   = borderBottom - 28;
+      const footerTextY = footerDiv    +  8;
+      const sigLineY    = footerDiv    + 16;
+      const sigLabelY   = sigLineY     +  6;
 
-      doc.setFillColor(201, 168, 76);
-      doc.roundedRect(12, tableEnd, 3, 18, 1, 1, "F");
-
-      doc.setFontSize(7.5);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(13, 27, 42);
-      doc.text("NOTE", 20, tableEnd + 7);
-
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(50, 55, 75);
-      doc.text(
-        "This delivery challan is not a tax invoice. Goods once dispatched will not be taken back without prior written intimation.",
-        20, tableEnd + 13,
-        { maxWidth: PW - 38 }
-      );
-
-      // ══════════════════════════════════════════════════════
-      // 7. FOOTER BAND — pinned to bottom
-      // ══════════════════════════════════════════════════════
-      const fbY = PH - 42;
-
-      doc.setFillColor(201, 168, 76);
-      doc.rect(0, fbY, PW, 1.5, "F");
-
-      doc.setFillColor(13, 27, 42);
-      doc.rect(0, fbY + 1.5, PW, 40.5, "F");
-
-      // ── Signature boxes ───────────────────────────────────
-      const sbW = 72;
-      const sbH = 20;
-      const sbY = fbY + 8;
-
-      // left — receiver
-      doc.setFillColor(22, 48, 78);
-      doc.roundedRect(12, sbY, sbW, sbH, 2, 2, "F");
-      doc.setDrawColor(201, 168, 76);
       doc.setLineWidth(0.4);
-      doc.roundedRect(12, sbY, sbW, sbH, 2, 2, "S");
-      doc.setDrawColor(138, 155, 176);
-      doc.setLineWidth(0.3);
-      doc.line(18, sbY + 13, 78, sbY + 13);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
-      doc.text("RECEIVER'S SIGNATURE", 48, sbY + 18, { align: "center" });
+      doc.line(bx, footerDiv, bx + bw, footerDiv);
 
-      // centre text
-      doc.setFontSize(8);
-      doc.setTextColor(138, 155, 176);
-      doc.text("Received goods in good condition", PW / 2, sbY + 9,  { align: "center" });
-      doc.setFontSize(7);
-      doc.setTextColor(60, 80, 110);
-      doc.text("(subject to inspection)",          PW / 2, sbY + 15, { align: "center" });
-
-      // right — company
-      doc.setFillColor(22, 48, 78);
-      doc.roundedRect(PW - 12 - sbW, sbY, sbW, sbH, 2, 2, "F");
-      doc.setDrawColor(201, 168, 76);
-      doc.setLineWidth(0.4);
-      doc.roundedRect(PW - 12 - sbW, sbY, sbW, sbH, 2, 2, "S");
-      doc.setDrawColor(138, 155, 176);
-      doc.setLineWidth(0.3);
-      doc.line(PW - 12 - sbW + 6, sbY + 13, PW - 18, sbY + 13);
-      doc.setFontSize(7);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 155, 176);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Received the goods in good condition", bx + 5, footerTextY);
       doc.text(
-        "FOR SHREE AANDAVAR TOOLING",
-        PW - 12 - sbW / 2, sbY + 18,
-        { align: "center" }
+        "For Shree Aandavar Tooling",
+        bx + bw - 5, footerTextY,
+        { align: "right" }
       );
 
-      // tagline
-      doc.setFontSize(6.5);
-      doc.setTextColor(60, 80, 110);
-      doc.text(
-        "Shree Aandavar Tooling  ·  Madurai  ·  9944130610  ·  prabusangari690@gmail.com",
-        PW / 2, PH - 3.5,
-        { align: "center" }
-      );
+      doc.setLineWidth(0.3);
+      doc.line(bx + 5,         sigLineY, bx + 68,      sigLineY);
+      doc.line(bx + bw - 68,   sigLineY, bx + bw - 5,  sigLineY);
 
-      // ══════════════════════════════════════════════════════
-      // 8. GOLD CORNER REGISTRATION MARKS
-      // ══════════════════════════════════════════════════════
-      drawCornerMarks(doc, 4, 4, PW - 8, PH - 8, 9);
+      doc.setFontSize(9);
+      doc.text("Party's Signature", bx + 5, sigLabelY);
+      doc.text("Signatory", bx + bw - 5, sigLabelY, { align: "right" });
 
       doc.save("Delivery_Challan.pdf");
 
@@ -462,7 +361,7 @@ function DeliveryChallan() {
   };
 
   // ═══════════════════════════════════════════════════════════
-  // WEB PAGE — original structure completely unchanged
+  // WEB PAGE — original design & structure completely unchanged
   // ═══════════════════════════════════════════════════════════
   return (
     <div className="sales-page">
