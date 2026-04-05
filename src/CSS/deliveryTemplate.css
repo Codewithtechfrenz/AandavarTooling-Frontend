@@ -151,6 +151,22 @@
   font-size: 10px;
 }
 
+
+
+.payment-wrapper {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 40px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.payment-half {
+  width: 48%; /* half the page, small gap for spacing */
+  text-align: left; /* optional: you can center text if needed */
+}
+
 .invoice-title {
   text-align: right;
   width: 40%;
