@@ -453,7 +453,6 @@
 
 // export default DeliveryChallan;
 
-
 import React, { useState, useEffect } from "react";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
@@ -482,31 +481,33 @@ function DeliveryChallan() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      if (res.data && res.data.data) setProductOptions(res.data.data);
+      if (res.data?.data) setProductOptions(res.data.data);
     } catch (error) {
-      console.error("Product API Error:", error);
+      console.error(error);
     }
   };
 
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/custdrop/getdropCustomers");
-      if (res.data && res.data.data) setCustomerOptions(res.data.data);
+      if (res.data?.data) setCustomerOptions(res.data.data);
     } catch (error) {
-      console.error("Customer API Error:", error);
+      console.error(error);
     }
   };
 
   const fetchDeliveryChallans = async () => {
     try {
       const res = await api.get("/delivery/getDeliveryChallans");
-      console.log("Saved Delivery Challans:", res.data);
+      if (res.data.status === 1) {
+        setProductsList(res.data.data); // ✅ LOAD FROM DB
+      }
     } catch (error) {
-      console.error("Delivery API Error:", error);
+      console.error(error);
     }
   };
 
-  /* ================= SAVE + ADD PRODUCT ================= */
+  /* ================= SAVE ================= */
   const addProduct = async () => {
     if (!challanNo || !customerName || !productName || !quantity) {
       alert("Please fill all fields");
@@ -516,9 +517,8 @@ function DeliveryChallan() {
     try {
       setLoading(true);
 
-      // ✅ SAVE DIRECTLY TO DB
       const res = await api.post("/delivery/createDeliveryChallan", {
-        delivery_challan_no: challanNo,
+        DeliveryChallanNo: challanNo, // ✅ MATCH DB
         customer_name: customerName,
         product_name: productName,
         quantity: quantity,
@@ -529,63 +529,39 @@ function DeliveryChallan() {
         throw new Error(res.data.message);
       }
 
-      // ✅ UPDATE GRID AFTER SAVE
-      const newProduct = {
-        id: productsList.length + 1,
-        challanNo,
-        customerName,
-        productName,
-        quantity,
-        created: new Date().toLocaleDateString(),
-      };
+      fetchDeliveryChallans(); // ✅ reload grid
 
-      setProductsList([...productsList, newProduct]);
-
-      // clear only product fields
       setProductName("");
       setQuantity("");
 
     } catch (error) {
-      console.error("Save Error:", error);
-      alert(error.message || "Failed to save");
+      alert(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   /* ================= PDF ================= */
-  const generatePDF = async () => {
+  const generatePDF = () => {
     if (productsList.length === 0) {
-      alert("Add products first");
+      alert("No data");
       return;
     }
 
-    try {
-      setLoading(true);
+    const doc = new jsPDF();
 
-      const doc = new jsPDF("p", "mm", "a4");
+    doc.text(`Challan No: ${productsList[0]?.DeliveryChallanNo || ""}`, 10, 10);
 
-      doc.text(`Challan No : ${productsList[0]?.challanNo || ""}`, 10, 10);
+    autoTable(doc, {
+      head: [["S.No", "Product", "Qty"]],
+      body: productsList.map((item, i) => [
+        i + 1,
+        item.product_name,
+        item.quantity
+      ])
+    });
 
-      autoTable(doc, {
-        startY: 20,
-        head: [["S.No", "Product Name", "Quantity", "Date"]],
-        body: productsList.map((item, idx) => [
-          idx + 1,
-          item.productName,
-          item.quantity,
-          item.created,
-        ]),
-      });
-
-      doc.save("Delivery_Challan.pdf");
-
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      alert("PDF Error: " + error.message);
-    } finally {
-      setLoading(false);
-    }
+    doc.save("Delivery_Challan.pdf");
   };
 
   return (
@@ -616,21 +592,11 @@ function DeliveryChallan() {
             <select
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              disabled={productsList.length > 0}
             >
-              <option value="">Select Customer</option>
-              {customerOptions.map((customer, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof customer === "string"
-                      ? customer
-                      : customer.customer_name
-                  }
-                >
-                  {typeof customer === "string"
-                    ? customer
-                    : customer.customer_name}
+              <option value="">Select</option>
+              {customerOptions.map((c, i) => (
+                <option key={i} value={c.customer_name}>
+                  {c.customer_name}
                 </option>
               ))}
             </select>
@@ -639,31 +605,22 @@ function DeliveryChallan() {
 
         <div className="sales-row">
           <div className="sales-group">
-            <label>Product Name</label>
+            <label>Product</label>
             <select
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
             >
-              <option value="">Select Product</option>
-              {productOptions.map((product, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof product === "string"
-                      ? product
-                      : product.product_name
-                  }
-                >
-                  {typeof product === "string"
-                    ? product
-                    : product.product_name}
+              <option value="">Select</option>
+              {productOptions.map((p, i) => (
+                <option key={i} value={p.product_name}>
+                  {p.product_name}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="sales-group">
-            <label>Quantity</label>
+            <label>Qty</label>
             <input
               type="number"
               value={quantity}
@@ -672,16 +629,13 @@ function DeliveryChallan() {
           </div>
         </div>
 
-        <button className="sales-add-btn" onClick={addProduct}>
+        {/* ✅ FIXED BUTTON */}
+        <button type="button" className="sales-add-btn" onClick={addProduct}>
           Add Product
         </button>
 
-        <button
-          className="sales-pdf-btn"
-          onClick={generatePDF}
-          disabled={loading}
-        >
-          {loading ? "Generating PDF..." : "Generate PDF"}
+        <button type="button" className="sales-pdf-btn" onClick={generatePDF}>
+          Generate PDF
         </button>
       </div>
 
@@ -692,25 +646,25 @@ function DeliveryChallan() {
               <th>ID</th>
               <th>Challan No</th>
               <th>Customer</th>
-              <th>Product Name</th>
-              <th>Quantity</th>
-              <th>Created</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Date</th>
             </tr>
           </thead>
           <tbody>
             {productsList.length === 0 ? (
               <tr>
-                <td colSpan="6">No Products Added</td>
+                <td colSpan="6">No Data</td>
               </tr>
             ) : (
               productsList.map((item) => (
                 <tr key={item.id}>
                   <td>{item.id}</td>
-                  <td>{item.challanNo}</td>
-                  <td>{item.customerName}</td>
-                  <td>{item.productName}</td>
+                  <td>{item.DeliveryChallanNo}</td>
+                  <td>{item.customer_name}</td>
+                  <td>{item.product_name}</td>
                   <td>{item.quantity}</td>
-                  <td>{item.created}</td>
+                  <td>{item.created_date}</td>
                 </tr>
               ))
             )}
