@@ -153,18 +153,26 @@
 
 
 
-.payment-wrapper {
+/* Make the container take full page height */
+.invoice-container {
+  min-height: 297mm; /* A4 page height */
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 40px;
-  padding: 0 20px;
+  flex-direction: column;
+  justify-content: space-between; /* pushes footer to bottom */
+  padding: 20px;
   box-sizing: border-box;
 }
 
-.payment-half {
-  width: 48%; /* half the page, small gap for spacing */
-  text-align: left; /* optional: you can center text if needed */
+/* Footer styling */
+.payment-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.payment-wrapper div {
+  width: 48%;
+  text-align: left;
 }
 
 .invoice-title {
