@@ -89,10 +89,12 @@ function DeliveryChallanTemplate({ challanData }) {
         alt="Watermark"
         className="invoice-watermark"
       />
-
+      <div className="company-header1">
+        <img src={logo} alt="Logo" className="company-logo" />
+        </div>
       {/* Header */}
       <div className="company-header">
-        <img src={logo} alt="Logo" className="company-logo" />
+        
         <div className="company-info">
          <h2>SHREE AANDAVAR TOOLING</h2>
          <p>Delivery Challan</p>
