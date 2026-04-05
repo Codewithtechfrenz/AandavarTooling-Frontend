@@ -85,7 +85,7 @@ function DeliveryChallanTemplate({ challanData }) {
       
       {/* 🔥 WATERMARK */}
       <img
-        src="/andavarwt.jpeg"
+        src="/andavarwt.png"
         alt="Watermark"
         className="invoice-watermark"
       />
@@ -97,7 +97,7 @@ function DeliveryChallanTemplate({ challanData }) {
         
         <div className="company-info">
          <h2>SHREE AANDAVAR TOOLING</h2>
-         <p>Delivery Challan</p>
+         <p><h4>Delivery Challan</h4></p>
           <p>📍 5/520 D, Kabeer Nagar MasthanPatti Madurai - 20</p>
           <p>✉ prabusangari690@gmail.com</p>
             <p>📞 9944130610</p>

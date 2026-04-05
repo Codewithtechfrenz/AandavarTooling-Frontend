@@ -90,7 +90,7 @@
   align-items: center;      /* 🔥 center horizontally */
   text-align: center;       /* 🔥 center text */
   border-bottom: 2px solid #000;
-  padding-bottom: 10px;
+  padding-bottom: 2px;
 }
 
 .company-logo {
