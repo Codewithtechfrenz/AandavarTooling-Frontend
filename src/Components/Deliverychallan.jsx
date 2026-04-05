@@ -455,23 +455,32 @@
 
 
 
-import React, { useState, useEffect } from "react";
-import api from "../api"; // your axios instance
+
+
+
+
+import React, { useState, useEffect, useRef } from "react";
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/Returndeliverychallan.css";
+
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
+import DeliveryChallanTemplate from "./DeliveryChallanTemplate";
 
 function DeliveryChallan() {
   const [challanNo, setChallanNo] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [productsList, setProductsList] = useState([]);
 
+  const [productsList, setProductsList] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
+
+  const challanRef = useRef();
 
   useEffect(() => {
     fetchProducts();
@@ -481,30 +490,28 @@ function DeliveryChallan() {
   const fetchProducts = async () => {
     try {
       const res = await api.get("/activeitems/activeitem");
-      if (res.data && res.data.data) setProductOptions(res.data.data);
-    } catch (error) {
-      console.error(error);
+      setProductOptions(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const fetchCustomers = async () => {
     try {
       const res = await api.get("/custdrop/getdropCustomers");
-      if (res.data && res.data.data) setCustomerOptions(res.data.data);
-    } catch (error) {
-      console.error(error);
+      setCustomerOptions(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // Add Product → Save Single Item to DB
   const addProduct = async () => {
     if (!challanNo || !customerName || !productName || !quantity) {
-      alert("Please fill all fields");
+      alert("Fill all fields");
       return;
     }
 
     const newItem = {
-      customerName,
       productName,
       quantity,
       created: new Date().toLocaleDateString(),
@@ -515,68 +522,47 @@ function DeliveryChallan() {
         DeliveryChallanNo: challanNo,
         customer_name: customerName,
         product_name: productName,
-        quantity: quantity,
+        quantity,
         created_date: new Date().toISOString().split("T")[0],
       });
 
-      // Add to local state for PDF table
       setProductsList([...productsList, newItem]);
-
-      // Reset product fields
       setProductName("");
       setQuantity("");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to add product");
+    } catch (err) {
+      console.error(err);
+      alert("Error saving");
     }
   };
 
-  // Generate PDF from local state
-  const generatePDF = () => {
-    if (!challanNo || productsList.length === 0) {
-      alert("Add products first and enter Challan No");
-      return;
-    }
-
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Aandavar Tooling", 14, 15);
-
-    doc.setFontSize(11);
-    doc.text("Company Address: Madurai, Tamil Nadu, India", 14, 22);
-
-    doc.setFontSize(14);
-    doc.text("Delivery Challan", 14, 35);
-
-    doc.setFontSize(11);
-    doc.text(`Challan No: ${challanNo}`, 14, 42);
-    doc.text(`Customer: ${customerName}`, 14, 48);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 42);
-
-    const tableColumn = ["ID", "Customer", "Product", "Quantity", "Created"];
-    const tableRows = productsList.map((item, index) => [
-      index + 1,
-      item.customerName,
-      item.productName,
-      item.quantity,
-      item.created,
-    ]);
-
-    autoTable(doc, {
-      startY: 55,
-      head: [tableColumn],
-      body: tableRows,
+  // 🔥 Styled PDF download
+  const handleDownload = async () => {
+    const canvas = await html2canvas(challanRef.current, {
+      scale: 2,
+      useCORS: true,
     });
 
-    doc.save(`DeliveryChallan_${challanNo}.pdf`);
+    const imgData = canvas.toDataURL("image/png");
 
-    // Clear local state for new challan
-    setChallanNo("");
-    setCustomerName("");
-    setProductsList([]);
-    setProductName("");
-    setQuantity("");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    pdf.save(`DeliveryChallan_${challanNo}.pdf`);
+  };
+
+  // 🔁 Convert state → template data
+  const challanData = {
+    orderNo: challanNo,
+    recipientName: customerName,
+    recipientAddress: "Customer Address",
+    date: new Date().toLocaleDateString(),
+    items: productsList.map((item) => ({
+      name: item.productName,
+      quantity: item.quantity,
+    })),
   };
 
   return (
@@ -584,105 +570,77 @@ function DeliveryChallan() {
       <Sidebar />
       <Topbar />
 
-      <div className="sales-header">
-        <h1>Delivery Challan</h1>
-        <p>Add multiple products for a single customer</p>
-      </div>
+      <h1>Delivery Challan</h1>
 
+      {/* FORM */}
       <div className="sales-form">
-        <div className="sales-row">
-          <div className="sales-group">
-            <label>Challan Number</label>
-            <input
-              type="text"
-              value={challanNo}
-              onChange={(e) => setChallanNo(e.target.value)}
-              placeholder="Enter Challan Number"
-              disabled={productsList.length > 0}
-            />
-          </div>
+        <input
+          type="text"
+          placeholder="Challan No"
+          value={challanNo}
+          onChange={(e) => setChallanNo(e.target.value)}
+        />
 
-          <div className="sales-group">
-            <label>Customer Name</label>
-            <select
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              disabled={productsList.length > 0}
-            >
-              <option value="">Select Customer</option>
-              {customerOptions.map((c, i) => (
-                <option key={i} value={c.customer_name || c}>
-                  {c.customer_name || c}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <select
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+        >
+          <option value="">Select Customer</option>
+          {customerOptions.map((c, i) => (
+            <option key={i} value={c.customer_name || c}>
+              {c.customer_name || c}
+            </option>
+          ))}
+        </select>
 
-        <div className="sales-row">
-          <div className="sales-group">
-            <label>Product Name</label>
-            <select
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-            >
-              <option value="">Select Product</option>
-              {productOptions.map((p, i) => (
-                <option key={i} value={p.product_name || p}>
-                  {p.product_name || p}
-                </option>
-              ))}
-            </select>
-          </div>
+        <select
+          value={productName}
+          onChange={(e) => setProductName(e.target.value)}
+        >
+          <option value="">Select Product</option>
+          {productOptions.map((p, i) => (
+            <option key={i} value={p.product_name || p}>
+              {p.product_name || p}
+            </option>
+          ))}
+        </select>
 
-          <div className="sales-group">
-            <label>Quantity</label>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Enter Quantity"
-            />
-          </div>
-        </div>
+        <input
+          type="number"
+          placeholder="Quantity"
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+        />
 
-        <button className="sales-add-btn" onClick={addProduct}>
-          Add Product
-        </button>
-        <button className="sales-pdf-btn" onClick={generatePDF}>
-          Generate PDF
-        </button>
+        <button onClick={addProduct}>Add Product</button>
+        <button onClick={handleDownload}>Download PDF</button>
       </div>
 
-      <div className="sales-table-card">
-        <table className="sales-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Customer</th>
-              <th>Product</th>
-              <th>Quantity</th>
-              <th>Created</th>
+      {/* TABLE */}
+      <table className="sales-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Product</th>
+            <th>Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          {productsList.map((item, i) => (
+            <tr key={i}>
+              <td>{i + 1}</td>
+              <td>{item.productName}</td>
+              <td>{item.quantity}</td>
             </tr>
-          </thead>
-          <tbody>
-            {productsList.length === 0 ? (
-              <tr>
-                <td colSpan="5">No Products Added</td>
-              </tr>
-            ) : (
-              productsList.map((item, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{item.customerName}</td>
-                  <td>{item.productName}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.created}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
+
+      {/* 🔥 Hidden Template for PDF */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div ref={challanRef}>
+          <DeliveryChallanTemplate challanData={challanData} />
+        </div>
       </div>
     </div>
   );
