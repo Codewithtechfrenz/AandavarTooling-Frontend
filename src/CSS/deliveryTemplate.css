@@ -153,13 +153,12 @@
 
 
 
-.payment-wrapper p {
+.payment-wrapper {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 40px;
-  padding: 0 20px;
-  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: space-between; /* pushes first div to top, second div to bottom */
+  min-height: 100vh; /* makes wrapper take full page height */
+  padding: 20px;
 }
 
 .payment-half {
