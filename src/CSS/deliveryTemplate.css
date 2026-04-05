@@ -85,27 +85,29 @@
 }
 
 .company-header {
-  display: flex;
-  flex-direction: column;   /* 🔥 stack logo + text */
-  align-items: center;      /* 🔥 center horizontally */
-  text-align: center;       /* 🔥 center text */
+  width: 100%;
+  text-align: center;     /* center text */
+  margin-top: 0;          /* stick to top */
+  padding-top: 10px;
   border-bottom: 2px solid #000;
-  padding-bottom: 2px;
-}
-
-.company-logo {
-  width: 80px;
-  margin-bottom: 8px;
 }
 
 .company-info h2 {
   margin: 5px 0;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.company-info h4 {
+  margin: 5px 0;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .company-info p {
   margin: 2px 0;
+  font-size: 14px;
 }
-
 .company-left {
   background: #aeb2b8;
   color: black;
