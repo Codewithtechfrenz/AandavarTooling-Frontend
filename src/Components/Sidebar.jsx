@@ -191,6 +191,14 @@ const Sidebar = ({ collapsed }) => {
 
 
 
+       <div
+          className={`menu-item ${isActive("/dashboard/DeliveryHistory") ? "active" : ""}`}
+          onClick={() => navigate("/dashboard/DeliveryHistory")}
+        >
+          <i className="fa fa-chart-bar"></i>
+          {!collapsed && <span>Delivery Challan History</span>}
+        </div>
+
 
 
         <div

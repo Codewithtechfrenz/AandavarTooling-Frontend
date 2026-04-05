@@ -18,6 +18,7 @@ import UOMMaster from "./Components/UOMMaster";
 import ToolMaster from "./Components/ToolMaster";
 import ToolInwardEntry from "./Components/ToolInwardEntry";
 import DeliveryChallan from "./Components/Deliverychallan";
+import DeliveryHistory from "./Components/DeliveryHistory";
 import Returndeliverychallan from "./Components/Returndeliverychallan";
 import Toolstack from "./Components/Toolstack";
 import InvoiceHistory from "./Components/InvoiceHistory";
@@ -47,6 +48,7 @@ function App() {
         <Route path="/dashboard/ToolMaster" element={<ToolMaster />} />
         <Route path="/dashboard/ToolInwardEntry" element={<ToolInwardEntry />} />
         <Route path="/dashboard/DeliveryChallan" element={<DeliveryChallan />} />
+        <Route path="/dashboard/DeliveryHistory" element={<DeliveryHistory />} />
         <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
         <Route path="/dashboard/Toolstack" element={<Toolstack />} />
         <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
