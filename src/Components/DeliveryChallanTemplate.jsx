@@ -95,9 +95,10 @@ function DeliveryChallanTemplate({ challanData }) {
         <img src={logo} alt="Logo" className="company-logo" />
         <div className="company-info">
          <h2>SHREE AANDAVAR TOOLING</h2>
-//           <div>📍 5/520 D, Kabeer Nagar MasthanPatti Madurai - 20</div>
-//           <div>✉ prabusangari690@gmail.com</div>
-//           <div>📞 9944130610</div>
+         <p>Delivery Challan</p>
+          <p>📍 5/520 D, Kabeer Nagar MasthanPatti Madurai - 20</p>
+          <p>✉ prabusangari690@gmail.com</p>
+            <p>📞 9944130610</p>
         </div>
       </div>
 
@@ -109,7 +110,7 @@ function DeliveryChallanTemplate({ challanData }) {
           <p>{challanData?.recipientAddress || "Customer Address"}</p>
         </div>
         <div>
-          <p>Order No: {challanData?.orderNo || "NA"}</p>
+          <p>Delivery challan No: {challanData?.orderNo || "NA"}</p>
           <p>Date: {challanData?.date || new Date().toLocaleDateString()}</p>
         </div>
       </div>

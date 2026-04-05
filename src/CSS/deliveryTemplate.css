@@ -86,9 +86,24 @@
 
 .company-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 6px;
+  flex-direction: column;   /* 🔥 stack logo + text */
+  align-items: center;      /* 🔥 center horizontally */
+  text-align: center;       /* 🔥 center text */
+  border-bottom: 2px solid #000;
+  padding-bottom: 10px;
+}
+
+.company-logo {
+  width: 80px;
+  margin-bottom: 8px;
+}
+
+.company-info h2 {
+  margin: 5px 0;
+}
+
+.company-info p {
+  margin: 2px 0;
 }
 
 .company-left {
