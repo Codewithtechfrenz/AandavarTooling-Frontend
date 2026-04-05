@@ -157,9 +157,13 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
-  margin-top: 100px;
+  margin-top: 40px;
   padding: 0 20px;
   box-sizing: border-box;
+}
+
+.payment-wrapper p {
+    margin-top: 40px;
 }
 
 .payment-half {
