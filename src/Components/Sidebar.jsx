@@ -196,7 +196,7 @@ const Sidebar = ({ collapsed }) => {
           onClick={() => navigate("/dashboard/DeliveryHistory")}
         >
           <i className="fa fa-chart-bar"></i>
-          {!collapsed && <span>Delivery Challan History</span>}
+          {!collapsed && <span>Challan History</span>}
         </div>
 
 
