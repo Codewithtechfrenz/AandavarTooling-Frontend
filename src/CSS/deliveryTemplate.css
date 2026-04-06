@@ -17,7 +17,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-between; /* pushes footer down */
   padding: 20px;
   box-sizing: border-box;
   background: #fff;
@@ -28,13 +28,14 @@
   flex: 1;
 }
 
-/* 🔻 FOOTER (SLIGHTLY UP) */
+/* 🔻 FOOTER */
 .payment-wrapper {
   display: flex;
   justify-content: space-between;
   margin-top: auto;
   padding-top: 30px;
-  margin-bottom: 40px; /* 🔥 THIS MOVES FOOTER UP */
+
+  margin-bottom: 60px; /* ✅ ADD THIS LINE */
 }
 
 /* WATERMARK */
@@ -72,12 +73,6 @@
   width: 80px;
 }
 
-/* PRINT FIX */
-@media print {
-  .invoice-container {
-    min-height: 100%;
-  }
-}
 
 
 
