@@ -31,7 +31,8 @@
 /* 🔻 FOOTER */
 .payment-wrapper {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 100px;
   margin-top: auto;
   padding-top: 30px;
 
