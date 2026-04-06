@@ -90,7 +90,7 @@ function DeliveryChallanTemplate({ challanData }) {
         className="invoice-watermark"
       />
 
-      {/* 🔝 TOP CONTENT */}
+      {/* 🔝 CONTENT */}
       <div className="invoice-content">
 
         <div className="header-wrapper">
@@ -117,7 +117,6 @@ function DeliveryChallanTemplate({ challanData }) {
             <h4>To:</h4>
             <p>{challanData?.recipientName || "Customer Name"}</p>
             <p>{challanData?.recipientAddress || "Customer Address"}</p>
-            <p>__________________________________</p>
             <p>__________________________________</p>
           </div>
 
@@ -158,7 +157,7 @@ function DeliveryChallanTemplate({ challanData }) {
 
       </div>
 
-      {/* 🔻 FOOTER (ALWAYS BOTTOM) */}
+      {/* 🔻 FOOTER */}
       <div className="payment-wrapper">
         <div>
           <p>Received the goods in good condition</p>
