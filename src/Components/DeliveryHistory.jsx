@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
-import DeliveryChallanTemplate from "./DeliveryChallanTemplate"; // ✅ IMPORT
+import DeliveryChallanTemplate from "./DeliveryChallanTemplate";
+import html2pdf from "html2pdf.js";
 
 import "../CSS/Deliverychallan.css";
 
@@ -10,6 +11,8 @@ function DeliveryHistory() {
   const [historyList, setHistoryList] = useState([]);
   const [selectedChallan, setSelectedChallan] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const printRef = useRef(); // ✅ REF FOR PDF
 
   useEffect(() => {
     fetchHistory();
@@ -24,7 +27,7 @@ function DeliveryHistory() {
     }
   };
 
-  // ✅ UPDATED VIEW FUNCTION
+  // ✅ VIEW FUNCTION
   const viewChallan = async (challanNo) => {
     try {
       const res = await api.get(`/delivery/getChallanByNumber/${challanNo}`);
@@ -32,7 +35,6 @@ function DeliveryHistory() {
       if (res.data.status) {
         const data = res.data.data;
 
-        // 🔥 FORMAT DATA FOR TEMPLATE
         const formattedData = {
           recipientName: data[0]?.customer_name,
           recipientAddress: data[0]?.address || "",
@@ -49,6 +51,21 @@ function DeliveryHistory() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  // ✅ DOWNLOAD PDF FUNCTION
+  const downloadPDF = () => {
+    const element = printRef.current;
+
+    const opt = {
+      margin: 0.5,
+      filename: `Challan_${selectedChallan.orderNo}.pdf`,
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf().set(opt).from(element).save();
   };
 
   // ✅ SEARCH FILTER
@@ -127,19 +144,29 @@ function DeliveryHistory() {
         </table>
       </div>
 
-      {/* ✅ TEMPLATE VIEW (SAME UI PAGE BELOW TABLE) */}
+      {/* ✅ TEMPLATE PREVIEW */}
       {selectedChallan && (
         <div className="sales-table-card">
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
             <h2>Challan Preview</h2>
 
-            {/* ✅ CLOSE BUTTON */}
-            <button onClick={() => setSelectedChallan(null)}>
-              Close
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              {/* ✅ DOWNLOAD BUTTON */}
+              <button onClick={downloadPDF}>
+                Download PDF
+              </button>
+
+              {/* ✅ CLOSE BUTTON */}
+              <button onClick={() => setSelectedChallan(null)}>
+                Close
+              </button>
+            </div>
           </div>
 
-          <DeliveryChallanTemplate challanData={selectedChallan} />
+          {/* ✅ REF FOR PDF */}
+          <div ref={printRef}>
+            <DeliveryChallanTemplate challanData={selectedChallan} />
+          </div>
         </div>
       )}
     </div>
@@ -147,7 +174,6 @@ function DeliveryHistory() {
 }
 
 export default DeliveryHistory;
-
 
 // import React, { useEffect, useState } from "react";
 // import api from "../api";
