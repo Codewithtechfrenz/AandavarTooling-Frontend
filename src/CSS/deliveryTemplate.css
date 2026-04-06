@@ -75,6 +75,12 @@
 }
 
 
+@media print {
+  .invoice-container {
+    padding-left: 10px;   /* ✅ reduce left space */
+    padding-right: 30px;  /* optional balance */
+  }
+}
 
 
 
@@ -84,8 +90,10 @@
 
 
 
-
-
+.invoice-container {
+  padding-left: 10px; /* reduce from 20px */
+  padding-right: 30px;
+}
 
 
 
