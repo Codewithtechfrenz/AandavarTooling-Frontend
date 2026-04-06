@@ -48,18 +48,13 @@ const Sidebar = ({ collapsed }) => {
         </div>
 
 
-  <div
+         <div
           className={`menu-item ${isActive("/dashboard/ToolMaster") ? "active" : ""}`}
           onClick={() => navigate("/dashboard/ToolMaster")}
         >
           <i className="fa fa-box"></i>
-          {!collapsed && <span>TooL Master</span>}
+          {!collapsed && <span>Tool Master</span>}
         </div>
-
-
-
-
-
 
 
 
