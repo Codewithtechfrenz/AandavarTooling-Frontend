@@ -1,138 +1,119 @@
-import React, { useState, useEffect } from "react";
-import api from "../api"; // ✅ changed
+import React, { useState, useEffect, useRef } from "react";
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/Returndeliverychallan.css";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
-function Returndeliverychallan() {
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+
+import ReturnDeliveryChallanTemplate from "./ReturnDeliveryChallanTemplate";
+
+function DeliveryChallan() {
+  const [challanNo, setChallanNo] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [productsList, setProductsList] = useState([]);
 
+  const [productsList, setProductsList] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
+
+  const challanRef = useRef();
 
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
   }, []);
 
-  // Fetch Products
   const fetchProducts = async () => {
     try {
-      const response = await api.get("/activeitems/activeitem"); // ✅ changed
-      if (response.data && response.data.data) {
-        setProductOptions(response.data.data);
-      }
+      const res = await api.get("/activeitems/activeitem");
+      setProductOptions(res.data?.data || []);
     } catch (error) {
-      console.error("Product API Error:", error);
+      console.error(error);
     }
   };
 
-  // Fetch Customers
   const fetchCustomers = async () => {
     try {
-      const response = await api.get("/custdrop/getdropCustomers"); // ✅ changed
-      if (response.data && response.data.data) {
-        setCustomerOptions(response.data.data);
-      }
+      const res = await api.get("/custdrop/getdropCustomers");
+      setCustomerOptions(res.data?.data || []);
     } catch (error) {
-      console.error("Customer API Error:", error);
+      console.error(error);
     }
   };
 
-  // Add Product to Grid
-  const addProduct = () => {
-    if (!customerName || !productName || !quantity) {
+  // ✅ Add product (same)
+  const addProduct = async () => {
+    if (!challanNo || !customerName || !productName || !quantity) {
       alert("Please fill all fields");
       return;
     }
 
-    const newProduct = {
-      id: productsList.length + 1,
+    const newItem = {
       customerName,
       productName,
       quantity,
       created: new Date().toLocaleDateString(),
     };
 
-    setProductsList([...productsList, newProduct]);
-
-    setProductName("");
-    setQuantity("");
-  };
-
-  // Save to Backend DB
-  const saveReturnDelivery = async () => {
     try {
-      for (const item of productsList) {
-        await api.post("/returndelivery/createReturnDeliveryChallan", { // ✅ changed
-          customer_name: item.customerName,
-          challan_date: new Date().toISOString().split("T")[0],
-        });
-      }
-      return true;
+      await api.post("/delivery/createDeliveryChallanItem", {
+        DeliveryChallanNo: challanNo,
+        customer_name: customerName,
+        product_name: productName,
+        quantity,
+        created_date: new Date().toISOString().split("T")[0],
+      });
+
+      setProductsList([...productsList, newItem]);
+      setProductName("");
+      setQuantity("");
     } catch (error) {
-      console.error("Save Error:", error);
-      return false;
+      console.error(error);
+      alert("Failed to add product");
     }
   };
 
-  // Generate PDF + Save DB + Clear Grid
+  // 🔥 NEW PDF (Template based, UI unchanged)
   const generatePDF = async () => {
-    if (productsList.length === 0) {
+    if (!challanNo || productsList.length === 0) {
       alert("Add products first");
       return;
     }
 
-    const saved = await saveReturnDelivery();
+    try {
+      const canvas = await html2canvas(challanRef.current, {
+        scale: 2,
+        useCORS: true,
+      });
 
-    if (!saved) {
-      alert("Failed to save data");
-      return;
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`DeliveryChallan_${challanNo}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("PDF failed");
     }
+  };
 
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Aandavar Tooling", 14, 15);
-
-    doc.setFontSize(11);
-    doc.text("Company Address: Madurai, Tamil Nadu, India", 14, 22);
-
-    doc.setFontSize(14);
-    doc.text("Return Delivery Challan", 14, 35);
-
-    doc.setFontSize(11);
-    doc.text(`Customer: ${customerName}`, 14, 42);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 42);
-
-    const tableColumn = ["ID", "Customer", "Product", "Quantity", "Created"];
-
-    const tableRows = productsList.map((item) => [
-      item.id,
-      item.customerName,
-      item.productName,
-      item.quantity,
-      item.created,
-    ]);
-
-    autoTable(doc, {
-      startY: 50,
-      head: [tableColumn],
-      body: tableRows,
-    });
-
-    doc.save("Return_Delivery_Challan.pdf");
-
-    // Clear Grid
-    setProductsList([]);
-    setCustomerName("");
-    setProductName("");
-    setQuantity("");
+  // 🔁 Data for template
+  const challanData = {
+    orderNo: challanNo,
+    recipientName: customerName,
+    recipientAddress: "Customer Address",
+    date: new Date().toLocaleDateString(),
+    items: productsList.map((item) => ({
+      name: item.productName,
+      quantity: item.quantity,
+    })),
   };
 
   return (
@@ -140,6 +121,7 @@ function Returndeliverychallan() {
       <Sidebar />
       <Topbar />
 
+      {/* ✅ SAME OLD UI */}
       <div className="sales-header">
         <h1>Return Delivery Challan</h1>
         <p>Add multiple products for a single customer</p>
@@ -148,6 +130,17 @@ function Returndeliverychallan() {
       <div className="sales-form">
         <div className="sales-row">
           <div className="sales-group">
+            <label>Challan Number</label>
+            <input
+              type="text"
+              value={challanNo}
+              onChange={(e) => setChallanNo(e.target.value)}
+              placeholder="Enter Challan Number"
+              disabled={productsList.length > 0}
+            />
+          </div>
+
+          <div className="sales-group">
             <label>Customer Name</label>
             <select
               value={customerName}
@@ -155,19 +148,9 @@ function Returndeliverychallan() {
               disabled={productsList.length > 0}
             >
               <option value="">Select Customer</option>
-
-              {customerOptions.map((customer, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof customer === "string"
-                      ? customer
-                      : customer.customer_name
-                  }
-                >
-                  {typeof customer === "string"
-                    ? customer
-                    : customer.customer_name}
+              {customerOptions.map((c, i) => (
+                <option key={i} value={c.customer_name || c}>
+                  {c.customer_name || c}
                 </option>
               ))}
             </select>
@@ -182,19 +165,9 @@ function Returndeliverychallan() {
               onChange={(e) => setProductName(e.target.value)}
             >
               <option value="">Select Product</option>
-
-              {productOptions.map((product, index) => (
-                <option
-                  key={index}
-                  value={
-                    typeof product === "string"
-                      ? product
-                      : product.product_name
-                  }
-                >
-                  {typeof product === "string"
-                    ? product
-                    : product.product_name}
+              {productOptions.map((p, i) => (
+                <option key={i} value={p.product_name || p}>
+                  {p.product_name || p}
                 </option>
               ))}
             </select>
@@ -215,6 +188,7 @@ function Returndeliverychallan() {
           Add Product
         </button>
 
+        {/* 🔥 SAME BUTTON UI but new logic */}
         <button className="sales-pdf-btn" onClick={generatePDF}>
           Generate PDF
         </button>
@@ -226,21 +200,20 @@ function Returndeliverychallan() {
             <tr>
               <th>ID</th>
               <th>Customer</th>
-              <th>Product Name</th>
+              <th>Product</th>
               <th>Quantity</th>
               <th>Created</th>
             </tr>
           </thead>
-
           <tbody>
             {productsList.length === 0 ? (
               <tr>
                 <td colSpan="5">No Products Added</td>
               </tr>
             ) : (
-              productsList.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
+              productsList.map((item, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
                   <td>{item.customerName}</td>
                   <td>{item.productName}</td>
                   <td>{item.quantity}</td>
@@ -251,8 +224,15 @@ function Returndeliverychallan() {
           </tbody>
         </table>
       </div>
+
+      {/* 🔥 Hidden Template (ONLY for PDF) */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div ref={challanRef}>
+          <ReturnDeliveryChallanTemplate challanData={challanData} />
+        </div>
+      </div>
     </div>
   );
 }
 
-export default Returndeliverychallan;
+export default DeliveryChallan;
