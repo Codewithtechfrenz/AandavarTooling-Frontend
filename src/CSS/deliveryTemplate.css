@@ -2,6 +2,90 @@
 /* A4 PAGE SIZE */
 /* ============================= */
 
+
+
+
+
+
+
+
+
+
+/* 🔥 MAIN CONTAINER */
+.invoice-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* pushes footer down */
+  padding: 20px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* 🔝 CONTENT AREA */
+.invoice-content {
+  flex: 1;
+}
+
+/* 🔻 FOOTER */
+.payment-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 30px;
+}
+
+/* WATERMARK */
+.invoice-watermark {
+  position: absolute;
+  top: 30%;
+  left: 30%;
+  width: 300px;
+  opacity: 0.08;
+  z-index: 0;
+}
+
+/* TABLE */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: center;
+}
+
+/* HEADER */
+.company-header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.company-logo {
+  width: 80px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .invoice-container {
   width: 210mm;
   min-height: 297mm;
