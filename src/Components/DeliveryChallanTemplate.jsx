@@ -115,6 +115,9 @@ function DeliveryChallanTemplate({ challanData }) {
           <h4>To:</h4>
           <p>{challanData?.recipientName || "Customer Name"}</p>
           <p>{challanData?.recipientAddress || "Customer Address"}</p>
+          <p>__________________________________</p>
+          <p>__________________________________</p>
+          <p>__________________________________</p>
         </div>
         <div>
           <p>Delivery challan No: {challanData?.orderNo || "NA"}</p>
