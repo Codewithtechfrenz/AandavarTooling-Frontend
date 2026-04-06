@@ -12,7 +12,7 @@ function DeliveryHistory() {
   const [selectedChallan, setSelectedChallan] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const printRef = useRef(); // ✅ REF FOR PDF
+  const printRef = useRef();
 
   useEffect(() => {
     fetchHistory();
@@ -53,19 +53,49 @@ function DeliveryHistory() {
     }
   };
 
-  // ✅ DOWNLOAD PDF FUNCTION
+  // ✅ DOWNLOAD PDF (FIXED)
   const downloadPDF = () => {
-    const element = printRef.current;
+    if (!printRef.current) {
+      alert("Nothing to download");
+      return;
+    }
 
     const opt = {
-      margin: 0.5,
-      filename: `Challan_${selectedChallan.orderNo}.pdf`,
-      image: { type: "jpeg", quality: 1 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      margin: 10,
+      filename: `Challan_${selectedChallan?.orderNo || "file"}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait",
+      },
     };
 
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(printRef.current).save();
+  };
+
+  // ✅ PRINT OPTION (RECOMMENDED BACKUP)
+  const handlePrint = () => {
+    const content = printRef.current.innerHTML;
+    const newWindow = window.open("", "", "width=900,height=700");
+
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Challan</title>
+        </head>
+        <body>
+          ${content}
+        </body>
+      </html>
+    `);
+
+    newWindow.document.close();
+    newWindow.print();
   };
 
   // ✅ SEARCH FILTER
@@ -151,19 +181,12 @@ function DeliveryHistory() {
             <h2>Challan Preview</h2>
 
             <div style={{ display: "flex", gap: "10px" }}>
-              {/* ✅ DOWNLOAD BUTTON */}
-              <button onClick={downloadPDF}>
-                Download PDF
-              </button>
-
-              {/* ✅ CLOSE BUTTON */}
-              <button onClick={() => setSelectedChallan(null)}>
-                Close
-              </button>
+              <button onClick={downloadPDF}>Download PDF</button>
+              <button onClick={handlePrint}>Print</button>
+              <button onClick={() => setSelectedChallan(null)}>Close</button>
             </div>
           </div>
 
-          {/* ✅ REF FOR PDF */}
           <div ref={printRef}>
             <DeliveryChallanTemplate challanData={selectedChallan} />
           </div>
