@@ -97,7 +97,7 @@ function DeliveryChallan() {
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`DeliveryChallan_${challanNo}.pdf`);
+      pdf.save(`ReturnDeliveryChallan_${challanNo}.pdf`);
     } catch (err) {
       console.error(err);
       alert("PDF failed");
