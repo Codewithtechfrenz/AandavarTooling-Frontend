@@ -355,7 +355,7 @@ import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/LineOut.css";
 
-function LineOutPage() {
+function WorkOrder() {
   const [form, setForm] = useState({
     work_order_no: "",
     tool_name: "",
@@ -617,4 +617,4 @@ function LineOutPage() {
   );
 }
 
-export default LineOutPage;
+export default WorkOrder;
