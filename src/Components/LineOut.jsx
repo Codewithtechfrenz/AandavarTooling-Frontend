@@ -376,10 +376,10 @@ function WorkOrder() {
   // ================= FETCH DROPDOWN DATA =================
   const fetchDropdowns = async () => {
     try {
-      const toolsRes = await api.get("/activetools/activetool");
+      const toolsRes = await api.get("/workorder/activetool");
       const workersRes = await api.get("/activeworkers/getWorkers");
-      const machinesRes = await api.get("/activemachines/activemachine");
-      const categoriesRes = await api.get("/activecategories/activeCategorie");
+      const machinesRes = await api.get("/workorder/activemachine");
+      const categoriesRes = await api.get("/workorder/activeCategorie");
 
       // ✅ SET EXACT DATA
       setTools(toolsRes.data.data);
