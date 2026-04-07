@@ -1,238 +1,128 @@
-/* ==================== GENERAL PAGE LAYOUT ==================== */
-.lo-page, .wo-page {
-  padding: 90px 40px 40px 260px; /* sidebar accounted for */
-  font-family: "Segoe UI", Arial, sans-serif;
-  background-color: #f4f6f8;
+/* ===== PAGE LAYOUT ===== */
+.cs-page {
+  padding: 20px;
+  margin-left: 220px; /* adjust if sidebar width differs */
+  background: #f4f6f9;
   min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* ==================== HEADER ==================== */
-.lo-header, .wo-header {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 25px;
-}
-
-.lo-header h1, .wo-header h1 {
-  font-size: 28px;
-  color: #222;
-  margin-bottom: 5px;
-}
-
-.lo-header p, .wo-header p {
-  font-size: 14px;
-  color: #555;
-}
-
-/* ==================== FORM CARD ==================== */
-.lo-form, .wo-form {
-  background: #fff;
-  padding: 20px 25px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-bottom: 25px;
-}
-
-/* ==================== FORM ROW ==================== */
-.lo-row, .wo-row {
-  display: flex;
-  gap: 20px;
+/* ===== HEADER ===== */
+.cs-header {
   margin-bottom: 20px;
-  flex-wrap: wrap;
 }
 
-.lo-group, .wo-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.lo-group label, .wo-group label {
-  font-size: 13px;
-  color: #555;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.lo-group input, .wo-group input,
-.lo-group select, .wo-group select {
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #dcdcdc;
-  font-size: 14px;
-  background: #fff;
-  transition: all 0.2s ease;
-}
-
-.lo-group input:focus, .wo-group input:focus,
-.lo-group select:focus, .wo-group select:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79,70,229,0.1);
-}
-
-/* ==================== BUTTON ==================== */
-.lo-btn, .wo-btn {
-  margin-top: 10px;
-  background: #4f46e5;
-  color: #fff;
-  border: none;
-  padding: 10px 22px;
-  border-radius: 6px;
-  font-size: 14px;
+.cs-header h1 {
+  font-size: 26px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: #333;
 }
 
-.lo-btn:hover, .wo-btn:hover {
-  background: #4338ca;
+/* ===== CARD ===== */
+.cs-table-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* ==================== SEARCH BAR ==================== */
-.lo-search, .wo-search {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid #e2e2e2;
-  padding: 8px 12px;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
-}
-
-.lo-search input, .wo-search input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: 14px;
-  background: transparent;
-}
-
-/* ==================== EXPORT BUTTONS ==================== */
-.lo-export-buttons, .wo-export-buttons {
-  display: flex;
-  justify-content: flex-end;
+.cs-table-card h3 {
   margin-bottom: 15px;
+  color: #444;
 }
 
-.lo-export-buttons button, .wo-export-buttons button {
-  padding: 8px 15px;
+/* ===== FORM ===== */
+.cs-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.cs-form input,
+.cs-form select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.cs-form input:focus,
+.cs-form select:focus {
+  border-color: #007bff;
+}
+
+/* ===== BUTTON ===== */
+.cs-form button {
+  grid-column: span 2;
+  padding: 10px;
+  background: #007bff;
+  color: white;
   border: none;
-  border-radius: 4px;
-  margin-left: 10px;
+  border-radius: 6px;
   cursor: pointer;
-  background-color: #2196F3;
-  color: #fff;
-  font-weight: 600;
+  font-size: 15px;
+  transition: 0.3s;
 }
 
-.lo-export-buttons button:hover, .wo-export-buttons button:hover {
-  background-color: #1976D2;
+.cs-form button:hover {
+  background: #0056b3;
 }
 
-/* ==================== TABLE CARD ==================== */
-.lo-table-card, .wo-table-card, .cs-table-card {
-  background: #fff;
-  border-radius: 10px;
-  overflow-x: auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  padding: 15px;
-}
-
-/* ==================== TABLE ==================== */
-.lo-table, .wo-table, .cs-table {
+/* ===== TABLE ===== */
+.cs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  margin-top: 10px;
 }
 
-.lo-table th, .wo-table th, .cs-table th,
-.lo-table td, .wo-table td, .cs-table td {
-  border: 1px solid #ddd;
+.cs-table thead {
+  background: #007bff;
+  color: white;
+}
+
+.cs-table th,
+.cs-table td {
   padding: 10px;
-  text-align: left;
-}
-
-.lo-table th, .wo-table th, .cs-table th {
-  background: #f0f0f0;
-  font-weight: 600;
-}
-
-.lo-table tr:nth-child(even), .wo-table tr:nth-child(even), .cs-table tr:nth-child(even) {
-  background: #fafafa;
-}
-
-.lo-table tr:hover, .wo-table tr:hover, .cs-table tr:hover {
-  background: #f1f7f9;
-}
-
-/* ==================== ACTION BUTTONS ==================== */
-.lo-edit-btn, .wo-edit-btn {
-  background: #4caf50;
-  border: none;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 6px;
-  transition: 0.2s;
-}
-
-.lo-edit-btn:hover, .wo-edit-btn:hover {
-  background: #43a047;
-}
-
-.lo-delete-btn, .cs-delete-btn {
-  background: #f44336;
-  border: none;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.lo-delete-btn:hover, .cs-delete-btn:hover {
-  background: #e53935;
-}
-
-/* ==================== EMPTY MESSAGE ==================== */
-.lo-empty, .wo-empty, .cs-empty {
   text-align: center;
-  padding: 25px;
-  color: #888;
+  border: 1px solid #ddd;
   font-size: 14px;
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1100px){
-  .lo-page, .wo-page {
-    padding-left: 200px;
-  }
+.cs-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
 }
 
-@media (max-width: 768px){
-  .lo-page, .wo-page {
-    padding: 90px 20px;
+.cs-table tbody tr:hover {
+  background: #f1f7ff;
+}
+
+/* ===== STATUS BUTTON ===== */
+.cs-table button {
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .cs-page {
+    margin-left: 0;
+    padding: 10px;
   }
 
-  .lo-row, .wo-row {
-    flex-direction: column;
+  .cs-form {
+    grid-template-columns: 1fr;
   }
 
-  .lo-table, .wo-table, .cs-table {
-    font-size: 13px;
+  .cs-form button {
+    grid-column: span 1;
   }
 
-  .lo-table th, .wo-table th, .cs-table th,
-  .lo-table td, .wo-table td, .cs-table td {
-    padding: 8px 6px;
-  }
-
-  .lo-search, .wo-search {
-    width: 100%;
+  .cs-table th,
+  .cs-table td {
+    font-size: 12px;
+    padding: 8px;
   }
 }
