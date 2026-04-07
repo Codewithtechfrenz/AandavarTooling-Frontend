@@ -445,15 +445,26 @@ function WorkOrder() {
     }
   };
 
-  // ================= GRID API =================
+  // ================= GRID API (FIXED) =================
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout/list");
-      if (res.data.status) {
+      // 🔥 FIXED ROUTE (remove /list)
+      const res = await api.get("/lineout");
+
+      console.log("GRID DATA:", res.data);
+
+      if (res.data?.status) {
         setList(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setList(res.data);
+      } else {
+        setList([]);
       }
     } catch (err) {
-      console.error("Grid Fetch Error:", err);
+      console.error(
+        "Grid Fetch Error:",
+        err.response?.data || err.message
+      );
     }
   };
 
@@ -478,7 +489,7 @@ function WorkOrder() {
     fetchData();
   }, []);
 
-  // ================= HANDLE FORM CHANGE =================
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -656,11 +667,15 @@ function WorkOrder() {
                   <td>{item.worker_name}</td>
                   <td>
                     <button
-                      onClick={() => handleComplete(item.work_order_no)}
+                      onClick={() =>
+                        handleComplete(item.work_order_no)
+                      }
                       disabled={item.status === "Completed"}
                       style={{
                         background:
-                          item.status === "Pending" ? "orange" : "green",
+                          item.status === "Pending"
+                            ? "orange"
+                            : "green",
                         color: "#fff",
                         border: "none",
                         padding: "5px 10px",
