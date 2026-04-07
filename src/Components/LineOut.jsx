@@ -350,7 +350,7 @@
 
 
 import React, { useState, useEffect } from "react";
-import api from "../api"; // ✅ IMPORT API INSTANCE
+import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/LineOut.css";
@@ -376,20 +376,19 @@ function WorkOrder() {
   // ================= FETCH DROPDOWN DATA =================
   const fetchDropdowns = async () => {
     try {
-      const [toolsRes, workersRes, machinesRes, categoriesRes] =
-        await Promise.all([
-          api.get("/activetools/activetool"),
-          api.get("/activeworkers/getWorkers"),
-          api.get("/activemachines/activemachine"),
-          api.get("/activecategories/activeCategorie"),
-        ]);
+      const toolsRes = await api.get("/activetools/activetool");
+      const workersRes = await api.get("/activeworkers/getWorkers");
+      const machinesRes = await api.get("/activemachines/activemachine");
+      const categoriesRes = await api.get("/activecategories/activeCategorie");
 
-      if (toolsRes.data?.data) setTools(toolsRes.data.data);
-      if (workersRes.data?.data) setWorkers(workersRes.data.data);
-      if (machinesRes.data?.data) setMachines(machinesRes.data.data);
-      if (categoriesRes.data?.data) setCategories(categoriesRes.data.data);
+      // ✅ SET EXACT DATA
+      setTools(toolsRes.data.data);
+      setWorkers(workersRes.data.data);
+      setMachines(machinesRes.data.data);
+      setCategories(categoriesRes.data.data);
+
     } catch (err) {
-      console.error("Failed to fetch dropdowns:", err);
+      console.error("Dropdown Fetch Error:", err);
     }
   };
 
@@ -402,9 +401,11 @@ function WorkOrder() {
   const fetchData = async () => {
     try {
       const res = await api.get("/lineout/list");
-      if (res.data.status) setList(res.data.data);
+      if (res.data.status) {
+        setList(res.data.data);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Grid Fetch Error:", err);
     }
   };
 
@@ -414,9 +415,11 @@ function WorkOrder() {
 
     let updatedForm = { ...form, [name]: value };
 
-    // Auto-set category if tool is selected
+    // ✅ Auto-set category from selected tool
     if (name === "tool_name") {
-      const selectedTool = tools.find((t) => t.ToolName === value);
+      const selectedTool = tools.find(
+        (t) => t.ToolName === value
+      );
       updatedForm.category_name = selectedTool?.CategoryName || "";
     }
 
@@ -432,6 +435,7 @@ function WorkOrder() {
 
       if (res.data.status) {
         alert("Saved Successfully");
+
         setForm({
           work_order_no: "",
           tool_name: "",
@@ -440,10 +444,11 @@ function WorkOrder() {
           machine_name: "",
           worker_name: "",
         });
+
         fetchData();
       }
     } catch (err) {
-      console.error(err);
+      console.error("Submit Error:", err);
     }
   };
 
@@ -459,7 +464,7 @@ function WorkOrder() {
         fetchData();
       }
     } catch (err) {
-      console.error(err);
+      console.error("Complete Error:", err);
     }
   };
 
@@ -509,8 +514,8 @@ function WorkOrder() {
           >
             <option value="">Select Category</option>
             {categories.map((c, i) => (
-              <option key={i} value={c}>
-                {c}
+              <option key={i} value={c.CategoryName}>
+                {c.CategoryName}
               </option>
             ))}
           </select>
@@ -534,8 +539,8 @@ function WorkOrder() {
           >
             <option value="">Select Machine</option>
             {machines.map((m, i) => (
-              <option key={i} value={m}>
-                {m}
+              <option key={i} value={m.MachineName}>
+                {m.MachineName}
               </option>
             ))}
           </select>
@@ -548,8 +553,8 @@ function WorkOrder() {
           >
             <option value="">Select Worker</option>
             {workers.map((w, i) => (
-              <option key={i} value={w}>
-                {w}
+              <option key={i} value={w.WorkerName}>
+                {w.WorkerName}
               </option>
             ))}
           </select>
