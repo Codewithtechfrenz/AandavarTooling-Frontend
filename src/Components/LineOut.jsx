@@ -353,7 +353,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
-import "../CSS/CurrentStock.css";
+import "../CSS/LineOut.css";
 
 function LineOutPage() {
   const [form, setForm] = useState({
