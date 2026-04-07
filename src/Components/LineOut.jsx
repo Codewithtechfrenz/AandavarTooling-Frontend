@@ -373,64 +373,79 @@ function WorkOrder() {
   const [machines, setMachines] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // ================= FETCH DROPDOWN DATA =================
-  const fetchDropdowns = async () => {
+  // ================= TOOLS API =================
+  const fetchTools = async () => {
     try {
-      const toolsRes = await api.get("/workorder/activetool");
-      const workersRes = await api.get("/activeworkers/getWorkers");
-      const machinesRes = await api.get("/workorder/activemachine");
-      const categoriesRes = await api.get("/workorder/activeCategorie");
+      const res = await api.get("/workorder/activetool");
+      console.log("TOOLS:", res.data);
 
-      // 🔍 DEBUG (IMPORTANT)
-      console.log("TOOLS:", toolsRes.data);
-      console.log("WORKERS:", workersRes.data);
-      console.log("MACHINES:", machinesRes.data);
-      console.log("CATEGORIES:", categoriesRes.data);
-
-      // ✅ SAFE SET DATA (NO UI CHANGE)
-      setTools(
-        Array.isArray(toolsRes.data?.data)
-          ? toolsRes.data.data
-          : Array.isArray(toolsRes.data)
-          ? toolsRes.data
-          : []
-      );
-
-      setWorkers(
-        Array.isArray(workersRes.data?.data)
-          ? workersRes.data.data
-          : Array.isArray(workersRes.data)
-          ? workersRes.data
-          : []
-      );
-
-      setMachines(
-        Array.isArray(machinesRes.data?.data)
-          ? machinesRes.data.data
-          : Array.isArray(machinesRes.data)
-          ? machinesRes.data
-          : []
-      );
-
-      setCategories(
-        Array.isArray(categoriesRes.data?.data)
-          ? categoriesRes.data.data
-          : Array.isArray(categoriesRes.data)
-          ? categoriesRes.data
-          : []
-      );
-
+      if (Array.isArray(res.data.data)) {
+        setTools(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setTools(res.data);
+      } else {
+        setTools([]);
+      }
     } catch (err) {
-      console.error("Dropdown Fetch Error:", err);
+      console.error("Tools API Error:", err);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-    fetchDropdowns();
-  }, []);
+  // ================= WORKERS API =================
+  const fetchWorkers = async () => {
+    try {
+      const res = await api.get("/activeworkers/getWorkers");
+      console.log("WORKERS:", res.data);
 
-  // ================= FETCH GRID DATA =================
+      if (Array.isArray(res.data.data)) {
+        setWorkers(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setWorkers(res.data);
+      } else {
+        setWorkers([]);
+      }
+    } catch (err) {
+      console.error("Workers API Error:", err);
+    }
+  };
+
+  // ================= MACHINES API =================
+  const fetchMachines = async () => {
+    try {
+      const res = await api.get("/workorder/activemachine");
+      console.log("MACHINES:", res.data);
+
+      if (Array.isArray(res.data.data)) {
+        setMachines(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setMachines(res.data);
+      } else {
+        setMachines([]);
+      }
+    } catch (err) {
+      console.error("Machines API Error:", err);
+    }
+  };
+
+  // ================= CATEGORIES API =================
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/workorder/activeCategorie");
+      console.log("CATEGORIES:", res.data);
+
+      if (Array.isArray(res.data.data)) {
+        setCategories(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setCategories(res.data);
+      } else {
+        setCategories([]);
+      }
+    } catch (err) {
+      console.error("Categories API Error:", err);
+    }
+  };
+
+  // ================= GRID API =================
   const fetchData = async () => {
     try {
       const res = await api.get("/lineout/list");
@@ -441,6 +456,27 @@ function WorkOrder() {
       console.error("Grid Fetch Error:", err);
     }
   };
+
+  // ================= USE EFFECTS =================
+  useEffect(() => {
+    fetchTools();
+  }, []);
+
+  useEffect(() => {
+    fetchWorkers();
+  }, []);
+
+  useEffect(() => {
+    fetchMachines();
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // ================= HANDLE FORM CHANGE =================
   const handleChange = (e) => {
@@ -458,7 +494,7 @@ function WorkOrder() {
     setForm(updatedForm);
   };
 
-  // ================= SUBMIT FORM =================
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -484,7 +520,7 @@ function WorkOrder() {
     }
   };
 
-  // ================= COMPLETE STATUS =================
+  // ================= COMPLETE =================
   const handleComplete = async (wo) => {
     if (!window.confirm("Mark as Completed?")) return;
 
@@ -521,7 +557,6 @@ function WorkOrder() {
             required
           />
 
-          {/* TOOL DROPDOWN */}
           <select
             name="tool_name"
             value={form.tool_name}
@@ -536,7 +571,6 @@ function WorkOrder() {
             ))}
           </select>
 
-          {/* CATEGORY */}
           <select
             name="category_name"
             value={form.category_name}
@@ -560,7 +594,6 @@ function WorkOrder() {
             required
           />
 
-          {/* MACHINE */}
           <select
             name="machine_name"
             value={form.machine_name}
@@ -574,7 +607,6 @@ function WorkOrder() {
             ))}
           </select>
 
-          {/* WORKER */}
           <select
             name="worker_name"
             value={form.worker_name}
@@ -592,7 +624,6 @@ function WorkOrder() {
         </form>
       </div>
 
-      {/* GRID */}
       <div className="cs-table-card">
         <h3>Work Order List</h3>
 
