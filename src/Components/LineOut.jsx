@@ -381,11 +381,44 @@ function WorkOrder() {
       const machinesRes = await api.get("/workorder/activemachine");
       const categoriesRes = await api.get("/workorder/activeCategorie");
 
-      // ✅ SET EXACT DATA
-      setTools(toolsRes.data.data);
-      setWorkers(workersRes.data.data);
-      setMachines(machinesRes.data.data);
-      setCategories(categoriesRes.data.data);
+      // 🔍 DEBUG (IMPORTANT)
+      console.log("TOOLS:", toolsRes.data);
+      console.log("WORKERS:", workersRes.data);
+      console.log("MACHINES:", machinesRes.data);
+      console.log("CATEGORIES:", categoriesRes.data);
+
+      // ✅ SAFE SET DATA (NO UI CHANGE)
+      setTools(
+        Array.isArray(toolsRes.data?.data)
+          ? toolsRes.data.data
+          : Array.isArray(toolsRes.data)
+          ? toolsRes.data
+          : []
+      );
+
+      setWorkers(
+        Array.isArray(workersRes.data?.data)
+          ? workersRes.data.data
+          : Array.isArray(workersRes.data)
+          ? workersRes.data
+          : []
+      );
+
+      setMachines(
+        Array.isArray(machinesRes.data?.data)
+          ? machinesRes.data.data
+          : Array.isArray(machinesRes.data)
+          ? machinesRes.data
+          : []
+      );
+
+      setCategories(
+        Array.isArray(categoriesRes.data?.data)
+          ? categoriesRes.data.data
+          : Array.isArray(categoriesRes.data)
+          ? categoriesRes.data
+          : []
+      );
 
     } catch (err) {
       console.error("Dropdown Fetch Error:", err);
@@ -415,7 +448,6 @@ function WorkOrder() {
 
     let updatedForm = { ...form, [name]: value };
 
-    // ✅ Auto-set category from selected tool
     if (name === "tool_name") {
       const selectedTool = tools.find(
         (t) => t.ToolName === value
@@ -473,12 +505,10 @@ function WorkOrder() {
       <Sidebar />
       <Topbar />
 
-      {/* HEADER */}
       <div className="cs-header">
         <h1>Line Out Entry</h1>
       </div>
 
-      {/* FORM */}
       <div className="cs-table-card">
         <h3>Create Work Order</h3>
 
@@ -506,7 +536,7 @@ function WorkOrder() {
             ))}
           </select>
 
-          {/* CATEGORY DROPDOWN */}
+          {/* CATEGORY */}
           <select
             name="category_name"
             value={form.category_name}
@@ -520,7 +550,6 @@ function WorkOrder() {
             ))}
           </select>
 
-          {/* TOOL QTY */}
           <input
             name="tool_qty"
             placeholder="Tool Qty"
@@ -531,7 +560,7 @@ function WorkOrder() {
             required
           />
 
-          {/* MACHINE DROPDOWN */}
+          {/* MACHINE */}
           <select
             name="machine_name"
             value={form.machine_name}
@@ -545,7 +574,7 @@ function WorkOrder() {
             ))}
           </select>
 
-          {/* WORKER DROPDOWN */}
+          {/* WORKER */}
           <select
             name="worker_name"
             value={form.worker_name}
