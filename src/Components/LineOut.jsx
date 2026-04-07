@@ -350,7 +350,7 @@
 
 
 import React, { useState, useEffect } from "react";
-import api from "../api";
+import axios from "axios";
 import Sidebar from "../Components/Sidebar";
 import Topbar from "../Components/Topbar";
 import "../CSS/LineOut.css";
@@ -373,14 +373,17 @@ function WorkOrder() {
   const [machines, setMachines] = useState([]);
   const [categories, setCategories] = useState([]);
 
+  // ✅ BASE URL (CHANGE THIS IF NEEDED)
+  const BASE_URL = "http://localhost:5000";
+
   // ================= FETCH DROPDOWN DATA =================
   const fetchDropdowns = async () => {
     try {
       const [toolsRes, workersRes, machinesRes, categoriesRes] = await Promise.all([
-        api.get("/activetools/activetool"),
-        api.get("/activeworkers/getWorkers"),
-        api.get("/activemachines/activemachine"),
-        api.get("/activecategories/activeCategorie")
+        axios.get(`${BASE_URL}/activetools/activetool`),
+        axios.get(`${BASE_URL}/activeworkers/getWorkers`),
+        axios.get(`${BASE_URL}/activemachines/activemachine`),
+        axios.get(`${BASE_URL}/activecategories/activeCategorie`)
       ]);
 
       if (toolsRes.data.data) setTools(toolsRes.data.data);
@@ -400,7 +403,7 @@ function WorkOrder() {
   // ================= FETCH GRID DATA =================
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout/list");
+      const res = await axios.get(`${BASE_URL}/lineout/list`);
       if (res.data.status) setList(res.data.data);
     } catch (err) {
       console.error(err);
@@ -427,7 +430,7 @@ function WorkOrder() {
     e.preventDefault();
 
     try {
-      const res = await api.post("/lineout/createSingle", form);
+      const res = await axios.post(`${BASE_URL}/lineout/createSingle`, form);
 
       if (res.data.status) {
         alert("Saved Successfully");
@@ -451,7 +454,7 @@ function WorkOrder() {
     if (!window.confirm("Mark as Completed?")) return;
 
     try {
-      const res = await api.put(`/lineout/complete/${wo}`);
+      const res = await axios.put(`${BASE_URL}/lineout/complete/${wo}`);
 
       if (res.data.status) {
         alert("Work Order Completed");
