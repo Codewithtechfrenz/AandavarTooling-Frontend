@@ -8,7 +8,7 @@ import WorkerMaster from "./Components/WorkerMaster";
 import ProductMaster from "./Components/ProductMaster";
 import SalesProductMaster from "./Components/SalesProductMaster";
 import CustomerMaster from "./Components/CustomerMaster";
-import FeedOutPage from "./Components/LineOut";
+import LineOutPage from "./Components/LineOut";
 import ReturnPage from "./Components/LineReturn";
 import SalesPage from "./Components/SalesPage";
 import CurrentStock from "./Components/CurrentStock";
@@ -36,7 +36,7 @@ function App() {
         <Route path="/dashboard/machines" element={<MachineMaster />} />
         <Route path="/dashboard/workers" element={<WorkerMaster />} />
         <Route path="/dashboard/products" element={<ProductMaster />} />
-        <Route path="/dashboard/feedout" element={<FeedOutPage />} />
+        <Route path="/dashboard/lineout" element={<LineOutPage />} />
         <Route path="/dashboard/returns" element={<ReturnPage />} />
         <Route path="/dashboard/CurrentStock" element={<CurrentStock />} />
         <Route path="/dashboard/reports" element={<Reports />} />

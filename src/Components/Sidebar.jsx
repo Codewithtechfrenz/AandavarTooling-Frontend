@@ -118,8 +118,8 @@ const Sidebar = ({ collapsed }) => {
         {!collapsed && <div className="menu-title">TRANSACTIONS</div>}
 
         <div
-          className={`menu-item ${isActive("/dashboard/feedout") ? "active" : ""}`}
-          onClick={() => navigate("/dashboard/feedout")}
+          className={`menu-item ${isActive("/dashboard/lineout") ? "active" : ""}`}
+          onClick={() => navigate("/dashboard/lineout")}
         >
           <i className="fa fa-arrow-right"></i>
           {!collapsed && <span>Line Out</span>}
