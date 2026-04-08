@@ -454,7 +454,7 @@ function WorkOrder() {
   // ✅ FIXED API HERE
   const fetchData = async () => {
     try {
-      const res = await api.get("/linefeedouts/list"); // ✅ FIXED
+      const res = await api.get("/workorder/getlist"); // ✅ FIXED
 
       if (res.data.status === 1) {
         setList(res.data.data || []);
@@ -496,7 +496,7 @@ function WorkOrder() {
     };
 
     try {
-      const res = await api.post("/linefeedouts/createworkorder", payload);
+      const res = await api.post("/workorder/createworkorder", payload);
 
       if (res.data.status === 1) {
         alert(res.data.message || "Saved Successfully");
@@ -524,7 +524,7 @@ function WorkOrder() {
     if (!window.confirm("Mark as Completed?")) return;
 
     try {
-      const res = await api.put(`/lineout/complete/${wo}`);
+      const res = await api.put(`/workorder/completeworkorder/${wo}`);
 
       if (res.data.status === 1) {
         alert("Work Order Completed");
