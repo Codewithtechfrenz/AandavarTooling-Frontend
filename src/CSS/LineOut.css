@@ -126,3 +126,51 @@
     padding: 8px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.tool-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tool-row select,
+.tool-row input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  min-width: 150px;
+}
+
+.tool-row button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button[type="button"] {
+  margin-top: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
