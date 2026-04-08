@@ -105,7 +105,7 @@ function DeliveryChallanTemplate({ challanData }) {
               <h4>Delivery Challan</h4>
               <p>📍 5/520 D, Kabeer Nagar MasthanPatti Madurai - 20</p>
               <p>✉ prabusangari690@gmail.com</p>
-              <p>📞 9944130610</p>
+              <p>GSTIN: 33BVBPP7144R1Z0</p><p>||</p><p>📞 9944130610</p>
             </div>
 
           </div>
@@ -118,12 +118,13 @@ function DeliveryChallanTemplate({ challanData }) {
             <p>{challanData?.recipientName || "Customer Name"}</p>
             <p>{challanData?.recipientAddress || "Customer Address"}</p>
             <p>__________________________________</p>
-            <p>__________________________________</p>
+            <p>__________________________________</p> 
           </div>
 
           <div>
             <p>Delivery challan No: {challanData?.orderNo || "NA"}</p>
             <p>Date: {challanData?.date || new Date().toLocaleDateString()}</p>
+            <p>Vehicle No:               </p>
           </div>
         </div>
 
