@@ -356,28 +356,31 @@ import Topbar from "../Components/Topbar";
 import "../CSS/LineOut.css";
 
 function WorkOrder() {
-  const [form, setForm] = useState({
-    work_order_no: "",
-    tool_name: "",
-    category_name: "",
-    tool_qty: "",
-    machine_name: "",
-    worker_name: "",
-  });
 
-  const [list, setList] = useState([]);
+  // ================= FORM STATE =================
+  const [workOrderNo, setWorkOrderNo] = useState("");
+  const [toolQty, setToolQty] = useState("");
+  const [workerName, setWorkerName] = useState("");
 
-  // ✅ NEW (same as LineReturn)
+  // ✅ Separate states like LineReturn
+  const [toolName, setToolName] = useState("");
+  const [machineName, setMachineName] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+
+  // ================= DROPDOWN OPTIONS =================
   const [toolOptions, setToolOptions] = useState([]);
   const [workerOptions, setWorkerOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
 
-  // ================= TOOLS =================
+  // ================= TABLE DATA =================
+  const [list, setList] = useState([]);
+
+  // ================= FETCH FUNCTIONS =================
+
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-
       if (res.data.status === 1) {
         setToolOptions(res.data.data);
       } else {
@@ -389,16 +392,14 @@ function WorkOrder() {
     }
   };
 
-  // ================= WORKERS =================
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
-
       if (res.data.status === 1) {
         const data = res.data.data.map(
           (w) => w.WorkerName || w.worker_name || w
         );
-        setWorkerOptions(data); // ✅ same as LineReturn
+        setWorkerOptions(data);
       } else {
         setWorkerOptions([]);
       }
@@ -408,11 +409,9 @@ function WorkOrder() {
     }
   };
 
-  // ================= MACHINES =================
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-
       if (res.data.status === 1) {
         setMachineOptions(res.data.data);
       } else {
@@ -424,11 +423,9 @@ function WorkOrder() {
     }
   };
 
-  // ================= CATEGORIES =================
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-
       if (res.data.status === 1) {
         setCategoryOptions(res.data.data);
       } else {
@@ -440,11 +437,9 @@ function WorkOrder() {
     }
   };
 
-  // ================= GRID =================
   const fetchData = async () => {
     try {
       const res = await api.get("/lineout");
-
       if (res.data.status === 1) {
         setList(res.data.data);
       } else {
@@ -465,47 +460,37 @@ function WorkOrder() {
     fetchData();
   }, []);
 
-  // ================= HANDLE CHANGE =================
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    let updatedForm = { ...form, [name]: value };
-
-    // ✅ Tool → Category auto-fill
-    if (name === "tool_name") {
-      const selectedTool = toolOptions.find(
-        (t) =>
-          t.ToolName === value ||
-          t.tool_name === value
-      );
-
-      updatedForm.category_name =
-        selectedTool?.CategoryName ||
-        selectedTool?.category_name ||
-        "";
-    }
-
-    setForm(updatedForm);
-  };
-
   // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!workOrderNo || !toolName || !toolQty) {
+      alert("Please fill required fields");
+      return;
+    }
+
+    const payload = {
+      work_order_no: workOrderNo,
+      tool_name: toolName,
+      category_name: categoryName,
+      tool_qty: Number(toolQty),
+      machine_name: machineName,
+      worker_name: workerName,
+    };
+
     try {
-      const res = await api.post("/lineout/createSingle", form);
+      const res = await api.post("/lineout/createSingle", payload);
 
       if (res.data.status === 1) {
         alert("Saved Successfully");
 
-        setForm({
-          work_order_no: "",
-          tool_name: "",
-          category_name: "",
-          tool_qty: "",
-          machine_name: "",
-          worker_name: "",
-        });
+        // clear form
+        setWorkOrderNo("");
+        setToolName("");
+        setCategoryName("");
+        setToolQty("");
+        setMachineName("");
+        setWorkerName("");
 
         fetchData();
       }
@@ -520,7 +505,6 @@ function WorkOrder() {
 
     try {
       const res = await api.put(`/lineout/complete/${wo}`);
-
       if (res.data.status === 1) {
         alert("Work Order Completed");
         fetchData();
@@ -539,77 +523,78 @@ function WorkOrder() {
         <h1>Line Out Entry</h1>
       </div>
 
+      {/* ================= FORM ================= */}
       <div className="cs-table-card">
         <h3>Create Work Order</h3>
 
         <form onSubmit={handleSubmit} className="cs-form">
+
+          {/* WORK ORDER NO */}
           <input
-            name="work_order_no"
             placeholder="Work Order No"
-            value={form.work_order_no}
-            onChange={handleChange}
+            value={workOrderNo}
+            onChange={(e) => setWorkOrderNo(e.target.value)}
             required
           />
 
-            <select value={toolName} onChange={(e)=>setToolName(e.target.value)}>
-              <option value="">Select Tool</option>
-              {toolOptions.map((t,i)=>(
-                <option key={i}>{t.ToolName || t}</option>
-              ))}
-            </select>
-
+          {/* TOOL */}
           <select
-            name="category_name"
-            value={form.category_name}
-            onChange={handleChange}
+            value={toolName}
+            onChange={(e) => setToolName(e.target.value)}
+            required
           >
-            <option value="">Select Category</option>
-            {categoryOptions.map((c, i) => {
-              const name = c?.CategoryName || c?.category_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
-            })}
+            <option value="">Select Tool</option>
+            {toolOptions.map((t, i) => (
+              <option key={i}>
+                {t.ToolName || t.tool_name}
+              </option>
+            ))}
           </select>
 
+          {/* CATEGORY */}
+          <select
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+          >
+            <option value="">Select Category</option>
+            {categoryOptions.map((c, i) => (
+              <option key={i}>
+                {c.CategoryName || c.category_name}
+              </option>
+            ))}
+          </select>
+
+          {/* TOOL QTY */}
           <input
-            name="tool_qty"
             type="number"
             min="1"
             placeholder="Tool Qty"
-            value={form.tool_qty}
-            onChange={handleChange}
+            value={toolQty}
+            onChange={(e) => setToolQty(e.target.value)}
             required
           />
 
+          {/* MACHINE */}
           <select
-            name="machine_name"
-            value={form.machine_name}
-            onChange={handleChange}
+            value={machineName}
+            onChange={(e) => setMachineName(e.target.value)}
           >
             <option value="">Select Machine</option>
-            {machineOptions.map((m, i) => {
-              const name = m?.MachineName || m?.machine_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
-            })}
+            {machineOptions.map((m, i) => (
+              <option key={i}>
+                {m.MachineName || m.machine_name}
+              </option>
+            ))}
           </select>
 
+          {/* WORKER (UNCHANGED) */}
           <select
-            name="worker_name"
-            value={form.worker_name}
-            onChange={handleChange}
+            value={workerName}
+            onChange={(e) => setWorkerName(e.target.value)}
           >
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
-              <option key={i} value={w}>
-                {w}
-              </option>
+              <option key={i}>{w}</option>
             ))}
           </select>
 
@@ -617,6 +602,7 @@ function WorkOrder() {
         </form>
       </div>
 
+      {/* ================= TABLE ================= */}
       <div className="cs-table-card">
         <h3>Work Order List</h3>
 
@@ -649,9 +635,7 @@ function WorkOrder() {
                   <td>{item.worker_name}</td>
                   <td>
                     <button
-                      onClick={() =>
-                        handleComplete(item.work_order_no)
-                      }
+                      onClick={() => handleComplete(item.work_order_no)}
                       disabled={item.status === "Completed"}
                       style={{
                         background:
