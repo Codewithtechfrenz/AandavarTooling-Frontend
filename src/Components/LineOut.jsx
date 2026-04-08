@@ -7,31 +7,38 @@ import "../CSS/LineOut.css";
 function WorkOrder() {
 
   // ================= STATES =================
-  const [date, setDate] = useState("");   // ✅ NEW DATE STATE
-  const [toolName, setToolName] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [toolQty, setToolQty] = useState("");
+  const [workDate, setWorkDate] = useState("");
   const [machineName, setMachineName] = useState("");
   const [workerName, setWorkerName] = useState("");
 
-  // ================= DROPDOWN OPTIONS =================
+  // ✅ MULTIPLE TOOLS
+  const [tools, setTools] = useState([
+    { tool_name: "", category_name: "", tool_qty: "" }
+  ]);
+
+  // ================= OPTIONS =================
   const [toolOptions, setToolOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [workerOptions, setWorkerOptions] = useState([]);
 
-  // ================= TABLE =================
   const [list, setList] = useState([]);
 
-  // ================= FETCH FUNCTIONS =================
+  // ================= LOAD =================
+  useEffect(() => {
+    fetchTools();
+    fetchMachines();
+    fetchCategories();
+    fetchWorkers();
+    fetchData();
+  }, []);
 
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      let data = res.data?.data || res.data?.result || res.data || [];
+      const data = res.data?.data || res.data || [];
       setToolOptions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Tool Error:", err);
+    } catch {
       setToolOptions([]);
     }
   };
@@ -39,10 +46,9 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      let data = res.data?.data || res.data?.result || res.data || [];
+      const data = res.data?.data || res.data || [];
       setMachineOptions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Machine Error:", err);
+    } catch {
       setMachineOptions([]);
     }
   };
@@ -50,10 +56,9 @@ function WorkOrder() {
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      let data = res.data?.data || res.data?.result || res.data || [];
+      const data = res.data?.data || res.data || [];
       setCategoryOptions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Category Error:", err);
+    } catch {
       setCategoryOptions([]);
     }
   };
@@ -66,11 +71,8 @@ function WorkOrder() {
           (w) => w.WorkerName || w.worker_name || w
         );
         setWorkerOptions(data);
-      } else {
-        setWorkerOptions([]);
       }
-    } catch (err) {
-      console.error("Worker Error:", err);
+    } catch {
       setWorkerOptions([]);
     }
   };
@@ -80,78 +82,87 @@ function WorkOrder() {
       const res = await api.get("/workorder/getlist");
       if (res.data.status === 1) {
         setList(res.data.data || []);
-      } else {
-        setList([]);
       }
-    } catch (err) {
-      console.error("List Error:", err);
+    } catch {
       setList([]);
     }
   };
 
-  // ================= LOAD =================
-  useEffect(() => {
-    fetchTools();
-    fetchMachines();
-    fetchCategories();
-    fetchWorkers();
-    fetchData();
-  }, []);
+  // ================= TOOL HANDLERS =================
+  const addToolRow = () => {
+    setTools([...tools, { tool_name: "", category_name: "", tool_qty: "" }]);
+  };
+
+  const removeToolRow = (index) => {
+    const updated = [...tools];
+    updated.splice(index, 1);
+    setTools(updated);
+  };
+
+  const handleToolChange = (index, field, value) => {
+    const updated = [...tools];
+    updated[index][field] = value;
+    setTools(updated);
+  };
 
   // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!date || !toolName || !toolQty) {
+    if (!workDate || tools.length === 0) {
       alert("Please fill required fields");
       return;
     }
 
     const payload = {
-      work_date: date,               // ✅ CHANGED
-      tools: toolName,
-      category_name: categoryName,
-      tool_qty: Number(toolQty),
+      work_date: workDate,
       machine_name: machineName,
       worker_name: workerName,
+      tools: tools.map((t) => ({
+        tool_name: t.tool_name,
+        category_name: t.category_name,
+        tool_qty: Number(t.tool_qty)
+      }))
     };
+
+    console.log("PAYLOAD:", payload);
 
     try {
       const res = await api.post("/workorder/createworkorder", payload);
 
       if (res.data.status === 1) {
-        alert(res.data.message || "Saved Successfully");
+        alert("Saved Successfully");
 
-        // CLEAR FORM
-        setDate("");
-        setToolName("");
-        setCategoryName("");
-        setToolQty("");
+        setWorkDate("");
         setMachineName("");
         setWorkerName("");
+        setTools([{ tool_name: "", category_name: "", tool_qty: "" }]);
 
         fetchData();
       } else {
         alert(res.data.message);
       }
     } catch (err) {
-      console.error("Submit Error:", err);
-      alert("Error saving data");
+      console.error(err);
+      alert("Error saving");
     }
   };
 
   // ================= COMPLETE =================
-  const handleComplete = async (wo) => {
+  const handleComplete = async (date) => {
     if (!window.confirm("Mark as Completed?")) return;
 
     try {
-      const res = await api.put(`/workorder/completeworkorder/${wo}`);
+      const res = await api.put("/workorder/completeworkorder", {
+        work_date: date
+      });
+
       if (res.data.status === 1) {
-        alert("Work Order Completed");
+        alert("Completed & Stock Updated");
         fetchData();
       }
     } catch (err) {
-      console.error("Complete Error:", err);
+      console.error(err);
     }
   };
 
@@ -167,43 +178,19 @@ function WorkOrder() {
 
       {/* FORM */}
       <div className="cs-table-card">
-        <h3>Create Work Order</h3>
+        <h3>Create Work Entry</h3>
 
         <form onSubmit={handleSubmit} className="cs-form">
 
-          {/* ✅ DATE FIELD */}
+          {/* DATE */}
           <input
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={workDate}
+            onChange={(e) => setWorkDate(e.target.value)}
             required
           />
 
-          <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
-            <option value="">Select Tool</option>
-            {toolOptions.map((t, i) => {
-              const name = t?.ToolName || t?.tool_name || t;
-              return <option key={i} value={name}>{name}</option>;
-            })}
-          </select>
-
-          <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)}>
-            <option value="">Select Category</option>
-            {categoryOptions.map((c, i) => {
-              const name = c?.CategoryName || c?.category_name || c;
-              return <option key={i} value={name}>{name}</option>;
-            })}
-          </select>
-
-          <input
-            type="number"
-            min="1"
-            placeholder="Tool Qty"
-            value={toolQty}
-            onChange={(e) => setToolQty(e.target.value)}
-            required
-          />
-
+          {/* MACHINE */}
           <select value={machineName} onChange={(e) => setMachineName(e.target.value)}>
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => {
@@ -212,6 +199,7 @@ function WorkOrder() {
             })}
           </select>
 
+          {/* WORKER */}
           <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
@@ -219,18 +207,70 @@ function WorkOrder() {
             ))}
           </select>
 
+          {/* MULTIPLE TOOLS */}
+          {tools.map((tool, index) => (
+            <div key={index} className="cs-form" style={{ marginBottom: "10px" }}>
+
+              <select
+                value={tool.tool_name}
+                onChange={(e) =>
+                  handleToolChange(index, "tool_name", e.target.value)
+                }
+              >
+                <option value="">Select Tool</option>
+                {toolOptions.map((t, i) => {
+                  const name = t?.ToolName || t?.tool_name || t;
+                  return <option key={i} value={name}>{name}</option>;
+                })}
+              </select>
+
+              <select
+                value={tool.category_name}
+                onChange={(e) =>
+                  handleToolChange(index, "category_name", e.target.value)
+                }
+              >
+                <option value="">Select Category</option>
+                {categoryOptions.map((c, i) => {
+                  const name = c?.CategoryName || c?.category_name || c;
+                  return <option key={i} value={name}>{name}</option>;
+                })}
+              </select>
+
+              <input
+                type="number"
+                min="1"
+                placeholder="Qty"
+                value={tool.tool_qty}
+                onChange={(e) =>
+                  handleToolChange(index, "tool_qty", e.target.value)
+                }
+              />
+
+              {tools.length > 1 && (
+                <button type="button" onClick={() => removeToolRow(index)}>
+                  ❌
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button type="button" onClick={addToolRow}>
+            ➕ Add Tool
+          </button>
+
           <button type="submit">Save</button>
         </form>
       </div>
 
       {/* TABLE */}
       <div className="cs-table-card">
-        <h3>Work Order List</h3>
+        <h3>Work Entry List</h3>
 
         <table className="cs-table">
           <thead>
             <tr>
-              <th>Date</th> {/* ✅ CHANGED */}
+              <th>Date</th>
               <th>Tool</th>
               <th>Category</th>
               <th>Qty</th>
@@ -246,15 +286,15 @@ function WorkOrder() {
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
-                  <td>{item.work_date}</td> {/* ✅ CHANGED */}
-                  <td>{item.tools}</td>
+                  <td>{item.work_date}</td>
+                  <td>{item.tool_name}</td>
                   <td>{item.category_name}</td>
                   <td>{item.tool_qty}</td>
                   <td>{item.machine_name}</td>
                   <td>{item.worker_name}</td>
                   <td>
                     <button
-                      onClick={() => handleComplete(item.work_order_no)}
+                      onClick={() => handleComplete(item.work_date)}
                       disabled={item.status === "Completed"}
                     >
                       {item.status}
@@ -271,5 +311,3 @@ function WorkOrder() {
 }
 
 export default WorkOrder;
-
-
