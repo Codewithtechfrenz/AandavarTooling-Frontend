@@ -498,7 +498,7 @@ function WorkOrder() {
     console.log("SUBMIT:", payload);
 
     try {
-      const res = await api.post("/lineout/createSingle", payload);
+      const res = await api.post("/linefeedouts/createworkorder", payload);
 
       if (res.data.status === 1) {
         alert(res.data.message || "Saved Successfully");
