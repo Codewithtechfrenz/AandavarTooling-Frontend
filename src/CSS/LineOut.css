@@ -142,20 +142,34 @@
 
 
 
-.tool-row {
+
+/* ✅ CONTAINER FIX */
+.tools-container {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  flex-direction: column;   /* stack rows properly */
+  gap: 12px;
+  width: 100%;
 }
 
+/* ✅ EACH TOOL ROW */
+.tool-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+/* inputs */
 .tool-row select,
 .tool-row input {
+  width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  min-width: 150px;
 }
 
+/* delete button */
 .tool-row button {
   background-color: red;
   color: white;
@@ -165,12 +179,9 @@
   cursor: pointer;
 }
 
-button[type="button"] {
-  margin-top: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  cursor: pointer;
+
+.cs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
