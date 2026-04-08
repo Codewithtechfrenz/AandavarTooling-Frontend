@@ -551,22 +551,12 @@ function WorkOrder() {
             required
           />
 
-          <select
-            name="tool_name"
-            value={form.tool_name}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Tool</option>
-            {toolOptions.map((t, i) => {
-              const name = t?.ToolName || t?.tool_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
-            })}
-          </select>
+            <select value={toolName} onChange={(e)=>setToolName(e.target.value)}>
+              <option value="">Select Tool</option>
+              {toolOptions.map((t,i)=>(
+                <option key={i}>{t.ToolName || t}</option>
+              ))}
+            </select>
 
           <select
             name="category_name"
