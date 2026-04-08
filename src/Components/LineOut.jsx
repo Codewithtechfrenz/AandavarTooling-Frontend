@@ -348,7 +348,6 @@
  
 // export default WorkOrder;
 
-
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
@@ -365,7 +364,7 @@ function WorkOrder() {
   const [machineName, setMachineName] = useState("");
   const [workerName, setWorkerName] = useState("");
 
-  // ================= DROPDOWNS =================
+  // ================= DROPDOWN OPTIONS =================
   const [toolOptions, setToolOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
@@ -374,59 +373,89 @@ function WorkOrder() {
   // ================= TABLE =================
   const [list, setList] = useState([]);
 
-  // ================= FETCH =================
+  // ================= FETCH FUNCTIONS =================
 
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      if (res.data.status === 1) {
-        setToolOptions(res.data.data || []);
+
+      console.log("TOOLS API:", res.data);
+
+      let data = [];
+
+      if (Array.isArray(res.data)) {
+        data = res.data;
+      } else if (Array.isArray(res.data.data)) {
+        data = res.data.data;
+      } else if (Array.isArray(res.data.result)) {
+        data = res.data.result;
       }
+
+      setToolOptions(data);
+
     } catch (err) {
       console.error("Tool Error:", err);
+      setToolOptions([]);
     }
   };
 
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      if (res.data.status === 1) {
-        setMachineOptions(res.data.data || []);
-      }
+
+      let data =
+        res.data?.data ||
+        res.data?.result ||
+        res.data ||
+        [];
+
+      setMachineOptions(Array.isArray(data) ? data : []);
+
     } catch (err) {
       console.error("Machine Error:", err);
+      setMachineOptions([]);
     }
   };
 
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      if (res.data.status === 1) {
-        setCategoryOptions(res.data.data || []);
-      }
+
+      let data =
+        res.data?.data ||
+        res.data?.result ||
+        res.data ||
+        [];
+
+      setCategoryOptions(Array.isArray(data) ? data : []);
+
     } catch (err) {
       console.error("Category Error:", err);
+      setCategoryOptions([]);
     }
   };
 
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
+
       if (res.data.status === 1) {
         const data = res.data.data.map(
           (w) => w.WorkerName || w.worker_name || w
         );
         setWorkerOptions(data);
+      } else {
+        setWorkerOptions([]);
       }
     } catch (err) {
       console.error("Worker Error:", err);
+      setWorkerOptions([]);
     }
   };
 
-  // ✅ FIXED API HERE
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout/list"); // ✅ FIX
+      const res = await api.get("/lineout/list"); // ✅ correct endpoint
 
       if (res.data.status === 1) {
         setList(res.data.data || []);
@@ -435,7 +464,7 @@ function WorkOrder() {
       }
     } catch (err) {
       console.error("List Error:", err);
-      setList([]); // prevent crash
+      setList([]);
     }
   };
 
@@ -466,13 +495,15 @@ function WorkOrder() {
       worker_name: workerName,
     };
 
+    console.log("SUBMIT:", payload);
+
     try {
       const res = await api.post("/lineout/createSingle", payload);
 
       if (res.data.status === 1) {
         alert(res.data.message || "Saved Successfully");
 
-        // CLEAR
+        // CLEAR FORM
         setWorkOrderNo("");
         setToolName("");
         setCategoryName("");
@@ -529,37 +560,80 @@ function WorkOrder() {
             required
           />
 
+          {/* TOOL */}
           <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
             <option value="">Select Tool</option>
-            {toolOptions.map((t, i) => {
-              const name = t?.ToolName || t?.tool_name || "";
-              return <option key={i} value={name}>{name}</option>;
-            })}
+            {toolOptions.length > 0 ? (
+              toolOptions.map((t, i) => {
+                const name =
+                  t?.ToolName ||
+                  t?.tool_name ||
+                  t?.name ||
+                  t;
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })
+            ) : (
+              <option disabled>No Tools Found</option>
+            )}
           </select>
 
+          {/* CATEGORY */}
           <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)}>
             <option value="">Select Category</option>
-            {categoryOptions.map((c, i) => {
-              const name = c?.CategoryName || c?.category_name || "";
-              return <option key={i} value={name}>{name}</option>;
-            })}
+            {categoryOptions.length > 0 ? (
+              categoryOptions.map((c, i) => {
+                const name =
+                  c?.CategoryName ||
+                  c?.category_name ||
+                  c?.name ||
+                  c;
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })
+            ) : (
+              <option disabled>No Category Found</option>
+            )}
           </select>
 
+          {/* TOOL QTY */}
           <input
             type="number"
+            min="1"
             placeholder="Tool Qty"
             value={toolQty}
             onChange={(e) => setToolQty(e.target.value)}
+            required
           />
 
+          {/* MACHINE */}
           <select value={machineName} onChange={(e) => setMachineName(e.target.value)}>
             <option value="">Select Machine</option>
-            {machineOptions.map((m, i) => {
-              const name = m?.MachineName || m?.machine_name || "";
-              return <option key={i} value={name}>{name}</option>;
-            })}
+            {machineOptions.length > 0 ? (
+              machineOptions.map((m, i) => {
+                const name =
+                  m?.MachineName ||
+                  m?.machine_name ||
+                  m?.name ||
+                  m;
+                return (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                );
+              })
+            ) : (
+              <option disabled>No Machine Found</option>
+            )}
           </select>
 
+          {/* WORKER */}
           <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
