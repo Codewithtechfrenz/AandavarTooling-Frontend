@@ -379,8 +379,6 @@ function WorkOrder() {
     try {
       const res = await api.get("/workorder/activetool");
 
-      console.log("TOOLS API:", res.data);
-
       let data = [];
 
       if (Array.isArray(res.data)) {
@@ -453,9 +451,10 @@ function WorkOrder() {
     }
   };
 
+  // ✅ FIXED API HERE
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout/list"); // ✅ correct endpoint
+      const res = await api.get("/linefeedouts/list"); // ✅ FIXED
 
       if (res.data.status === 1) {
         setList(res.data.data || []);
@@ -486,16 +485,15 @@ function WorkOrder() {
       return;
     }
 
+    // ✅ FIXED PAYLOAD KEY
     const payload = {
       work_order_no: workOrderNo,
-      tool_name: toolName,
+      tools: toolName,              // ✅ IMPORTANT FIX
       category_name: categoryName,
       tool_qty: Number(toolQty),
       machine_name: machineName,
       worker_name: workerName,
     };
-
-    console.log("SUBMIT:", payload);
 
     try {
       const res = await api.post("/linefeedouts/createworkorder", payload);
@@ -511,7 +509,7 @@ function WorkOrder() {
         setMachineName("");
         setWorkerName("");
 
-        fetchData();
+        fetchData(); // ✅ NOW GRID WILL UPDATE
       } else {
         alert(res.data.message);
       }
@@ -560,49 +558,22 @@ function WorkOrder() {
             required
           />
 
-          {/* TOOL */}
           <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
             <option value="">Select Tool</option>
-            {toolOptions.length > 0 ? (
-              toolOptions.map((t, i) => {
-                const name =
-                  t?.ToolName ||
-                  t?.tool_name ||
-                  t?.name ||
-                  t;
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })
-            ) : (
-              <option disabled>No Tools Found</option>
-            )}
+            {toolOptions.map((t, i) => {
+              const name = t?.ToolName || t?.tool_name || t;
+              return <option key={i} value={name}>{name}</option>;
+            })}
           </select>
 
-          {/* CATEGORY */}
           <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)}>
             <option value="">Select Category</option>
-            {categoryOptions.length > 0 ? (
-              categoryOptions.map((c, i) => {
-                const name =
-                  c?.CategoryName ||
-                  c?.category_name ||
-                  c?.name ||
-                  c;
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })
-            ) : (
-              <option disabled>No Category Found</option>
-            )}
+            {categoryOptions.map((c, i) => {
+              const name = c?.CategoryName || c?.category_name || c;
+              return <option key={i} value={name}>{name}</option>;
+            })}
           </select>
 
-          {/* TOOL QTY */}
           <input
             type="number"
             min="1"
@@ -612,28 +583,14 @@ function WorkOrder() {
             required
           />
 
-          {/* MACHINE */}
           <select value={machineName} onChange={(e) => setMachineName(e.target.value)}>
             <option value="">Select Machine</option>
-            {machineOptions.length > 0 ? (
-              machineOptions.map((m, i) => {
-                const name =
-                  m?.MachineName ||
-                  m?.machine_name ||
-                  m?.name ||
-                  m;
-                return (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                );
-              })
-            ) : (
-              <option disabled>No Machine Found</option>
-            )}
+            {machineOptions.map((m, i) => {
+              const name = m?.MachineName || m?.machine_name || m;
+              return <option key={i} value={name}>{name}</option>;
+            })}
           </select>
 
-          {/* WORKER */}
           <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
@@ -669,7 +626,7 @@ function WorkOrder() {
               list.map((item, i) => (
                 <tr key={i}>
                   <td>{item.work_order_no}</td>
-                  <td>{item.tool_name}</td>
+                  <td>{item.tools}</td> {/* ✅ FIXED */}
                   <td>{item.category_name}</td>
                   <td>{item.tool_qty}</td>
                   <td>{item.machine_name}</td>
