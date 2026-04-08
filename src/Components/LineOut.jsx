@@ -376,8 +376,12 @@ function WorkOrder() {
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      const data = res.data?.data || res.data || [];
-      setTools(Array.isArray(data) ? data : []);
+
+      if (res.data.status === 1) {
+        setTools(res.data.data);
+      } else {
+        setTools([]);
+      }
     } catch (err) {
       console.error("Tools API Error:", err);
       setTools([]);
@@ -388,8 +392,15 @@ function WorkOrder() {
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
-      const data = res.data?.data || res.data || [];
-      setWorkers(Array.isArray(data) ? data : []);
+
+      if (res.data.status === 1) {
+        const data = res.data.data.map(
+          (w) => w.WorkerName || w.worker_name || w
+        );
+        setWorkers(data); // ✅ same as LineReturn
+      } else {
+        setWorkers([]);
+      }
     } catch (err) {
       console.error("Workers API Error:", err);
       setWorkers([]);
@@ -400,8 +411,12 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      const data = res.data?.data || res.data || [];
-      setMachines(Array.isArray(data) ? data : []);
+
+      if (res.data.status === 1) {
+        setMachines(res.data.data);
+      } else {
+        setMachines([]);
+      }
     } catch (err) {
       console.error("Machines API Error:", err);
       setMachines([]);
@@ -412,8 +427,12 @@ function WorkOrder() {
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      const data = res.data?.data || res.data || [];
-      setCategories(Array.isArray(data) ? data : []);
+
+      if (res.data.status === 1) {
+        setCategories(res.data.data);
+      } else {
+        setCategories([]);
+      }
     } catch (err) {
       console.error("Categories API Error:", err);
       setCategories([]);
@@ -423,9 +442,13 @@ function WorkOrder() {
   // ================= GRID =================
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout"); // ✅ correct route
-      const data = res.data?.data || res.data || [];
-      setList(Array.isArray(data) ? data : []);
+      const res = await api.get("/lineout");
+
+      if (res.data.status === 1) {
+        setList(res.data.data);
+      } else {
+        setList([]);
+      }
     } catch (err) {
       console.error("Grid Fetch Error:", err);
       setList([]);
@@ -433,11 +456,13 @@ function WorkOrder() {
   };
 
   // ================= USE EFFECT =================
-  useEffect(() => { fetchTools(); }, []);
-  useEffect(() => { fetchWorkers(); }, []);
-  useEffect(() => { fetchMachines(); }, []);
-  useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchTools();
+    fetchWorkers();
+    fetchMachines();
+    fetchCategories();
+    fetchData();
+  }, []);
 
   // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
@@ -445,6 +470,7 @@ function WorkOrder() {
 
     let updatedForm = { ...form, [name]: value };
 
+    // ✅ Tool → Category auto fill (fixed)
     if (name === "tool_name") {
       const selectedTool = tools.find(
         (t) =>
@@ -468,7 +494,7 @@ function WorkOrder() {
     try {
       const res = await api.post("/lineout/createSingle", form);
 
-      if (res.data.status) {
+      if (res.data.status === 1) {
         alert("Saved Successfully");
 
         setForm({
@@ -494,7 +520,7 @@ function WorkOrder() {
     try {
       const res = await api.put(`/lineout/complete/${wo}`);
 
-      if (res.data.status) {
+      if (res.data.status === 1) {
         alert("Work Order Completed");
         fetchData();
       }
@@ -583,20 +609,18 @@ function WorkOrder() {
             })}
           </select>
 
+          {/* ✅ FIXED WORKER DROPDOWN */}
           <select
             name="worker_name"
             value={form.worker_name}
             onChange={handleChange}
           >
             <option value="">Select Worker</option>
-            {workers.map((w, i) => {
-              const name = w?.WorkerName || w?.worker_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
-            })}
+            {workers.map((w, i) => (
+              <option key={i} value={w}>
+                {w}
+              </option>
+            ))}
           </select>
 
           <button type="submit">Save</button>
