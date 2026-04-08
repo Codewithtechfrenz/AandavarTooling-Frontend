@@ -367,127 +367,77 @@ function WorkOrder() {
 
   const [list, setList] = useState([]);
 
-  // Dropdown data
   const [tools, setTools] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [machines, setMachines] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // ================= TOOLS API =================
+  // ================= TOOLS =================
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      console.log("TOOLS:", res.data);
-
-      if (Array.isArray(res.data.data)) {
-        setTools(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setTools(res.data);
-      } else {
-        setTools([]);
-      }
+      const data = res.data?.data || res.data || [];
+      setTools(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Tools API Error:", err);
+      setTools([]);
     }
   };
 
-  // ================= WORKERS API =================
+  // ================= WORKERS =================
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
-      console.log("WORKERS:", res.data);
-
-      if (Array.isArray(res.data.data)) {
-        setWorkers(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setWorkers(res.data);
-      } else {
-        setWorkers([]);
-      }
+      const data = res.data?.data || res.data || [];
+      setWorkers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Workers API Error:", err);
+      setWorkers([]);
     }
   };
 
-  // ================= MACHINES API =================
+  // ================= MACHINES =================
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      console.log("MACHINES:", res.data);
-
-      if (Array.isArray(res.data.data)) {
-        setMachines(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setMachines(res.data);
-      } else {
-        setMachines([]);
-      }
+      const data = res.data?.data || res.data || [];
+      setMachines(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Machines API Error:", err);
+      setMachines([]);
     }
   };
 
-  // ================= CATEGORIES API =================
+  // ================= CATEGORIES =================
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      console.log("CATEGORIES:", res.data);
-
-      if (Array.isArray(res.data.data)) {
-        setCategories(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setCategories(res.data);
-      } else {
-        setCategories([]);
-      }
+      const data = res.data?.data || res.data || [];
+      setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Categories API Error:", err);
+      setCategories([]);
     }
   };
 
-  // ================= GRID API (FIXED) =================
+  // ================= GRID =================
   const fetchData = async () => {
     try {
-      // 🔥 FIXED ROUTE (remove /list)
-      const res = await api.get("/lineout");
-
-      console.log("GRID DATA:", res.data);
-
-      if (res.data?.status) {
-        setList(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setList(res.data);
-      } else {
-        setList([]);
-      }
+      const res = await api.get("/lineout"); // ✅ correct route
+      const data = res.data?.data || res.data || [];
+      setList(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(
-        "Grid Fetch Error:",
-        err.response?.data || err.message
-      );
+      console.error("Grid Fetch Error:", err);
+      setList([]);
     }
   };
 
-  // ================= USE EFFECTS =================
-  useEffect(() => {
-    fetchTools();
-  }, []);
-
-  useEffect(() => {
-    fetchWorkers();
-  }, []);
-
-  useEffect(() => {
-    fetchMachines();
-  }, []);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // ================= USE EFFECT =================
+  useEffect(() => { fetchTools(); }, []);
+  useEffect(() => { fetchWorkers(); }, []);
+  useEffect(() => { fetchMachines(); }, []);
+  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
@@ -497,9 +447,15 @@ function WorkOrder() {
 
     if (name === "tool_name") {
       const selectedTool = tools.find(
-        (t) => t.ToolName === value
+        (t) =>
+          t.ToolName === value ||
+          t.tool_name === value
       );
-      updatedForm.category_name = selectedTool?.CategoryName || "";
+
+      updatedForm.category_name =
+        selectedTool?.CategoryName ||
+        selectedTool?.category_name ||
+        "";
     }
 
     setForm(updatedForm);
@@ -575,11 +531,14 @@ function WorkOrder() {
             required
           >
             <option value="">Select Tool</option>
-            {tools.map((t, i) => (
-              <option key={i} value={t.ToolName}>
-                {t.ToolName}
-              </option>
-            ))}
+            {tools.map((t, i) => {
+              const name = t?.ToolName || t?.tool_name || "";
+              return (
+                <option key={i} value={name}>
+                  {name}
+                </option>
+              );
+            })}
           </select>
 
           <select
@@ -588,18 +547,21 @@ function WorkOrder() {
             onChange={handleChange}
           >
             <option value="">Select Category</option>
-            {categories.map((c, i) => (
-              <option key={i} value={c.CategoryName}>
-                {c.CategoryName}
-              </option>
-            ))}
+            {categories.map((c, i) => {
+              const name = c?.CategoryName || c?.category_name || "";
+              return (
+                <option key={i} value={name}>
+                  {name}
+                </option>
+              );
+            })}
           </select>
 
           <input
             name="tool_qty"
-            placeholder="Tool Qty"
             type="number"
             min="1"
+            placeholder="Tool Qty"
             value={form.tool_qty}
             onChange={handleChange}
             required
@@ -611,11 +573,14 @@ function WorkOrder() {
             onChange={handleChange}
           >
             <option value="">Select Machine</option>
-            {machines.map((m, i) => (
-              <option key={i} value={m.MachineName}>
-                {m.MachineName}
-              </option>
-            ))}
+            {machines.map((m, i) => {
+              const name = m?.MachineName || m?.machine_name || "";
+              return (
+                <option key={i} value={name}>
+                  {name}
+                </option>
+              );
+            })}
           </select>
 
           <select
@@ -624,11 +589,14 @@ function WorkOrder() {
             onChange={handleChange}
           >
             <option value="">Select Worker</option>
-            {workers.map((w, i) => (
-              <option key={i} value={w.WorkerName}>
-                {w.WorkerName}
-              </option>
-            ))}
+            {workers.map((w, i) => {
+              const name = w?.WorkerName || w?.worker_name || "";
+              return (
+                <option key={i} value={name}>
+                  {name}
+                </option>
+              );
+            })}
           </select>
 
           <button type="submit">Save</button>
@@ -679,10 +647,6 @@ function WorkOrder() {
                         color: "#fff",
                         border: "none",
                         padding: "5px 10px",
-                        cursor:
-                          item.status === "Pending"
-                            ? "pointer"
-                            : "not-allowed",
                       }}
                     >
                       {item.status}
