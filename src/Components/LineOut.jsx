@@ -365,22 +365,20 @@ function WorkOrder() {
   const [machineName, setMachineName] = useState("");
   const [workerName, setWorkerName] = useState("");
 
-  // ================= DROPDOWN OPTIONS =================
+  // ================= DROPDOWNS =================
   const [toolOptions, setToolOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [workerOptions, setWorkerOptions] = useState([]);
 
-  // ================= TABLE DATA =================
+  // ================= TABLE =================
   const [list, setList] = useState([]);
 
-  // ================= FETCH DATA =================
+  // ================= FETCH =================
 
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      console.log("TOOLS:", res.data);
-
       if (res.data.status === 1) {
         setToolOptions(res.data.data || []);
       }
@@ -392,8 +390,6 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      console.log("MACHINES:", res.data);
-
       if (res.data.status === 1) {
         setMachineOptions(res.data.data || []);
       }
@@ -405,8 +401,6 @@ function WorkOrder() {
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      console.log("CATEGORY:", res.data);
-
       if (res.data.status === 1) {
         setCategoryOptions(res.data.data || []);
       }
@@ -418,7 +412,6 @@ function WorkOrder() {
   const fetchWorkers = async () => {
     try {
       const res = await api.get("/activeworkers/getWorkers");
-
       if (res.data.status === 1) {
         const data = res.data.data.map(
           (w) => w.WorkerName || w.worker_name || w
@@ -430,14 +423,19 @@ function WorkOrder() {
     }
   };
 
+  // ✅ FIXED API HERE
   const fetchData = async () => {
     try {
-      const res = await api.get("/lineout");
+      const res = await api.get("/lineout/list"); // ✅ FIX
+
       if (res.data.status === 1) {
         setList(res.data.data || []);
+      } else {
+        setList([]);
       }
     } catch (err) {
       console.error("List Error:", err);
+      setList([]); // prevent crash
     }
   };
 
@@ -468,15 +466,13 @@ function WorkOrder() {
       worker_name: workerName,
     };
 
-    console.log("SUBMIT PAYLOAD:", payload);
-
     try {
       const res = await api.post("/lineout/createSingle", payload);
 
       if (res.data.status === 1) {
         alert(res.data.message || "Saved Successfully");
 
-        // CLEAR FORM
+        // CLEAR
         setWorkOrderNo("");
         setToolName("");
         setCategoryName("");
@@ -520,7 +516,7 @@ function WorkOrder() {
         <h1>Line Out Entry</h1>
       </div>
 
-      {/* ================= FORM ================= */}
+      {/* FORM */}
       <div className="cs-table-card">
         <h3>Create Work Order</h3>
 
@@ -533,75 +529,41 @@ function WorkOrder() {
             required
           />
 
-          {/* TOOL */}
-          <select
-            value={toolName}
-            onChange={(e) => setToolName(e.target.value)}
-            required
-          >
+          <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
             <option value="">Select Tool</option>
             {toolOptions.map((t, i) => {
               const name = t?.ToolName || t?.tool_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
+              return <option key={i} value={name}>{name}</option>;
             })}
           </select>
 
-          {/* CATEGORY */}
-          <select
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-          >
+          <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)}>
             <option value="">Select Category</option>
             {categoryOptions.map((c, i) => {
               const name = c?.CategoryName || c?.category_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
+              return <option key={i} value={name}>{name}</option>;
             })}
           </select>
 
-          {/* TOOL QTY */}
           <input
             type="number"
-            min="1"
             placeholder="Tool Qty"
             value={toolQty}
             onChange={(e) => setToolQty(e.target.value)}
-            required
           />
 
-          {/* MACHINE */}
-          <select
-            value={machineName}
-            onChange={(e) => setMachineName(e.target.value)}
-          >
+          <select value={machineName} onChange={(e) => setMachineName(e.target.value)}>
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => {
               const name = m?.MachineName || m?.machine_name || "";
-              return (
-                <option key={i} value={name}>
-                  {name}
-                </option>
-              );
+              return <option key={i} value={name}>{name}</option>;
             })}
           </select>
 
-          {/* WORKER */}
-          <select
-            value={workerName}
-            onChange={(e) => setWorkerName(e.target.value)}
-          >
+          <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
-              <option key={i} value={w}>
-                {w}
-              </option>
+              <option key={i} value={w}>{w}</option>
             ))}
           </select>
 
@@ -609,7 +571,7 @@ function WorkOrder() {
         </form>
       </div>
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       <div className="cs-table-card">
         <h3>Work Order List</h3>
 
@@ -628,9 +590,7 @@ function WorkOrder() {
 
           <tbody>
             {list.length === 0 ? (
-              <tr>
-                <td colSpan="7">No Data</td>
-              </tr>
+              <tr><td colSpan="7">No Data</td></tr>
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
@@ -642,19 +602,8 @@ function WorkOrder() {
                   <td>{item.worker_name}</td>
                   <td>
                     <button
-                      onClick={() =>
-                        handleComplete(item.work_order_no)
-                      }
+                      onClick={() => handleComplete(item.work_order_no)}
                       disabled={item.status === "Completed"}
-                      style={{
-                        background:
-                          item.status === "Pending"
-                            ? "orange"
-                            : "green",
-                        color: "#fff",
-                        border: "none",
-                        padding: "5px 10px",
-                      }}
                     >
                       {item.status}
                     </button>
