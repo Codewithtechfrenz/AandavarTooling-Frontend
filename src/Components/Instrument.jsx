@@ -411,12 +411,12 @@ function InstrumentMaster() {
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    const img = new Image();
-    img.src = logo;
+    // const img = new Image();
+    // img.src = logo;
 
-    img.onload = () => {
-      // LOGO
-      doc.addImage(img, "PNG", 14, 10, 30, 15);
+    // img.onload = () => {
+    //   // LOGO
+    //   doc.addImage(img, "PNG", 14, 10, 30, 15);
 
       // HEADER
       doc.setFontSize(16);
