@@ -323,6 +323,7 @@ function WorkOrder() {
   const [workDate, setWorkDate] = useState("");
   const [machineName, setMachineName] = useState("");
   const [workerName, setWorkerName] = useState("");
+  const [editId, setEditId] = useState(null);
 
   const [tools, setTools] = useState([
     { tool_name: "", category_name: "", tool_qty: "" }
@@ -344,57 +345,32 @@ function WorkOrder() {
   }, []);
 
   const fetchTools = async () => {
-    try {
-      const res = await api.get("/workorder/activetool");
-      setToolOptions(res.data.data || []);
-    } catch {
-      setToolOptions([]);
-    }
+    const res = await api.get("/workorder/activetool");
+    setToolOptions(res.data.data || []);
   };
 
   const fetchMachines = async () => {
-    try {
-      const res = await api.get("/workorder/activemachine");
-      setMachineOptions(res.data.data || []);
-    } catch {
-      setMachineOptions([]);
-    }
+    const res = await api.get("/workorder/activemachine");
+    setMachineOptions(res.data.data || []);
   };
 
   const fetchCategories = async () => {
-    try {
-      const res = await api.get("/workorder/activeCategorie");
-      setCategoryOptions(res.data.data || []);
-    } catch {
-      setCategoryOptions([]);
-    }
+    const res = await api.get("/workorder/activeCategorie");
+    setCategoryOptions(res.data.data || []);
   };
 
   const fetchWorkers = async () => {
-    try {
-      const res = await api.get("/activeworkers/getWorkers");
-      setWorkerOptions(
-        res.data.data.map(w => w.WorkerName || w.worker_name) || []
-      );
-    } catch {
-      setWorkerOptions([]);
-    }
+    const res = await api.get("/activeworkers/getWorkers");
+    setWorkerOptions(res.data.data.map(w => w.WorkerName || w.worker_name) || []);
   };
 
   const fetchList = async () => {
-    try {
-      const res = await api.get("/workorder/getlist");
-      setList(res.data.data || []);
-    } catch {
-      setList([]);
-    }
+    const res = await api.get("/workorder/getlist");
+    setList(res.data.data || []);
   };
 
   const addToolRow = () => {
-    setTools([
-      ...tools,
-      { tool_name: "", category_name: "", tool_qty: "" }
-    ]);
+    setTools([...tools, { tool_name: "", category_name: "", tool_qty: "" }]);
   };
 
   const removeToolRow = (index) => {
@@ -407,6 +383,29 @@ function WorkOrder() {
     setTools(updated);
   };
 
+  // ✅ EDIT
+  const handleEdit = (item) => {
+    setEditId(item.id);
+    setWorkDate(item.work_date);
+    setMachineName(item.machine_name);
+    setWorkerName(item.worker_name);
+
+    setTools([{
+      tool_name: item.tool_name,
+      category_name: item.category_name,
+      tool_qty: item.tool_qty
+    }]);
+  };
+
+  // ✅ DELETE
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this record?")) return;
+
+    await api.post("/workorder/deleteworkorder", { id });
+    fetchList();
+  };
+
+  // ✅ SUBMIT (CREATE + UPDATE)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -415,57 +414,46 @@ function WorkOrder() {
       return;
     }
 
-    // Only take filled rows
     const filledTools = tools.filter(
       t => t.tool_name && t.category_name && t.tool_qty
     );
 
     if (filledTools.length === 0) {
-      alert("Please add at least one tool with name, category, and quantity");
+      alert("At least one tool required");
       return;
     }
 
     try {
-      const res = await api.post("/workorder/createworkorder", {
-        work_date: workDate,
-        machine_name: machineName,
-        worker_name: workerName,
-        tools: filledTools
-      });
+      let res;
 
-      if (res.data.status === 1) {
-        alert(res.data.message);
-
-        // reset form
-        setWorkDate("");
-        setMachineName("");
-        setWorkerName("");
-        setTools([{ tool_name: "", category_name: "", tool_qty: "" }]);
-
-        fetchList();
+      if (editId) {
+        res = await api.post("/workorder/updateworkorder", {
+          id: editId,
+          ...filledTools[0]
+        });
+        setEditId(null);
       } else {
-        alert(res.data.message);
+        res = await api.post("/workorder/createworkorder", {
+          work_date: workDate,
+          machine_name: machineName,
+          worker_name: workerName,
+          tools: filledTools
+        });
       }
+
+      alert(res.data.message);
+
+      // reset
+      setWorkDate("");
+      setMachineName("");
+      setWorkerName("");
+      setTools([{ tool_name: "", category_name: "", tool_qty: "" }]);
+
+      fetchList();
+
     } catch (err) {
       console.error(err);
       alert("Error saving");
-    }
-  };
-
-  const handleComplete = async (date) => {
-    if (!window.confirm("Mark as Completed?")) return;
-
-    try {
-      const res = await api.put("/workorder/completeworkorder", {
-        work_date: date
-      });
-
-      if (res.data.status === 1) {
-        alert(res.data.message);
-        fetchList();
-      }
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -480,10 +468,10 @@ function WorkOrder() {
 
       {/* FORM */}
       <div className="cs-table-card">
-        <h3>Create Work Entry</h3>
+        <h3>{editId ? "Update Work Entry" : "Create Work Entry"}</h3>
 
         <form onSubmit={handleSubmit} className="cs-form">
-          {/* Required fields */}
+
           <input
             type="date"
             value={workDate}
@@ -491,11 +479,7 @@ function WorkOrder() {
             required
           />
 
-          <select
-            value={machineName}
-            onChange={(e) => setMachineName(e.target.value)}
-            required
-          >
+          <select value={machineName} onChange={(e) => setMachineName(e.target.value)} required>
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => (
               <option key={i} value={m.MachineName || m}>
@@ -504,32 +488,18 @@ function WorkOrder() {
             ))}
           </select>
 
-          <select
-            value={workerName}
-            onChange={(e) => setWorkerName(e.target.value)}
-            required
-          >
+          <select value={workerName} onChange={(e) => setWorkerName(e.target.value)} required>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
-              <option key={i} value={w}>
-                {w}
-              </option>
+              <option key={i} value={w}>{w}</option>
             ))}
           </select>
 
-          {/* TOOL ROWS */}
           {tools.map((tool, index) => (
-            <div
-              key={index}
-              className="cs-form"
-              style={{ marginBottom: "10px" }}
-            >
-              <select
-                value={tool.tool_name}
-                onChange={(e) =>
-                  handleToolChange(index, "tool_name", e.target.value)
-                }
-              >
+            <div key={index} className="cs-form">
+
+              <select value={tool.tool_name}
+                onChange={(e) => handleToolChange(index, "tool_name", e.target.value)}>
                 <option value="">Select Tool</option>
                 {toolOptions.map((t, i) => (
                   <option key={i} value={t.ToolName || t}>
@@ -538,12 +508,8 @@ function WorkOrder() {
                 ))}
               </select>
 
-              <select
-                value={tool.category_name}
-                onChange={(e) =>
-                  handleToolChange(index, "category_name", e.target.value)
-                }
-              >
+              <select value={tool.category_name}
+                onChange={(e) => handleToolChange(index, "category_name", e.target.value)}>
                 <option value="">Select Category</option>
                 {categoryOptions.map((c, i) => (
                   <option key={i} value={c.CategoryName || c}>
@@ -554,30 +520,19 @@ function WorkOrder() {
 
               <input
                 type="number"
-                min="1"
                 placeholder="Qty"
                 value={tool.tool_qty}
-                onChange={(e) =>
-                  handleToolChange(index, "tool_qty", e.target.value)
-                }
+                onChange={(e) => handleToolChange(index, "tool_qty", e.target.value)}
               />
 
               {tools.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeToolRow(index)}
-                >
-                  ❌
-                </button>
+                <button type="button" onClick={() => removeToolRow(index)}>❌</button>
               )}
             </div>
           ))}
 
-          <button type="button" onClick={addToolRow}>
-            ➕ Add Tool
-          </button>
-
-          <button type="submit">Save</button>
+          <button type="button" onClick={addToolRow}>➕ Add Tool</button>
+          <button type="submit">{editId ? "Update" : "Save"}</button>
         </form>
       </div>
 
@@ -594,15 +549,13 @@ function WorkOrder() {
               <th>Qty</th>
               <th>Machine</th>
               <th>Worker</th>
-              <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
             {list.length === 0 ? (
-              <tr>
-                <td colSpan="7">No Data</td>
-              </tr>
+              <tr><td colSpan="7">No Data</td></tr>
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
@@ -613,19 +566,14 @@ function WorkOrder() {
                   <td>{item.machine_name}</td>
                   <td>{item.worker_name}</td>
                   <td>
-                    <button
-                      onClick={() =>
-                        handleComplete(item.work_date)
-                      }
-                      disabled={item.status === "Completed"}
-                    >
-                      {item.status}
-                    </button>
+                    <button onClick={() => handleEdit(item)}>✏️</button>
+                    <button onClick={() => handleDelete(item.id)}>🗑️</button>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
+
         </table>
       </div>
     </div>
