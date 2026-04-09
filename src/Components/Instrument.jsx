@@ -249,7 +249,7 @@ function InstrumentMaster() {
           </div>
 
           <div className="form-group">
-            <label>Min-Stock</label>
+            <label>Available Stock</label>
             <input
               type="number"
               value={minStock}
