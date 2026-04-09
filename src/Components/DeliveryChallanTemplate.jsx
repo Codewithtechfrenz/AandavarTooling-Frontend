@@ -123,7 +123,12 @@ function DeliveryChallanTemplate({ challanData }) {
 
           <div>
             <p>Delivery challan No: {challanData?.orderNo || "NA"}</p>
-            <p>Date: {challanData?.date || new Date().toLocaleDateString()}</p>
+            <p>
+                  Date:{" "}
+                  {challanData?.date
+                  ? new Date(challanData.date).toLocaleDateString("en-GB")
+                  : new Date().toLocaleDateString("en-GB")}
+                  </p>
             <p>Vehicle No:               </p>
           </div>
         </div>
