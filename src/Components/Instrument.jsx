@@ -343,7 +343,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 // ✅ LOGO
-import logo from "../assets/AandavarLogo2.png";
+import logo from "../assets/aandavartooling1.png";
 
 function InstrumentMaster() {
   const [instrumentName, setInstrumentName] = useState("");
