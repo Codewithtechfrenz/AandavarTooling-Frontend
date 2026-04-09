@@ -130,7 +130,7 @@ const Sidebar = ({ collapsed }) => {
           onClick={() => navigate("/dashboard/returns")}
         >
           <i className="fa fa-undo"></i>
-          {!collapsed && <span>Line Return</span>}
+          {!collapsed && <span>Line Out History</span>}
         </div>
 
         <div
