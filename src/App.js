@@ -23,6 +23,7 @@ import Returndeliverychallan from "./Components/Returndeliverychallan";
 import Toolstack from "./Components/Toolstack";
 import InvoiceHistory from "./Components/InvoiceHistory";
 import InvoiceTemplate from "./Components/InvoiceTemplate";
+import InstrumentMaster from "./Components/Instrument";
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
         <Route path="/dashboard/Returndeliverychallan" element={<Returndeliverychallan />} />
         <Route path="/dashboard/Toolstack" element={<Toolstack />} />
         <Route path="/dashboard/InvoiceHistory" element={<InvoiceHistory />} />
+        <Route path="/dashboard/InstrumentMaster" element={<InstrumentMaster />} />
 
         {/* FIXED ROUTE */}
         <Route path="/dashboard/invoice/:invoiceNo" element={<InvoiceTemplate />} />

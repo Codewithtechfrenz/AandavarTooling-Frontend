@@ -57,6 +57,19 @@ const Sidebar = ({ collapsed }) => {
         </div>
 
 
+<div
+          className={`menu-item ${isActive("/dashboard/InstrumentMaster") ? "active" : ""}`}
+          onClick={() => navigate("/dashboard/InstrumentMaster")}
+        >
+          <i className="fa fa-box"></i>
+          {!collapsed && <span>Instrument Master</span>}
+        </div>
+
+
+
+
+
+
 
 
         <div
