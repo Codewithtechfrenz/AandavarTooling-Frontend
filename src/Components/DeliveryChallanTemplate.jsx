@@ -76,7 +76,7 @@
 
 
 import React from "react";
-import logo from "../Assets/AandavarLogo1.png";
+import logo from "../Assets/AandavarLogo2.png";
 import "../CSS/deliveryTemplate.css";
 
 function DeliveryChallanTemplate({ challanData }) {
