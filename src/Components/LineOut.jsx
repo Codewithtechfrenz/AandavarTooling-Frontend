@@ -312,7 +312,6 @@
 
 // export default WorkOrder;
 
-
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
@@ -323,12 +322,10 @@ function WorkOrder() {
   const [workDate, setWorkDate] = useState("");
   const [machineName, setMachineName] = useState("");
   const [workerName, setWorkerName] = useState("");
+  const [toolName, setToolName] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [toolQty, setToolQty] = useState("");
   const [editId, setEditId] = useState(null);
-  
-
-  const [tools, setTools] = useState([
-    { tool_name: "", category_name: "", tool_qty: "" }
-  ]);
 
   const [toolOptions, setToolOptions] = useState([]);
   const [machineOptions, setMachineOptions] = useState([]);
@@ -362,26 +359,14 @@ function WorkOrder() {
 
   const fetchWorkers = async () => {
     const res = await api.get("/activeworkers/getWorkers");
-    setWorkerOptions(res.data.data.map(w => w.WorkerName || w.worker_name) || []);
+    setWorkerOptions(
+      res.data.data.map((w) => w.WorkerName || w.worker_name) || []
+    );
   };
 
   const fetchList = async () => {
     const res = await api.get("/workorder/getlist");
     setList(res.data.data || []);
-  };
-
-  const addToolRow = () => {
-    setTools([...tools, { tool_name: "", category_name: "", tool_qty: "" }]);
-  };
-
-  const removeToolRow = (index) => {
-    setTools(tools.filter((_, i) => i !== index));
-  };
-
-  const handleToolChange = (index, field, value) => {
-    const updated = [...tools];
-    updated[index][field] = value;
-    setTools(updated);
   };
 
   // ✅ EDIT
@@ -390,12 +375,9 @@ function WorkOrder() {
     setWorkDate(item.work_date);
     setMachineName(item.machine_name);
     setWorkerName(item.worker_name);
-
-    setTools([{
-      tool_name: item.tool_name,
-      category_name: item.category_name,
-      tool_qty: item.tool_qty
-    }]);
+    setToolName(item.tool_name);
+    setCategoryName(item.category_name);
+    setToolQty(item.tool_qty);
   };
 
   // ✅ DELETE
@@ -415,12 +397,8 @@ function WorkOrder() {
       return;
     }
 
-    const filledTools = tools.filter(
-      t => t.tool_name && t.category_name && t.tool_qty
-    );
-
-    if (filledTools.length === 0) {
-      alert("At least one tool required");
+    if (!toolName || !categoryName || !toolQty) {
+      alert("Please fill all tool details");
       return;
     }
 
@@ -430,7 +408,12 @@ function WorkOrder() {
       if (editId) {
         res = await api.post("/workorder/updateworkorder", {
           id: editId,
-          ...filledTools[0]
+          work_date: workDate,
+          machine_name: machineName,
+          worker_name: workerName,
+          tool_name: toolName,
+          category_name: categoryName,
+          tool_qty: toolQty,
         });
         setEditId(null);
       } else {
@@ -438,20 +421,23 @@ function WorkOrder() {
           work_date: workDate,
           machine_name: machineName,
           worker_name: workerName,
-          tools: filledTools
+          tool_name: toolName,
+          category_name: categoryName,
+          tool_qty: toolQty,
         });
       }
 
       alert(res.data.message);
 
-      // reset
+      // reset form
       setWorkDate("");
       setMachineName("");
       setWorkerName("");
-      setTools([{ tool_name: "", category_name: "", tool_qty: "" }]);
+      setToolName("");
+      setCategoryName("");
+      setToolQty("");
 
       fetchList();
-
     } catch (err) {
       console.error(err);
       alert("Error saving");
@@ -472,7 +458,6 @@ function WorkOrder() {
         <h3>{editId ? "Update Work Entry" : "Create Work Entry"}</h3>
 
         <form onSubmit={handleSubmit} className="cs-form">
-
           <input
             type="date"
             value={workDate}
@@ -480,7 +465,11 @@ function WorkOrder() {
             required
           />
 
-          <select value={machineName} onChange={(e) => setMachineName(e.target.value)} required>
+          <select
+            value={machineName}
+            onChange={(e) => setMachineName(e.target.value)}
+            required
+          >
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => (
               <option key={i} value={m.MachineName || m}>
@@ -489,50 +478,51 @@ function WorkOrder() {
             ))}
           </select>
 
-          <select value={workerName} onChange={(e) => setWorkerName(e.target.value)} required>
+          <select
+            value={workerName}
+            onChange={(e) => setWorkerName(e.target.value)}
+            required
+          >
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
-              <option key={i} value={w}>{w}</option>
+              <option key={i} value={w}>
+                {w}
+              </option>
             ))}
           </select>
 
-          {tools.map((tool, index) => (
-            <div key={index} className="cs-form">
+          {/* TOOL SECTION */}
+          <select
+            value={toolName}
+            onChange={(e) => setToolName(e.target.value)}
+          >
+            <option value="">Select Tool</option>
+            {toolOptions.map((t, i) => (
+              <option key={i} value={t.ToolName || t}>
+                {t.ToolName || t}
+              </option>
+            ))}
+          </select>
 
-              <select value={tool.tool_name}
-                onChange={(e) => handleToolChange(index, "tool_name", e.target.value)}>
-                <option value="">Select Tool</option>
-                {toolOptions.map((t, i) => (
-                  <option key={i} value={t.ToolName || t}>
-                    {t.ToolName || t}
-                  </option>
-                ))}
-              </select>
+          <select
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+          >
+            <option value="">Select Category</option>
+            {categoryOptions.map((c, i) => (
+              <option key={i} value={c.CategoryName || c}>
+                {c.CategoryName || c}
+              </option>
+            ))}
+          </select>
 
-              <select value={tool.category_name}
-                onChange={(e) => handleToolChange(index, "category_name", e.target.value)}>
-                <option value="">Select Category</option>
-                {categoryOptions.map((c, i) => (
-                  <option key={i} value={c.CategoryName || c}>
-                    {c.CategoryName || c}
-                  </option>
-                ))}
-              </select>
+          <input
+            type="number"
+            placeholder="Qty"
+            value={toolQty}
+            onChange={(e) => setToolQty(e.target.value)}
+          />
 
-              <input
-                type="number"
-                placeholder="Qty"
-                value={tool.tool_qty}
-                onChange={(e) => handleToolChange(index, "tool_qty", e.target.value)}
-              />
-
-              {tools.length > 1 && (
-                <button type="button" onClick={() => removeToolRow(index)}>❌</button>
-              )}
-            </div>
-          ))}
-
-          <button type="button" onClick={addToolRow}>➕ Add Tool</button>
           <button type="submit">{editId ? "Update" : "Save"}</button>
         </form>
       </div>
@@ -556,7 +546,9 @@ function WorkOrder() {
 
           <tbody>
             {list.length === 0 ? (
-              <tr><td colSpan="7">No Data</td></tr>
+              <tr>
+                <td colSpan="7">No Data</td>
+              </tr>
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
@@ -574,7 +566,6 @@ function WorkOrder() {
               ))
             )}
           </tbody>
-
         </table>
       </div>
     </div>
