@@ -310,6 +310,26 @@
 //   );
 // }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // export default WorkOrder;
 import React, { useState, useEffect } from "react";
 import api from "../api";
@@ -347,8 +367,7 @@ function WorkOrder() {
   const fetchTools = async () => {
     try {
       const res = await api.get("/workorder/activetool");
-      const data = res.data?.data || res.data || [];
-      setToolOptions(Array.isArray(data) ? data : []);
+      setToolOptions(res.data?.data || []);
     } catch {
       setToolOptions([]);
     }
@@ -357,8 +376,7 @@ function WorkOrder() {
   const fetchMachines = async () => {
     try {
       const res = await api.get("/workorder/activemachine");
-      const data = res.data?.data || res.data || [];
-      setMachineOptions(Array.isArray(data) ? data : []);
+      setMachineOptions(res.data?.data || []);
     } catch {
       setMachineOptions([]);
     }
@@ -367,8 +385,7 @@ function WorkOrder() {
   const fetchCategories = async () => {
     try {
       const res = await api.get("/workorder/activeCategorie");
-      const data = res.data?.data || res.data || [];
-      setCategoryOptions(Array.isArray(data) ? data : []);
+      setCategoryOptions(res.data?.data || []);
     } catch {
       setCategoryOptions([]);
     }
@@ -378,9 +395,7 @@ function WorkOrder() {
     try {
       const res = await api.get("/activeworkers/getWorkers");
       if (res.data.status === 1) {
-        const data = res.data.data.map(
-          (w) => w.WorkerName || w.worker_name || w
-        );
+        const data = res.data.data.map((w) => w.WorkerName || w.worker_name || w);
         setWorkerOptions(data);
       }
     } catch {
@@ -413,27 +428,8 @@ function WorkOrder() {
   // ================= DELETE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this record?")) return;
-
     await api.post("/workorder/deleteworkorder", { id });
     fetchData();
-  };
-
-  // ================= COMPLETE =================
-  const handleComplete = async (date) => {
-    if (!window.confirm("Mark as Completed?")) return;
-
-    try {
-      const res = await api.put("/workorder/completeworkorder", {
-        work_date: date,
-      });
-
-      if (res.data.status === 1) {
-        alert("Completed & Stock Updated");
-        fetchData();
-      }
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   // ================= SUBMIT =================
@@ -515,7 +511,11 @@ function WorkOrder() {
             required
           />
 
-          <select value={machineName} onChange={(e) => setMachineName(e.target.value)}>
+          <select
+            value={machineName}
+            onChange={(e) => setMachineName(e.target.value)}
+            required
+          >
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => {
               const name = m?.MachineName || m?.machine_name || m;
@@ -523,14 +523,22 @@ function WorkOrder() {
             })}
           </select>
 
-          <select value={workerName} onChange={(e) => setWorkerName(e.target.value)}>
+          <select
+            value={workerName}
+            onChange={(e) => setWorkerName(e.target.value)}
+            required
+          >
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
               <option key={i} value={w}>{w}</option>
             ))}
           </select>
 
-          <select value={toolName} onChange={(e) => setToolName(e.target.value)}>
+          <select
+            value={toolName}
+            onChange={(e) => setToolName(e.target.value)}
+            required
+          >
             <option value="">Select Tool</option>
             {toolOptions.map((t, i) => {
               const name = t?.ToolName || t?.tool_name || t;
@@ -538,7 +546,11 @@ function WorkOrder() {
             })}
           </select>
 
-          <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)}>
+          <select
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            required
+          >
             <option value="">Select Category</option>
             {categoryOptions.map((c, i) => {
               const name = c?.CategoryName || c?.category_name || c;
@@ -552,6 +564,7 @@ function WorkOrder() {
             placeholder="Qty"
             value={toolQty}
             onChange={(e) => setToolQty(e.target.value)}
+            required
           />
 
           <button type="submit">{editId ? "Update" : "Save"}</button>
@@ -571,14 +584,13 @@ function WorkOrder() {
               <th>Qty</th>
               <th>Machine</th>
               <th>Worker</th>
-              <th>Status</th>
               <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
             {list.length === 0 ? (
-              <tr><td colSpan="8">No Data</td></tr>
+              <tr><td colSpan="7">No Data</td></tr>
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
@@ -588,16 +600,6 @@ function WorkOrder() {
                   <td>{item.tool_qty}</td>
                   <td>{item.machine_name}</td>
                   <td>{item.worker_name}</td>
-
-                  <td>
-                    <button
-                      onClick={() => handleComplete(item.work_date)}
-                      disabled={item.status === "Completed"}
-                    >
-                      {item.status || "Pending"}
-                    </button>
-                  </td>
-
                   <td>
                     <button onClick={() => handleEdit(item)}>✏️</button>
                     <button onClick={() => handleDelete(item.id)}>🗑️</button>
