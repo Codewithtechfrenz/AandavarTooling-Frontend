@@ -330,7 +330,15 @@
 
 
 
-// export default WorkOrder;
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
@@ -354,6 +362,22 @@ function WorkOrder() {
   const [workerOptions, setWorkerOptions] = useState([]);
 
   const [list, setList] = useState([]);
+
+  /* ✅ DATE FORMAT FIX */
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "-";
+
+    const str = String(dateValue);
+
+    if (str.includes("T")) {
+      return str.split("T")[0];
+    }
+
+    const date = new Date(str);
+    if (isNaN(date)) return "-";
+
+    return date.toISOString().split("T")[0];
+  };
 
   // ================= LOAD =================
   useEffect(() => {
@@ -417,7 +441,7 @@ function WorkOrder() {
   // ================= EDIT =================
   const handleEdit = (item) => {
     setEditId(item.id);
-    setWorkDate(item.work_date);
+    setWorkDate(formatDate(item.work_date)); // ✅ FIX
     setMachineName(item.machine_name);
     setWorkerName(item.worker_name);
     setToolName(item.tool_name);
@@ -471,7 +495,6 @@ function WorkOrder() {
       if (res.data.status === 1) {
         alert(res.data.message || "Saved Successfully");
 
-        // reset
         setWorkDate("");
         setMachineName("");
         setWorkerName("");
@@ -499,7 +522,6 @@ function WorkOrder() {
         <h1>Line Out Entry</h1>
       </div>
 
-      {/* FORM */}
       <div className="cs-table-card">
         <h3>{editId ? "Update Work Entry" : "Create Work Entry"}</h3>
 
@@ -511,11 +533,7 @@ function WorkOrder() {
             required
           />
 
-          <select
-            value={machineName}
-            onChange={(e) => setMachineName(e.target.value)}
-            required
-          >
+          <select value={machineName} onChange={(e) => setMachineName(e.target.value)} required>
             <option value="">Select Machine</option>
             {machineOptions.map((m, i) => {
               const name = m?.MachineName || m?.machine_name || m;
@@ -523,22 +541,14 @@ function WorkOrder() {
             })}
           </select>
 
-          <select
-            value={workerName}
-            onChange={(e) => setWorkerName(e.target.value)}
-            required
-          >
+          <select value={workerName} onChange={(e) => setWorkerName(e.target.value)} required>
             <option value="">Select Worker</option>
             {workerOptions.map((w, i) => (
               <option key={i} value={w}>{w}</option>
             ))}
           </select>
 
-          <select
-            value={toolName}
-            onChange={(e) => setToolName(e.target.value)}
-            required
-          >
+          <select value={toolName} onChange={(e) => setToolName(e.target.value)} required>
             <option value="">Select Tool</option>
             {toolOptions.map((t, i) => {
               const name = t?.ToolName || t?.tool_name || t;
@@ -546,11 +556,7 @@ function WorkOrder() {
             })}
           </select>
 
-          <select
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            required
-          >
+          <select value={categoryName} onChange={(e) => setCategoryName(e.target.value)} required>
             <option value="">Select Category</option>
             {categoryOptions.map((c, i) => {
               const name = c?.CategoryName || c?.category_name || c;
@@ -571,7 +577,6 @@ function WorkOrder() {
         </form>
       </div>
 
-      {/* TABLE */}
       <div className="cs-table-card">
         <h3>Work Entry List</h3>
 
@@ -594,7 +599,7 @@ function WorkOrder() {
             ) : (
               list.map((item, i) => (
                 <tr key={i}>
-                  <td>{item.work_date}</td>
+                  <td>{formatDate(item.work_date)}</td> {/* ✅ FIX */}
                   <td>{item.tool_name}</td>
                   <td>{item.category_name}</td>
                   <td>{item.tool_qty}</td>
