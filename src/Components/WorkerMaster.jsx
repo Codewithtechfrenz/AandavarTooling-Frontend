@@ -278,8 +278,6 @@
 // }
 
 // export default WorkerMaster;
-
-
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Sidebar from "../Components/Sidebar";
@@ -297,27 +295,20 @@ function WorkerMaster() {
   const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  /* ✅ UPDATED DATE FORMAT FUNCTION */
+  /* ✅ FIXED DATE FORMAT */
   const formatDate = (dateValue) => {
     if (!dateValue) return "-";
 
-    try {
-      // Handle ISO string directly
-      if (typeof dateValue === "string" && dateValue.includes("T")) {
-        return dateValue.split("T")[0];
-      }
+    const str = String(dateValue);
 
-      const date = new Date(dateValue);
-      if (isNaN(date)) return "-";
-
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-
-      return `${year}-${month}-${day}`;
-    } catch {
-      return "-";
+    if (str.includes("T")) {
+      return str.split("T")[0];
     }
+
+    const date = new Date(str);
+    if (isNaN(date)) return "-";
+
+    return date.toISOString().split("T")[0];
   };
 
   /* ================= FETCH WORKERS ================= */
@@ -332,10 +323,10 @@ function WorkerMaster() {
         workerCode: item.WorkerCode,
         workerName: item.WorkerName,
         workerDepartment: item.WorkerDepartment,
-        joiningDate: formatDate(item.WorkerJoiningDate),
+        joiningDate: item.WorkerJoiningDate, // store raw
         salary: item.salary ?? 0,
-        created: formatDate(item.created_at || item.CreatedAt || item.createdAt),
-        updated: formatDate(item.updated_at || item.UpdatedAt || item.updatedAt),
+        created: item.created_at || item.CreatedAt || item.createdAt,
+        updated: item.updated_at || item.UpdatedAt || item.updatedAt,
       }));
 
       setWorkerList([...formattedData]);
@@ -416,7 +407,7 @@ function WorkerMaster() {
     setWorkerCode(item.workerCode);
     setWorkerName(item.workerName);
     setWorkerDepartment(item.workerDepartment);
-    setJoiningDate(item.joiningDate);
+    setJoiningDate(formatDate(item.joiningDate));
     setSalary(item.salary ?? 0);
     setEditIndex(index);
   };
@@ -550,7 +541,7 @@ function WorkerMaster() {
                   <td>{item.workerCode}</td>
                   <td>{item.workerName}</td>
                   <td>{item.workerDepartment}</td>
-                  <td>{item.joiningDate}</td>
+                  <td>{formatDate(item.joiningDate)}</td>
                   <td>{item.salary ?? 0}</td>
                   <td>
                     <button onClick={() => handleEdit(index)}>
@@ -560,8 +551,8 @@ function WorkerMaster() {
                       <i className="fa fa-trash"></i>
                     </button>
                   </td>
-                  <td>{item.created}</td>
-                  <td>{item.updated}</td>
+                  <td>{formatDate(item.created)}</td>
+                  <td>{formatDate(item.updated)}</td>
                 </tr>
               ))
             )}
