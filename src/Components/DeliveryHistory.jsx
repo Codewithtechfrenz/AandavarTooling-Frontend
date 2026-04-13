@@ -19,6 +19,22 @@ function DeliveryHistory() {
     fetchHistory();
   }, []);
 
+  /* ✅ DATE FORMAT FUNCTION */
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "-";
+
+    const str = String(dateValue);
+
+    if (str.includes("T")) {
+      return str.split("T")[0];
+    }
+
+    const date = new Date(str);
+    if (isNaN(date)) return "-";
+
+    return date.toISOString().split("T")[0];
+  };
+
   const fetchHistory = async () => {
     try {
       const res = await api.get("/delivery/getDeliveryChallanHistory");
@@ -28,7 +44,7 @@ function DeliveryHistory() {
     }
   };
 
-  // ✅ VIEW FUNCTION
+  /* ================= VIEW ================= */
   const viewChallan = async (challanNo) => {
     try {
       const res = await api.get(`/delivery/getChallanByNumber/${challanNo}`);
@@ -40,7 +56,7 @@ function DeliveryHistory() {
           recipientName: data[0]?.customer_name,
           recipientAddress: data[0]?.address || "",
           orderNo: challanNo,
-          date: data[0]?.created_date,
+          date: formatDate(data[0]?.created_date), // ✅ formatted
           items: data.map((item) => ({
             name: item.product_name,
             quantity: item.quantity,
@@ -54,19 +70,19 @@ function DeliveryHistory() {
     }
   };
 
-  // ✅ DELETE FUNCTION
+  /* ================= DELETE ================= */
   const deleteChallan = async (challanNo) => {
     if (!window.confirm("Are you sure you want to delete this challan?")) return;
 
     try {
       const res = await api.post("/delivery/deleteChallan", {
-        challan_no: challanNo
+        challan_no: challanNo,
       });
 
       if (res.data.status) {
         alert("Challan deleted successfully");
-        fetchHistory(); // refresh table
-        setSelectedChallan(null); // close preview
+        fetchHistory();
+        setSelectedChallan(null);
       } else {
         alert(res.data.message);
       }
@@ -76,12 +92,9 @@ function DeliveryHistory() {
     }
   };
 
-  // ✅ DOWNLOAD PDF
+  /* ================= DOWNLOAD PDF ================= */
   const downloadPDF = () => {
-    if (!printRef.current) {
-      alert("Nothing to download");
-      return;
-    }
+    if (!printRef.current) return alert("Nothing to download");
 
     const opt = {
       margin: 10,
@@ -94,19 +107,15 @@ function DeliveryHistory() {
     html2pdf().set(opt).from(printRef.current).save();
   };
 
-  // ✅ PRINT
+  /* ================= PRINT ================= */
   const handlePrint = () => {
     const content = printRef.current.innerHTML;
     const newWindow = window.open("", "", "width=900,height=700");
 
     newWindow.document.write(`
       <html>
-        <head>
-          <title>Challan</title>
-        </head>
-        <body>
-          ${content}
-        </body>
+        <head><title>Challan</title></head>
+        <body>${content}</body>
       </html>
     `);
 
@@ -114,7 +123,7 @@ function DeliveryHistory() {
     newWindow.print();
   };
 
-  // ✅ SEARCH FILTER
+  /* ================= SEARCH ================= */
   const filteredHistory = historyList.filter((item) => {
     const search = searchTerm.toLowerCase();
 
@@ -137,7 +146,7 @@ function DeliveryHistory() {
       </div>
 
       <div className="sales-table-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <h2>History</h2>
 
           <input
@@ -145,19 +154,14 @@ function DeliveryHistory() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-              width: "300px"
-            }}
+            style={{ padding: "10px", width: "300px" }}
           />
         </div>
 
         <table className="sales-table">
           <thead>
             <tr>
-              <th>Challan No</th>
+              <th>SL No</th> {/* ✅ CHANGED */}
               <th>Customer</th>
               <th>Date</th>
               <th>Total Items</th>
@@ -174,9 +178,9 @@ function DeliveryHistory() {
             ) : (
               filteredHistory.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.DeliveryChallanNo}</td>
+                  <td>{index + 1}</td> {/* ✅ SERIAL NUMBER */}
                   <td>{item.customer_name}</td>
-                  <td>{item.created_date}</td>
+                  <td>{formatDate(item.created_date)}</td> {/* ✅ FORMAT */}
                   <td>{item.total_items}</td>
                   <td>{item.total_quantity}</td>
 
@@ -187,11 +191,7 @@ function DeliveryHistory() {
 
                     <button
                       onClick={() => deleteChallan(item.DeliveryChallanNo)}
-                      style={{
-                        marginLeft: "10px",
-                        backgroundColor: "red",
-                        color: "#fff"
-                      }}
+                      style={{ marginLeft: "10px", backgroundColor: "red", color: "#fff" }}
                     >
                       Delete
                     </button>
@@ -203,10 +203,10 @@ function DeliveryHistory() {
         </table>
       </div>
 
-      {/* ✅ PREVIEW */}
+      {/* PREVIEW */}
       {selectedChallan && (
         <div className="sales-table-card">
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
             <h2>Challan Preview</h2>
 
             <div style={{ display: "flex", gap: "10px" }}>
@@ -226,6 +226,252 @@ function DeliveryHistory() {
 }
 
 export default DeliveryHistory;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useEffect, useState, useRef } from "react";
+// import api from "../api";
+// import Sidebar from "../Components/Sidebar";
+// import Topbar from "../Components/Topbar";
+// import DeliveryChallanTemplate from "./DeliveryChallanTemplate";
+// import html2pdf from "html2pdf.js";
+
+// import "../CSS/Deliverychallan.css";
+
+// function DeliveryHistory() {
+//   const [historyList, setHistoryList] = useState([]);
+//   const [selectedChallan, setSelectedChallan] = useState(null);
+//   const [searchTerm, setSearchTerm] = useState("");
+
+//   const printRef = useRef();
+
+//   useEffect(() => {
+//     fetchHistory();
+//   }, []);
+
+//   const fetchHistory = async () => {
+//     try {
+//       const res = await api.get("/delivery/getDeliveryChallanHistory");
+//       if (res.data.status) setHistoryList(res.data.data);
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   // ✅ VIEW FUNCTION
+//   const viewChallan = async (challanNo) => {
+//     try {
+//       const res = await api.get(`/delivery/getChallanByNumber/${challanNo}`);
+
+//       if (res.data.status) {
+//         const data = res.data.data;
+
+//         const formattedData = {
+//           recipientName: data[0]?.customer_name,
+//           recipientAddress: data[0]?.address || "",
+//           orderNo: challanNo,
+//           date: data[0]?.created_date,
+//           items: data.map((item) => ({
+//             name: item.product_name,
+//             quantity: item.quantity,
+//           })),
+//         };
+
+//         setSelectedChallan(formattedData);
+//       }
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   // ✅ DELETE FUNCTION
+//   const deleteChallan = async (challanNo) => {
+//     if (!window.confirm("Are you sure you want to delete this challan?")) return;
+
+//     try {
+//       const res = await api.post("/delivery/deleteChallan", {
+//         challan_no: challanNo
+//       });
+
+//       if (res.data.status) {
+//         alert("Challan deleted successfully");
+//         fetchHistory(); // refresh table
+//         setSelectedChallan(null); // close preview
+//       } else {
+//         alert(res.data.message);
+//       }
+//     } catch (err) {
+//       console.error("Delete Error:", err);
+//       alert("Error deleting challan");
+//     }
+//   };
+
+//   // ✅ DOWNLOAD PDF
+//   const downloadPDF = () => {
+//     if (!printRef.current) {
+//       alert("Nothing to download");
+//       return;
+//     }
+
+//     const opt = {
+//       margin: 10,
+//       filename: `Challan_${selectedChallan?.orderNo || "file"}.pdf`,
+//       image: { type: "jpeg", quality: 0.98 },
+//       html2canvas: { scale: 2, useCORS: true },
+//       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+//     };
+
+//     html2pdf().set(opt).from(printRef.current).save();
+//   };
+
+//   // ✅ PRINT
+//   const handlePrint = () => {
+//     const content = printRef.current.innerHTML;
+//     const newWindow = window.open("", "", "width=900,height=700");
+
+//     newWindow.document.write(`
+//       <html>
+//         <head>
+//           <title>Challan</title>
+//         </head>
+//         <body>
+//           ${content}
+//         </body>
+//       </html>
+//     `);
+
+//     newWindow.document.close();
+//     newWindow.print();
+//   };
+
+//   // ✅ SEARCH FILTER
+//   const filteredHistory = historyList.filter((item) => {
+//     const search = searchTerm.toLowerCase();
+
+//     return (
+//       item.DeliveryChallanNo?.toLowerCase().includes(search) ||
+//       item.customer_name?.toLowerCase().includes(search) ||
+//       item.created_date?.toLowerCase().includes(search) ||
+//       item.total_items?.toString().includes(search) ||
+//       item.total_quantity?.toString().includes(search)
+//     );
+//   });
+
+//   return (
+//     <div className="sales-page">
+//       <Sidebar />
+//       <Topbar />
+
+//       <div className="sales-header">
+//         <h1>Delivery Challan History</h1>
+//       </div>
+
+//       <div className="sales-table-card">
+//         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+//           <h2>History</h2>
+
+//           <input
+//             type="text"
+//             placeholder="Search..."
+//             value={searchTerm}
+//             onChange={(e) => setSearchTerm(e.target.value)}
+//             style={{
+//               padding: "10px",
+//               borderRadius: "5px",
+//               border: "1px solid #ccc",
+//               width: "300px"
+//             }}
+//           />
+//         </div>
+
+//         <table className="sales-table">
+//           <thead>
+//             <tr>
+//               <th>Challan No</th>
+//               <th>Customer</th>
+//               <th>Date</th>
+//               <th>Total Items</th>
+//               <th>Total Quantity</th>
+//               <th>Action</th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {filteredHistory.length === 0 ? (
+//               <tr>
+//                 <td colSpan="6">No Challans Found</td>
+//               </tr>
+//             ) : (
+//               filteredHistory.map((item, index) => (
+//                 <tr key={index}>
+//                   <td>{item.DeliveryChallanNo}</td>
+//                   <td>{item.customer_name}</td>
+//                   <td>{item.created_date}</td>
+//                   <td>{item.total_items}</td>
+//                   <td>{item.total_quantity}</td>
+
+//                   <td>
+//                     <button onClick={() => viewChallan(item.DeliveryChallanNo)}>
+//                       View
+//                     </button>
+
+//                     <button
+//                       onClick={() => deleteChallan(item.DeliveryChallanNo)}
+//                       style={{
+//                         marginLeft: "10px",
+//                         backgroundColor: "red",
+//                         color: "#fff"
+//                       }}
+//                     >
+//                       Delete
+//                     </button>
+//                   </td>
+//                 </tr>
+//               ))
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       {/* ✅ PREVIEW */}
+//       {selectedChallan && (
+//         <div className="sales-table-card">
+//           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+//             <h2>Challan Preview</h2>
+
+//             <div style={{ display: "flex", gap: "10px" }}>
+//               <button onClick={downloadPDF}>Download PDF</button>
+//               <button onClick={handlePrint}>Print</button>
+//               <button onClick={() => setSelectedChallan(null)}>Close</button>
+//             </div>
+//           </div>
+
+//           <div ref={printRef}>
+//             <DeliveryChallanTemplate challanData={selectedChallan} />
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default DeliveryHistory;
 
 
 
