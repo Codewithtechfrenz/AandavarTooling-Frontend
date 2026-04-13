@@ -433,7 +433,7 @@ function InvoiceTemplate(props) {
               {new Date(invoice.Invoice_Date).toLocaleDateString()}
             </p>
             <p><b>Place:</b> Tamil Nadu</p>
-            <p><b>Vehicle No:</b></p>
+            <p><b>Vehicle No:</b> {invoice.Vehicle_No || "-"}</p>
           </div>
         </div>
 
