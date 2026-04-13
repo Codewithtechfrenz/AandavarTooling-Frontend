@@ -11,6 +11,22 @@ function InvoiceHistory() {
 
   const navigate = useNavigate();
 
+  /* ✅ DATE FORMAT FIX */
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "-";
+
+    const str = String(dateValue);
+
+    if (str.includes("T")) {
+      return str.split("T")[0];
+    }
+
+    const date = new Date(str);
+    if (isNaN(date)) return "-";
+
+    return date.toISOString().split("T")[0];
+  };
+
   /* ================= LOAD INVOICES ================= */
   useEffect(() => {
     fetchInvoices();
@@ -49,7 +65,7 @@ function InvoiceHistory() {
 
       if (res.data.status === 1) {
         alert("Invoice deleted successfully");
-        fetchInvoices(); // refresh list
+        fetchInvoices();
       } else {
         alert(res.data.message);
       }
@@ -98,14 +114,13 @@ function InvoiceHistory() {
                 invoices.map((inv) => (
                   <tr key={inv.Invoice_ID}>
                     <td>{inv.Invoice_No}</td>
-                    <td>{inv.Invoice_Date}</td>
+                    <td>{formatDate(inv.Invoice_Date)}</td> {/* ✅ FIX */}
                     <td>{inv.Customer_Name}</td>
                     <td>{inv.Customer_Phone}</td>
                     <td>{inv.Total_Amount}</td>
                     <td>{inv.Status}</td>
 
                     <td>
-                      {/* VIEW BUTTON */}
                       <button
                         className="edit-btn"
                         onClick={() => viewInvoice(inv.Invoice_No)}
@@ -113,7 +128,6 @@ function InvoiceHistory() {
                         View
                       </button>
 
-                      {/* DELETE BUTTON */}
                       <button
                         className="delete-btn"
                         onClick={() => deleteInvoice(inv.Invoice_No)}
@@ -132,7 +146,6 @@ function InvoiceHistory() {
             </tbody>
           </table>
 
-          {/* Refresh Button */}
           <div style={{ marginTop: "20px" }}>
             <button className="sales-add-btn" onClick={fetchInvoices}>
               Refresh
@@ -144,7 +157,7 @@ function InvoiceHistory() {
   );
 }
 
-export default InvoiceHistory; 
+export default InvoiceHistory;
 
 
 //import React, { useEffect, useState } from "react";
