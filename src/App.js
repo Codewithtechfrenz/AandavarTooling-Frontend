@@ -24,15 +24,15 @@ import Toolstack from "./Components/Toolstack";
 import InvoiceHistory from "./Components/InvoiceHistory";
 import InvoiceTemplate from "./Components/InvoiceTemplate";
 import InstrumentMaster from "./Components/Instrument";
-import ChangePassword from "./Components/ChangePassword";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+
         <Route path="/dashboard/*" element={<Dashboard />} />
-       <Route path="/change-password" element={<ChangePassword />} />
+
         <Route path="/dashboard/categories" element={<CategoryMaster />} />
         <Route path="/dashboard/machines" element={<MachineMaster />} />
         <Route path="/dashboard/workers" element={<WorkerMaster />} />
