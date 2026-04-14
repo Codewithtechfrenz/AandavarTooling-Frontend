@@ -271,6 +271,10 @@ const Sidebar = ({ collapsed }) => {
       navigate("/", { replace: true });
     }}
   >
+     <button onClick={() => navigate("/change-password")}>
+        Change Password
+      </button>
+      
     <i className="fa-solid fa-right-from-bracket"></i>
     {!collapsed && <span>Logout</span>}
   </div>
