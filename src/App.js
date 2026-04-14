@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Components/Login";
-import ChangePassword from "./Components/ChangePassword";
 import Dashboard from "./Components/Dashboard";
 import CategoryMaster from "./Components/CategoryMaster";
 import MachineMaster from "./Components/MachineMaster";
@@ -31,7 +30,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/dashboard/*" element={<Dashboard />} />
 
         <Route path="/dashboard/categories" element={<CategoryMaster />} />
