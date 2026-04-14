@@ -111,71 +111,71 @@
 // export default LoginPage;
 
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// import React, { useState, useEffect } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
 
-const LoginPage = () => {
-  const navigate = useNavigate();
+// const LoginPage = () => {
+//   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+//   const [username, setUsername] = useState("");
+//   const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    const isAuth = localStorage.getItem("isAuthenticated");
-    if (isAuth === "true") {
-      navigate("/dashboard");
-    }
-  }, [navigate]);
+//   useEffect(() => {
+//     const isAuth = localStorage.getItem("isAuthenticated");
+//     if (isAuth === "true") {
+//       navigate("/dashboard");
+//     }
+//   }, [navigate]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+//   const handleLogin = async (e) => {
+//     e.preventDefault();
 
-    try {
-      const res = await axios.post("/auth/login", {
-        username,
-        password
-      });
+//     try {
+//       const res = await axios.post("/auth/login", {
+//         username,
+//         password
+//       });
 
-      if (res.data.status === 1) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", username);
-        navigate("/dashboard");
-      } else {
-        alert(res.data.message);
-      }
-    } catch {
-      alert("Server error");
-    }
-  };
+//       if (res.data.status === 1) {
+//         localStorage.setItem("isAuthenticated", "true");
+//         localStorage.setItem("username", username);
+//         navigate("/dashboard");
+//       } else {
+//         alert(res.data.message);
+//       }
+//     } catch {
+//       alert("Server error");
+//     }
+//   };
 
-  return (
-    <form onSubmit={handleLogin}>
-      <h2>Login</h2>
+//   return (
+//     <form onSubmit={handleLogin}>
+//       <h2>Login</h2>
 
-      <input
-        type="text"
-        placeholder="Username"
-        onChange={(e) => setUsername(e.target.value)}
-        required
-      /><br /><br />
+//       <input
+//         type="text"
+//         placeholder="Username"
+//         onChange={(e) => setUsername(e.target.value)}
+//         required
+//       /><br /><br />
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      /><br /><br />
+//       <input
+//         type="password"
+//         placeholder="Password"
+//         onChange={(e) => setPassword(e.target.value)}
+//         required
+//       /><br /><br />
 
-      <button type="submit">Login</button>
+//       <button type="submit">Login</button>
 
-      <br /><br />
+//       <br /><br />
 
-      <button type="button" onClick={() => navigate("/change-password")}>
-        Change Password
-      </button>
-    </form>
-  );
-};
+//       <button type="button" onClick={() => navigate("/change-password")}>
+//         Change Password
+//       </button>
+//     </form>
+//   );
+// };
 
-export default LoginPage;
+// export default LoginPage;
