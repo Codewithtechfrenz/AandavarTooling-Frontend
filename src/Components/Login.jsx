@@ -20,8 +20,8 @@ const LoginPage = () => {
   const handleLogin = (event) => {
     event.preventDefault();
 
-    const validUsername = "admin";
-    const validPassword = "admin@123";
+    const validUsername = "AANDAVAR";
+    const validPassword = "SATPRABU@2350";
 
     if (!username.trim() || !password.trim()) {
       alert("Please enter Username and Password");
