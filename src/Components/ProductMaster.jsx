@@ -337,13 +337,6 @@
 
 
 
-
-
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import api from "../api";
 
@@ -371,6 +364,7 @@ function ProductMaster() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSI, setSelectedSI] = useState(null);
 
+  /* ================= FETCH PRODUCTS ================= */
   const fetchProducts = async () => {
     try {
       const res = await api.get("/items/getItems");
@@ -383,9 +377,9 @@ function ProductMaster() {
         SI: item.SI,
         productName: item.ItemName,
         code: item.ItemCode,
-        category: item.ItemCategory,
+        category: item.CategoryName,
         minStock: item.MinStock,
-        uom: item.UOM,
+        uom: item.UOMName,
         status: item.Status,
         created: item.CreatedDate
           ? new Date(item.CreatedDate).toLocaleString()
@@ -397,11 +391,12 @@ function ProductMaster() {
 
       formatted.sort((a, b) => a.SI - b.SI);
       setProductList(formatted);
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch products");
     }
   };
 
+  /* ================= FETCH DROPDOWNS ================= */
   const fetchUOMOptions = async () => {
     try {
       const res = await api.get("/activeuoms/activeUOM");
@@ -426,6 +421,7 @@ function ProductMaster() {
     fetchCategoryOptions();
   }, []);
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
     if (!productName || !code) {
       toast.warning("Enter Product Name and Code");
@@ -433,44 +429,39 @@ function ProductMaster() {
     }
 
     try {
-      if (editIndex !== null && selectedSI) {
-        const res = await api.post("/items/updateItem", {
-          SI: selectedSI,
-          ItemName: productName,
-          ItemCode: code,
-          CategoryName: category || "",
-          MinStock: Number(minStock) || 0,
-          UOMName: uom || "",
-          Status: status || "Active",
-        });
+      const payload = {
+        SI: selectedSI,
+        ItemName: productName,
+        ItemCode: code,
+        CategoryName: category || "",
+        MinStock: Number(minStock) || 0,
+        UOMName: uom || "",
+        Status: status || "Active",
+      };
 
-        if (res.data.status === 1) {
-          toast.success("Product Updated Successfully");
-          fetchProducts();
-        } else {
-          toast.error("Update Failed");
-        }
+      const endpoint =
+        editIndex !== null && selectedSI
+          ? "/items/updateItem"
+          : "/items/item";
+
+      const res = await api.post(endpoint, payload);
+
+      if (res.data.status === 1) {
+        toast.success(
+          editIndex !== null
+            ? "Product Updated Successfully"
+            : "Product Created Successfully"
+        );
       } else {
-        const res = await api.post("/items/item", {
-          ItemName: productName,
-          ItemCode: code,
-          CategoryName: category || "",
-          MinStock: Number(minStock) || 0,
-          UOMName: uom || "",
-          Status: status || "Active",
-        });
-
-        if (res.data.status === 1) {
-          toast.success("Product Created Successfully");
-          fetchProducts();
-        } else {
-          toast.error("Create Failed");
-        }
+        toast.error(res.data?.message || "Operation Failed");
       }
+
+      fetchProducts();
     } catch {
       toast.error("API Error");
     }
 
+    // Reset form
     setProductName("");
     setCode("");
     setCategory("");
@@ -481,6 +472,7 @@ function ProductMaster() {
     setSelectedSI(null);
   };
 
+  /* ================= EDIT ================= */
   const handleEdit = (index) => {
     const item = filteredData[index];
     setProductName(item.productName);
@@ -493,6 +485,7 @@ function ProductMaster() {
     setEditIndex(index);
   };
 
+  /* ================= DELETE ================= */
   const handleDelete = async (index) => {
     const item = filteredData[index];
     if (!window.confirm("Are you sure to delete?")) return;
@@ -510,6 +503,7 @@ function ProductMaster() {
     }
   };
 
+  /* ================= SEARCH ================= */
   const filteredData = productList.filter(
     (item) =>
       item.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -533,23 +527,97 @@ function ProductMaster() {
         </div>
       </div>
 
+      {/* ================= FORM ================= */}
       <div className="product-form">
         <div className="form-row">
           <div className="form-group">
             <label>Product Name</label>
-            <input value={productName} onChange={(e) => setProductName(e.target.value)} />
+            <input
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+            />
           </div>
+
           <div className="form-group">
             <label>Code</label>
             <input value={code} onChange={(e) => setCode(e.target.value)} />
           </div>
         </div>
 
+        <div className="form-row">
+          <div className="form-group">
+            <label>Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">Select Category</option>
+              {categoryOptions.map((option, i) => (
+                <option key={i} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">Select Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>UOM</label>
+            <select value={uom} onChange={(e) => setUom(e.target.value)}>
+              <option value="">Select UOM</option>
+              {uomOptions.map((option, i) => (
+                <option key={i} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Min Stock</label>
+            <input
+              type="number"
+              value={minStock}
+              onChange={(e) => setMinStock(e.target.value)}
+            />
+          </div>
+        </div>
+
         <button className="add-btn" onClick={handleSubmit}>
           {editIndex !== null ? "Update" : "Submit"}
         </button>
+
+        {/* Cancel Edit */}
+        {editIndex !== null && (
+          <button
+            className="cancel-btn"
+            onClick={() => {
+              setEditIndex(null);
+              setSelectedSI(null);
+              setProductName("");
+              setCode("");
+              setCategory("");
+              setStatus("");
+              setUom("");
+              setMinStock("");
+            }}
+          >
+            Cancel
+          </button>
+        )}
       </div>
 
+      {/* ================= SEARCH ================= */}
       <div className="product-search">
         <input
           type="text"
@@ -559,6 +627,7 @@ function ProductMaster() {
         />
       </div>
 
+      {/* ================= TABLE ================= */}
       <div className="table-card">
         <table className="product-table">
           <thead>
@@ -575,6 +644,7 @@ function ProductMaster() {
               <th>Updated</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredData.length === 0 ? (
               <tr>
@@ -583,7 +653,7 @@ function ProductMaster() {
             ) : (
               filteredData.map((item, index) => (
                 <tr key={item.id}>
-                  <td>{index + 1}</td> {/* ✅ Serial Number */}
+                  <td>{index + 1}</td>
                   <td>{item.productName}</td>
                   <td>{item.code}</td>
                   <td>{item.category}</td>
@@ -592,7 +662,9 @@ function ProductMaster() {
                   <td>{item.uom}</td>
                   <td>
                     <button onClick={() => handleEdit(index)}>Edit</button>
-                    <button onClick={() => handleDelete(index)}>Delete</button>
+                    <button onClick={() => handleDelete(index)}>
+                      Delete
+                    </button>
                   </td>
                   <td>{item.created}</td>
                   <td>{item.updated}</td>
