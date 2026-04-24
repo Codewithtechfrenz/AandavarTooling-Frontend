@@ -1,3 +1,245 @@
+// import React, { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import Sidebar from "./Sidebar";
+// import Topbar from "./Topbar";
+// import "../CSS/InwardEntry.css";
+// import api from "../api";
+
+// function InwardEntry() {
+//   const navigate = useNavigate();
+
+//   const [products, setProducts] = useState([]);
+//   const [itemCodes, setItemCodes] = useState([]);
+//   const [uoms, setUoms] = useState([]);
+
+//   const [selectedItemName, setSelectedItemName] = useState("");
+//   const [itemCode, setItemCode] = useState("");
+//   const [uom, setUom] = useState("");
+//   const [qty, setQty] = useState("");
+//   const [rate, setRate] = useState("");
+
+//   /* SAFE DATA EXTRACTOR */
+//   const extractList = (res) => {
+//     if (Array.isArray(res?.data)) return res.data;
+//     if (Array.isArray(res?.data?.data)) return res.data.data;
+
+//     if (res?.data?.data) {
+//       const nested = Object.values(res.data.data).find((v) =>
+//         Array.isArray(v)
+//       );
+//       if (nested) return nested;
+//     }
+
+//     return [];
+//   };
+
+//   useEffect(() => {
+//     loadProducts();
+//     loadItemCodes();
+//     loadUoms();
+//   }, []);
+
+//   /* PRODUCTS */
+//   const loadProducts = async () => {
+//     try {
+//       const res = await api.get("/items/activeitem");
+
+//       const list = extractList(res);
+
+//       const normalized = list
+//         .map((item) => ({
+//           ItemName: String(
+//             item.ItemName ||
+//               item.itemName ||
+//               item.item_name ||
+//               ""
+//           ).trim(),
+//           ItemCode: String(
+//             item.ItemCode ||
+//               item.itemCode ||
+//               item.item_code ||
+//               ""
+//           ).trim(),
+//         }))
+//         .filter((i) => i.ItemName && i.ItemCode);
+
+//       console.log("Products:", normalized);
+
+//       setProducts(normalized);
+//     } catch (err) {
+//       console.error("Product Load Error:", err);
+//       setProducts([]);
+//     }
+//   };
+
+//   const loadItemCodes = async () => {
+//     try {
+//       const res = await api.get("/activeitems/activeitemcode");
+//       setItemCodes(extractList(res));
+//     } catch {
+//       setItemCodes([]);
+//     }
+//   };
+
+//   const loadUoms = async () => {
+//     try {
+//       const res = await api.get("/activeuoms/activeUOM");
+//       setUoms(extractList(res));
+//     } catch {
+//       setUoms([]);
+//     }
+//   };
+
+//   /* HANDLERS */
+//   const handleItemChange = (e) => {
+//     const name = e.target.value;
+//     setSelectedItemName(name);
+
+//     const found = products.find((p) => p.ItemName === name);
+//     setItemCode(found ? found.ItemCode : "");
+//   };
+
+//   const handleCodeChange = (e) => {
+//     const code = e.target.value;
+//     setItemCode(code);
+
+//     const found = products.find((p) => p.ItemCode === code);
+//     setSelectedItemName(found ? found.ItemName : "");
+//   };
+
+//   const handleSubmit = async () => {
+//     if (!selectedItemName || !itemCode || !uom || !qty || !rate) {
+//       alert("Fill all fields");
+//       return;
+//     }
+
+//     const payload = {
+//       ItemName: selectedItemName,
+//       ItemCode: itemCode,
+//       UOMName: uom,
+//       Quantity: Number(qty),
+//       Rate: Number(rate),
+//       Status: "Completed",
+//     };
+
+//     try {
+//       const res = await api.post("/inward/iteminward", payload);
+//       alert(res.data.message || "Saved");
+
+//       resetForm();
+//       navigate("/current-stock", { state: { refresh: true } });
+//     } catch (err) {
+//       console.error(err);
+//       alert("Error saving");
+//     }
+//   };
+
+//   const resetForm = () => {
+//     setSelectedItemName("");
+//     setItemCode("");
+//     setUom("");
+//     setQty("");
+//     setRate("");
+//   };
+
+//   return (
+//     <div className="ie-page">
+//       <Sidebar />
+//       <Topbar />
+
+//       <div className="ie-header">
+//         <h1>Product Inward Entry</h1>
+//       </div>
+
+//       <div className="ie-form">
+//         <div className="ie-row">
+//           <div className="ie-group">
+//             <label>Item Name</label>
+//             <select value={selectedItemName} onChange={handleItemChange}>
+//               <option value="">Select Item</option>
+
+//               {products.length > 0 ? (
+//                 products.map((item, index) => (
+//                   <option
+//                     key={item.ItemCode + index}
+//                     value={item.ItemName}
+//                   >
+//                     {item.ItemName}
+//                   </option>
+//                 ))
+//               ) : (
+//                 <option disabled>No Items Found</option>
+//               )}
+//             </select>
+//           </div>
+
+//           <div className="ie-group">
+//             <label>Item Code</label>
+//             <select value={itemCode} onChange={handleCodeChange}>
+//               <option value="">Select Code</option>
+//               {itemCodes.map((code, i) => (
+//                 <option key={i} value={code}>
+//                   {code}
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
+//         </div>
+
+//         <div className="ie-row">
+//           <div className="ie-group">
+//             <label>UOM</label>
+//             <select value={uom} onChange={(e) => setUom(e.target.value)}>
+//               <option value="">Select UOM</option>
+//               {uoms.map((u, i) => (
+//                 <option key={i} value={u.UOMName || u}>
+//                   {u.UOMName || u}
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
+
+//           <div className="ie-group">
+//             <label>Quantity</label>
+//             <input
+//               type="number"
+//               value={qty}
+//               onChange={(e) => setQty(e.target.value)}
+//             />
+//           </div>
+//         </div>
+
+//         <div className="ie-row">
+//           <div className="ie-group">
+//             <label>Rate</label>
+//             <input
+//               type="number"
+//               value={rate}
+//               onChange={(e) => setRate(e.target.value)}
+//             />
+//           </div>
+//         </div>
+
+//         <button className="ie-btn" onClick={handleSubmit}>
+//           Submit
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default InwardEntry;
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
@@ -5,141 +247,84 @@ import Topbar from "./Topbar";
 import "../CSS/InwardEntry.css";
 import api from "../api";
 
-function InwardEntry() {
+function ToolInwardEntry() {
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [itemCodes, setItemCodes] = useState([]);
-  const [uoms, setUoms] = useState([]);
-
-  const [selectedItemName, setSelectedItemName] = useState("");
-  const [itemCode, setItemCode] = useState("");
+  const [toolName, setToolName] = useState("");
   const [uom, setUom] = useState("");
-  const [qty, setQty] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [rate, setRate] = useState("");
 
-  /* SAFE DATA EXTRACTOR */
-  const extractList = (res) => {
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res?.data?.data)) return res.data.data;
+  const [toolOptions, setToolOptions] = useState([]);
+  const [filteredTools, setFilteredTools] = useState([]);
 
-    if (res?.data?.data) {
-      const nested = Object.values(res.data.data).find((v) =>
-        Array.isArray(v)
-      );
-      if (nested) return nested;
-    }
-
-    return [];
-  };
+  const [uomOptions, setUomOptions] = useState([]);
 
   useEffect(() => {
-    loadProducts();
-    loadItemCodes();
-    loadUoms();
+    fetchTools();
+    fetchUOMs();
   }, []);
 
-  /* PRODUCTS */
-  const loadProducts = async () => {
+  const fetchTools = async () => {
     try {
-      const res = await api.get("/items/activeitem");
-
-      const list = extractList(res);
-
-      const normalized = list
-        .map((item) => ({
-          ItemName: String(
-            item.ItemName ||
-              item.itemName ||
-              item.item_name ||
-              ""
-          ).trim(),
-          ItemCode: String(
-            item.ItemCode ||
-              item.itemCode ||
-              item.item_code ||
-              ""
-          ).trim(),
-        }))
-        .filter((i) => i.ItemName && i.ItemCode);
-
-      console.log("Products:", normalized);
-
-      setProducts(normalized);
+      const res = await api.get("/Toolstock/activetool");
+      const tools = res.data.data || [];
+      setToolOptions(tools);
+      setFilteredTools(tools);
     } catch (err) {
-      console.error("Product Load Error:", err);
-      setProducts([]);
+      console.error("Error fetching tools:", err);
     }
   };
 
-  const loadItemCodes = async () => {
+  const fetchUOMs = async () => {
     try {
-      const res = await api.get("/activeitems/activeitemcode");
-      setItemCodes(extractList(res));
-    } catch {
-      setItemCodes([]);
+      const res = await api.get("/Toolstock/activeuom");
+      setUomOptions(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching UOMs:", err);
     }
   };
 
-  const loadUoms = async () => {
-    try {
-      const res = await api.get("/activeuoms/activeUOM");
-      setUoms(extractList(res));
-    } catch {
-      setUoms([]);
-    }
-  };
+  /* FILTER WHILE TYPING IN DROPDOWN */
+  const handleFilter = (e) => {
+    const value = e.target.value;
+    setToolName(value);
 
-  /* HANDLERS */
-  const handleItemChange = (e) => {
-    const name = e.target.value;
-    setSelectedItemName(name);
+    const filtered = toolOptions.filter((tool) =>
+      tool.toLowerCase().includes(value.toLowerCase())
+    );
 
-    const found = products.find((p) => p.ItemName === name);
-    setItemCode(found ? found.ItemCode : "");
-  };
-
-  const handleCodeChange = (e) => {
-    const code = e.target.value;
-    setItemCode(code);
-
-    const found = products.find((p) => p.ItemCode === code);
-    setSelectedItemName(found ? found.ItemName : "");
+    setFilteredTools(filtered);
   };
 
   const handleSubmit = async () => {
-    if (!selectedItemName || !itemCode || !uom || !qty || !rate) {
-      alert("Fill all fields");
+    if (!toolName || !uom || !quantity || !rate) {
+      alert("Enter all fields");
       return;
     }
 
-    const payload = {
-      ItemName: selectedItemName,
-      ItemCode: itemCode,
-      UOMName: uom,
-      Quantity: Number(qty),
-      Rate: Number(rate),
-      Status: "Completed",
-    };
-
     try {
-      const res = await api.post("/inward/iteminward", payload);
-      alert(res.data.message || "Saved");
+      const payload = {
+        ToolName: toolName,
+        UOMName: uom,
+        Quantity: Number(quantity),
+        Rate: Number(rate),
+      };
 
-      resetForm();
-      navigate("/current-stock", { state: { refresh: true } });
+      await api.post("/toolinward/toolinwards", payload);
+
+      alert("Tool Inward submitted & stock updated!");
+      navigate("/tool-stock");
     } catch (err) {
-      console.error(err);
-      alert("Error saving");
+      console.error("Error submitting Tool Inward:", err);
+      alert("Error updating Tool stock");
     }
-  };
 
-  const resetForm = () => {
-    setSelectedItemName("");
-    setItemCode("");
+    setToolName("");
     setUom("");
-    setQty("");
+    setQuantity("");
     setRate("");
+    setFilteredTools(toolOptions);
   };
 
   return (
@@ -148,68 +333,52 @@ function InwardEntry() {
       <Topbar />
 
       <div className="ie-header">
-        <h1>Product Inward Entry</h1>
+        <h1>Tool Inward Entry</h1>
       </div>
 
       <div className="ie-form">
         <div className="ie-row">
           <div className="ie-group">
-            <label>Item Name</label>
-            <select value={selectedItemName} onChange={handleItemChange}>
-              <option value="">Select Item</option>
+            <label>Tool Name</label>
 
-              {products.length > 0 ? (
-                products.map((item, index) => (
-                  <option
-                    key={item.ItemCode + index}
-                    value={item.ItemName}
-                  >
-                    {item.ItemName}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No Items Found</option>
-              )}
-            </select>
-          </div>
+            {/* Single Searchable Dropdown */}
+            <input
+              list="toolList"
+              value={toolName}
+              onChange={handleFilter}
+              placeholder="Select Tool"
+            />
 
-          <div className="ie-group">
-            <label>Item Code</label>
-            <select value={itemCode} onChange={handleCodeChange}>
-              <option value="">Select Code</option>
-              {itemCodes.map((code, i) => (
-                <option key={i} value={code}>
-                  {code}
-                </option>
+            <datalist id="toolList">
+              {filteredTools.map((tool, i) => (
+                <option key={i} value={tool} />
               ))}
-            </select>
+            </datalist>
           </div>
-        </div>
 
-        <div className="ie-row">
           <div className="ie-group">
             <label>UOM</label>
             <select value={uom} onChange={(e) => setUom(e.target.value)}>
               <option value="">Select UOM</option>
-              {uoms.map((u, i) => (
-                <option key={i} value={u.UOMName || u}>
-                  {u.UOMName || u}
+              {uomOptions.map((opt, i) => (
+                <option key={i} value={opt}>
+                  {opt}
                 </option>
               ))}
             </select>
           </div>
+        </div>
 
+        <div className="ie-row">
           <div className="ie-group">
             <label>Quantity</label>
             <input
               type="number"
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
             />
           </div>
-        </div>
 
-        <div className="ie-row">
           <div className="ie-group">
             <label>Rate</label>
             <input
@@ -228,4 +397,4 @@ function InwardEntry() {
   );
 }
 
-export default InwardEntry;
+export default ToolInwardEntry;
